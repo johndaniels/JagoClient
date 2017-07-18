@@ -37,14 +37,14 @@ import rene.util.xml.XmlWriter;
 
 /**
  * This is the main file for presenting a Go board.
- * <P>
+ * <boardPosition>
  * Handles the complete display and storage of a Go board. The display is kept
  * on an offscreen image. Stores a Go game in a node list (with variants).
  * Handles the display of the current node.
- * <P>
+ * <boardPosition>
  * This class handles mouse input to set the next move. It also has methods to
  * move in the node tree from external sources.
- * <P>
+ * <boardPosition>
  * A BoardInterface is used to encorporate the board into an environment.
  */
 
@@ -62,7 +62,7 @@ public class Board extends Canvas implements MouseListener,
 	SGFTree T; // the game tree
 	Vector Trees; // the game trees (one of them is T)
 	int CurrentTree; // the currently displayed tree
-	Position P; // current board position
+	Position boardPosition; // current board position
 	int number; // number of the next move
 	Tree<Node> Pos; // the current board position in this presentation
 	int State; // states: 1 is black, 2 is white, 3 is set black etc.
@@ -103,7 +103,7 @@ public class Board extends Canvas implements MouseListener,
 		showlast = true;
 		GF = gf;
 		State = 1;
-		P = new Position(S);
+		boardPosition = new Position(S);
 		number = 1;
 		T = new SGFTree(new Node(number));
 		Trees = new Vector();
@@ -552,14 +552,14 @@ public class Board extends Canvas implements MouseListener,
 				else if (e.isControlDown())
 				// goto variation
 				{
-					if (P.tree(i, j) != null)
+					if (boardPosition.tree(i, j) != null)
 					{
 						gotovariation(i, j);
 					}
 				}
 				else if (e.isMetaDown()) // right click
 				{
-					if (P.tree(i, j) != null)
+					if (boardPosition.tree(i, j) != null)
 					{
 						gotovariation(i, j);
 					}
@@ -784,7 +784,7 @@ public class Board extends Canvas implements MouseListener,
 	void gotovariation (int i, int j)
 	// goto the variation at (i,j)
 	{
-		Tree<Node> newpos = P.tree(i, j);
+		Tree<Node> newpos = boardPosition.tree(i, j);
 		getinformation();
 		if (VCurrent && newpos.parent() == Pos.parent())
 		{
@@ -809,7 +809,7 @@ public class Board extends Canvas implements MouseListener,
 		Action a;
 		synchronized (Pos)
 		{
-			if (P.color(i, j) == 0) // empty?
+			if (boardPosition.color(i, j) == 0) // empty?
 			{
 				if (Pos.content().actions() != null || Pos.parent() == null)
 				// create a new node, if there the current node is not
@@ -817,7 +817,7 @@ public class Board extends Canvas implements MouseListener,
 				// move, where we always create a new move.
 				{
 					Node n = new Node(++number);
-					if (P.color() > 0)
+					if (boardPosition.color() > 0)
 					{
 						a = new Action("B", Field.string(i, j));
 					}
@@ -826,7 +826,7 @@ public class Board extends Canvas implements MouseListener,
 						a = new Action("W", Field.string(i, j));
 					}
 					n.addaction(a); // note the move action
-					setaction(n, a, P.color()); // display the action
+					setaction(n, a, boardPosition.color()); // display the action
 					// !!! We alow for suicide moves
 					Tree<Node> newpos = new Tree<Node>(n);
 					Pos.addchild(newpos); // note the move
@@ -836,7 +836,7 @@ public class Board extends Canvas implements MouseListener,
 				else
 				{
 					Node n = Pos.content();
-					if (P.color() > 0)
+					if (boardPosition.color() > 0)
 					{
 						a = new Action("B", Field.string(i, j));
 					}
@@ -845,7 +845,7 @@ public class Board extends Canvas implements MouseListener,
 						a = new Action("W", Field.string(i, j));
 					}
 					n.addaction(a); // note the move action
-					setaction(n, a, P.color()); // display the action
+					setaction(n, a, boardPosition.color()); // display the action
 					// !!! We alow for suicide moves
 				}
 			}
@@ -855,7 +855,7 @@ public class Board extends Canvas implements MouseListener,
 	public void delete (int i, int j)
 	// delete the stone and note it
 	{
-		if (P.color(i, j) == 0) return;
+		if (boardPosition.color(i, j) == 0) return;
 		synchronized (Pos)
 		{
 			Node n = Pos.content();
@@ -890,8 +890,8 @@ public class Board extends Canvas implements MouseListener,
 			{
 				Action a = new Action("AE", field);
 				n.expandaction(a);
-				n.addchange(new Change(i, j, P.color(i, j)));
-				P.color(i, j, 0);
+				n.addchange(new Change(i, j, boardPosition.color(i, j)));
+				boardPosition.color(i, j, 0);
 				update(i, j);
 			}
 			showinformation();
@@ -902,7 +902,7 @@ public class Board extends Canvas implements MouseListener,
 	public void changemove (int i, int j)
 	// change a move to a new field (dangerous!)
 	{
-		if (P.color(i, j) != 0) return;
+		if (boardPosition.color(i, j) != 0) return;
 		synchronized (Pos)
 		{
 			for (ListElement<Action> la : Pos.content().actions())
@@ -924,24 +924,24 @@ public class Board extends Canvas implements MouseListener,
 	// note all removals
 	{
 		if (Pos.haschildren()) return;
-		if (P.color(i0, j0) == 0) return;
+		if (boardPosition.color(i0, j0) == 0) return;
 		Action a;
-		P.markgroup(i0, j0);
+		boardPosition.markgroup(i0, j0);
 		int i, j;
-		int c = P.color(i0, j0);
+		int c = boardPosition.color(i0, j0);
 		Node n = Pos.content();
 		if (n.contains("B") || n.contains("W")) n = newnode();
 		for (i = 0; i < S; i++)
 			for (j = 0; j < S; j++)
 			{
-				if (P.marked(i, j))
+				if (boardPosition.marked(i, j))
 				{
 					a = new Action("AE", Field.string(i, j));
 					n
-						.addchange(new Change(i, j, P.color(i, j), P.number(i,
+						.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i,
 							j)));
 					n.expandaction(a);
-					if (P.color(i, j) > 0)
+					if (boardPosition.color(i, j) > 0)
 					{
 						n.Pb++;
 						Pb++;
@@ -951,7 +951,7 @@ public class Board extends Canvas implements MouseListener,
 						n.Pw++;
 						Pw++;
 					}
-					P.color(i, j, 0);
+					boardPosition.color(i, j, 0);
 					update(i, j);
 				}
 			}
@@ -1027,7 +1027,7 @@ public class Board extends Canvas implements MouseListener,
 		synchronized (Pos)
 		{
 			Action a;
-			if (P.color(i, j) == 0) // empty?
+			if (boardPosition.color(i, j) == 0) // empty?
 			{
 				Node n = Pos.content();
 				if (GF.getParameter("puresgf", true)
@@ -1042,7 +1042,7 @@ public class Board extends Canvas implements MouseListener,
 					a = new Action("AW", Field.string(i, j));
 				}
 				n.expandaction(a); // note the move action
-				P.color(i, j, c);
+				boardPosition.color(i, j, c);
 				update(i, j);
 			}
 		}
@@ -1054,17 +1054,17 @@ public class Board extends Canvas implements MouseListener,
 	// capture neighboring groups without liberties
 	// capture own group on suicide
 	{
-		int c = -P.color(i, j);
+		int c = -boardPosition.color(i, j);
 		captured = 0;
 		if (i > 0) capturegroup(i - 1, j, c, n);
 		if (j > 0) capturegroup(i, j - 1, c, n);
 		if (i < S - 1) capturegroup(i + 1, j, c, n);
 		if (j < S - 1) capturegroup(i, j + 1, c, n);
-		if (P.color(i, j) == -c)
+		if (boardPosition.color(i, j) == -c)
 		{
 			capturegroup(i, j, -c, n);
 		}
-		if (captured == 1 && P.count(i, j) != 1) captured = 0;
+		if (captured == 1 && boardPosition.count(i, j) != 1) captured = 0;
 		if ( !GF.getParameter("korule", true)) captured = 0;
 	}
 
@@ -1075,17 +1075,17 @@ public class Board extends Canvas implements MouseListener,
 	{
 		int ii, jj;
 		Action a;
-		if (P.color(i, j) != c) return;
-		if ( !P.markgrouptest(i, j, 0)) // liberties?
+		if (boardPosition.color(i, j) != c) return;
+		if ( !boardPosition.markgrouptest(i, j, 0)) // liberties?
 		{
 			for (ii = 0; ii < S; ii++)
 				for (jj = 0; jj < S; jj++)
 				{
-					if (P.marked(ii, jj))
+					if (boardPosition.marked(ii, jj))
 					{
-						n.addchange(new Change(ii, jj, P.color(ii, jj), P
+						n.addchange(new Change(ii, jj, boardPosition.color(ii, jj), boardPosition
 							.number(ii, jj)));
-						if (P.color(ii, jj) > 0)
+						if (boardPosition.color(ii, jj) > 0)
 						{
 							Pb++;
 							n.Pb++;
@@ -1095,7 +1095,7 @@ public class Board extends Canvas implements MouseListener,
 							Pw++;
 							n.Pw++;
 						}
-						P.color(ii, jj, 0);
+						boardPosition.color(ii, jj, 0);
 						update(ii, jj); // redraw the field (offscreen)
 						captured++;
 						capturei = ii;
@@ -1108,15 +1108,15 @@ public class Board extends Canvas implements MouseListener,
 	public void variation (int i, int j)
 	{
 		if (Pos.parent() == null) return;
-		if (P.color(i, j) == 0) // empty?
+		if (boardPosition.color(i, j) == 0) // empty?
 		{
-			int c = P.color();
+			int c = boardPosition.color();
 			goback();
-			P.color( -c);
+			boardPosition.color( -c);
 			set(i, j);
 			if ( !GF.getParameter("variationnumbers", false))
 			{
-				P.number(i, j, 1);
+				boardPosition.number(i, j, 1);
 				number = 2;
 				Pos.content().number(2);
 			}
@@ -1215,7 +1215,7 @@ public class Board extends Canvas implements MouseListener,
 				LText = ms + GF.resourceString("Text__") + TextMarker;
 				break;
 			default:
-				if (P.color() > 0)
+				if (boardPosition.color() > 0)
 				{
 					String s = lookuptime("BL");
 					if ( !s.equals(""))
@@ -1254,7 +1254,7 @@ public class Board extends Canvas implements MouseListener,
 		GF.setState(7, !n.main() || Pos.haschildren());
 		if (State == 1 || State == 2)
 		{
-			if (P.color() == 1)
+			if (boardPosition.color() == 1)
 				State = 1;
 			else State = 2;
 		}
@@ -1272,24 +1272,24 @@ public class Board extends Canvas implements MouseListener,
 		for (i = 0; i < S; i++)
 			for (j = 0; j < S; j++)
 			{
-				if (P.tree(i, j) != null)
+				if (boardPosition.tree(i, j) != null)
 				{
-					P.tree(i, j, null);
+					boardPosition.tree(i, j, null);
 					update(i, j);
 				}
-				if (P.marker(i, j) != Field.Marker.NONE)
+				if (boardPosition.marker(i, j) != Field.Marker.NONE)
 				{
-					P.marker(i, j, Field.Marker.NONE);
+					boardPosition.marker(i, j, Field.Marker.NONE);
 					update(i, j);
 				}
-				if (P.letter(i, j) != 0)
+				if (boardPosition.letter(i, j) != 0)
 				{
-					P.letter(i, j, 0);
+					boardPosition.letter(i, j, 0);
 					update(i, j);
 				}
-				if (P.haslabel(i, j))
+				if (boardPosition.haslabel(i, j))
 				{
-					P.clearlabel(i, j);
+					boardPosition.clearlabel(i, j);
 					update(i, j);
 				}
 			}
@@ -1310,7 +1310,7 @@ public class Board extends Canvas implements MouseListener,
 					j = Field.j(s);
 					if (valid(i, j))
 					{
-						P.marker(i, j, Field.Marker.SQUARE);
+						boardPosition.marker(i, j, Field.Marker.SQUARE);
 						update(i, j);
 					}
 				}
@@ -1324,7 +1324,7 @@ public class Board extends Canvas implements MouseListener,
 					j = Field.j(s);
 					if (valid(i, j))
 					{
-						P.marker(i, j, Field.Marker.CROSS);
+						boardPosition.marker(i, j, Field.Marker.CROSS);
 						update(i, j);
 					}
 				}
@@ -1337,7 +1337,7 @@ public class Board extends Canvas implements MouseListener,
 					j = Field.j(s);
 					if (valid(i, j))
 					{
-						P.marker(i, j, Field.Marker.TRIANGLE);
+						boardPosition.marker(i, j, Field.Marker.TRIANGLE);
 						update(i, j);
 					}
 				}
@@ -1350,7 +1350,7 @@ public class Board extends Canvas implements MouseListener,
 					j = Field.j(s);
 					if (valid(i, j))
 					{
-						P.marker(i, j, Field.Marker.CIRCLE);
+						boardPosition.marker(i, j, Field.Marker.CIRCLE);
 						update(i, j);
 					}
 				}
@@ -1363,7 +1363,7 @@ public class Board extends Canvas implements MouseListener,
 					j = Field.j(s);
 					if (valid(i, j))
 					{
-						P.letter(i, j, let);
+						boardPosition.letter(i, j, let);
 						let++;
 						update(i, j);
 					}
@@ -1377,7 +1377,7 @@ public class Board extends Canvas implements MouseListener,
 					j = Field.j(s);
 					if (valid(i, j) && s.length() >= 4 && s.charAt(2) == ':')
 					{
-						P.setlabel(i, j, s.substring(3));
+						boardPosition.setlabel(i, j, s.substring(3));
 						update(i, j);
 					}
 				}
@@ -1406,7 +1406,7 @@ public class Board extends Canvas implements MouseListener,
 						j = Field.j(s);
 						if (valid(i, j))
 						{
-							P.tree(i, j, p);
+							boardPosition.tree(i, j, p);
 							update(i, j);
 						}
 						break;
@@ -1466,7 +1466,7 @@ public class Board extends Canvas implements MouseListener,
 
 	public void update (int i, int j)
 	// update the field (i,j) in the offscreen image Active
-	// in dependance of the board position P.
+	// in dependance of the board position boardPosition.
 	// display the last move mark, if applicable.
 	{
 		if (ActiveImage == null) return;
@@ -1481,7 +1481,7 @@ public class Board extends Canvas implements MouseListener,
 				&& GF.getParameter("beauty", true)
 				&& GF.getParameter("beautystones", true))
 			{
-				if (P.color(i, j) != 0)
+				if (boardPosition.color(i, j) != 0)
 				{
 					g.drawImage(EmptyShadow, xi - OP / 2, xj + OP / 2, xi + D
 						- OP / 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi
@@ -1498,13 +1498,13 @@ public class Board extends Canvas implements MouseListener,
 				update1(g, i, j + 1);
 				update1(g, i - 1, j + 1);
 				g.setClip(xi, xj, D, D);
-				if (i < S - 1 && P.color(i + 1, j) != 0)
+				if (i < S - 1 && boardPosition.color(i + 1, j) != 0)
 				{
 					g.drawImage(EmptyShadow, xi + D - OP / 2, xj + OP / 2, xi
 						+ D, xj + D, xi + D - OP / 2, xj + OP / 2, xi + D, xj
 						+ D, this);
 				}
-				if (j > 0 && P.color(i, j - 1) != 0)
+				if (j > 0 && boardPosition.color(i, j - 1) != 0)
 				{
 					g.drawImage(EmptyShadow, xi, xj, xi + D - OP / 2, xj + OP
 						/ 2, xi, xj, xi + D - OP / 2, xj + OP / 2, this);
@@ -1523,7 +1523,7 @@ public class Board extends Canvas implements MouseListener,
 		int n;
 		int xi = O + OTU + i * D;
 		int xj = O + OTU + j * D;
-		if (P.color(i, j) > 0 || P.color(i, j) < 0 && GF.blackOnly())
+		if (boardPosition.color(i, j) > 0 || boardPosition.color(i, j) < 0 && GF.blackOnly())
 		{
 			if (BlackStone != null)
 			{
@@ -1537,7 +1537,7 @@ public class Board extends Canvas implements MouseListener,
 				g.drawArc(xi + D / 2, xj + D / 4, D / 4, D / 4, 40, 50);
 			}
 		}
-		else if (P.color(i, j) < 0)
+		else if (boardPosition.color(i, j) < 0)
 		{
 			if (WhiteStone != null)
 			{
@@ -1551,17 +1551,17 @@ public class Board extends Canvas implements MouseListener,
 				g.drawArc(xi + D / 2, xj + D / 4, D / 4, D / 4, 40, 50);
 			}
 		}
-		if (P.marker(i, j) != Field.Marker.NONE)
+		if (boardPosition.marker(i, j) != Field.Marker.NONE)
 		{
 			if (GF.bwColor())
 			{
-				if (P.color(i, j) >= 0)
+				if (boardPosition.color(i, j) >= 0)
 					g.setColor(Color.white);
 				else g.setColor(Color.black);
 			}
-			else g.setColor(GF.markerColor(P.color(i, j)));
+			else g.setColor(GF.markerColor(boardPosition.color(i, j)));
 			int h = D / 4;
-			switch (P.marker(i, j))
+			switch (boardPosition.marker(i, j))
 			{
 			case CIRCLE:
 				g.drawOval(xi + D/2 - h, xj + D/2 - h, 2*h, 2*h);
@@ -1579,38 +1579,38 @@ public class Board extends Canvas implements MouseListener,
 				g.drawRect(xi + D/2 - h, xj + D/2 - h, 2*h, 2*h);
 			}
 		}
-		if (P.letter(i, j) != 0)
+		if (boardPosition.letter(i, j) != 0)
 		{
 			if (GF.bwColor())
 			{
-				if (P.color(i, j) >= 0)
+				if (boardPosition.color(i, j) >= 0)
 					g.setColor(Color.white);
 				else g.setColor(Color.black);
 			}
-			else g.setColor(GF.labelColor(P.color(i, j)));
-			c[0] = (char)('a' + P.letter(i, j) - 1);
+			else g.setColor(GF.labelColor(boardPosition.color(i, j)));
+			c[0] = (char)('a' + boardPosition.letter(i, j) - 1);
 			String hs = new String(c);
 			int w = fontmetrics.stringWidth(hs) / 2;
 			int h = fontmetrics.getAscent() / 2 - 1;
 			g.setFont(font);
 			g.drawString(hs, xi + D / 2 - w, xj + D / 2 + h);
 		}
-		else if (P.haslabel(i, j))
+		else if (boardPosition.haslabel(i, j))
 		{
 			if (GF.bwColor())
 			{
-				if (P.color(i, j) >= 0)
+				if (boardPosition.color(i, j) >= 0)
 					g.setColor(Color.white);
 				else g.setColor(Color.black);
 			}
-			else g.setColor(GF.labelColor(P.color(i, j)));
-			String hs = P.label(i, j);
+			else g.setColor(GF.labelColor(boardPosition.color(i, j)));
+			String hs = boardPosition.label(i, j);
 			int w = fontmetrics.stringWidth(hs) / 2;
 			int h = fontmetrics.getAscent() / 2 - 1;
 			g.setFont(font);
 			g.drawString(hs, xi + D / 2 - w, xj + D / 2 + h);
 		}
-		else if (P.tree(i, j) != null && !VHide)
+		else if (boardPosition.tree(i, j) != null && !VHide)
 		{
 			if (GF.bwColor())
 				g.setColor(Color.white);
@@ -1624,7 +1624,7 @@ public class Board extends Canvas implements MouseListener,
 		{
 			if (GF.bwColor())
 			{
-				if (P.color(i, j) > 0)
+				if (boardPosition.color(i, j) > 0)
 					g.setColor(Color.white);
 				else g.setColor(Color.black);
 			}
@@ -1634,12 +1634,12 @@ public class Board extends Canvas implements MouseListener,
 		}
 		if (lasti == i && lastj == j && showlast)
 		{
-			if (GF.lastNumber() || Range >= 0 && P.number(i, j) > Range)
+			if (GF.lastNumber() || Range >= 0 && boardPosition.number(i, j) > Range)
 			{
-				if (P.color(i, j) > 0)
+				if (boardPosition.color(i, j) > 0)
 					g.setColor(Color.white);
 				else g.setColor(Color.black);
-				String hs = "" + P.number(i, j) % 100;
+				String hs = "" + boardPosition.number(i, j) % 100;
 				int w = fontmetrics.stringWidth(hs) / 2;
 				int h = fontmetrics.getAscent() / 2 - 1;
 				g.setFont(font);
@@ -1649,7 +1649,7 @@ public class Board extends Canvas implements MouseListener,
 			{
 				if (GF.bwColor())
 				{
-					if (P.color(i, j) > 0)
+					if (boardPosition.color(i, j) > 0)
 						g.setColor(Color.white);
 					else g.setColor(Color.black);
 				}
@@ -1660,12 +1660,12 @@ public class Board extends Canvas implements MouseListener,
 					/ 2 + D / 6);
 			}
 		}
-		else if (P.color(i, j) != 0 && Range >= 0 && P.number(i, j) > Range)
+		else if (boardPosition.color(i, j) != 0 && Range >= 0 && boardPosition.number(i, j) > Range)
 		{
-			if (P.color(i, j) > 0)
+			if (boardPosition.color(i, j) > 0)
 				g.setColor(Color.white);
 			else g.setColor(Color.black);
-			String hs = "" + P.number(i, j) % 100;
+			String hs = "" + boardPosition.number(i, j) % 100;
 			int w = fontmetrics.stringWidth(hs) / 2;
 			int h = fontmetrics.getAscent() / 2 - 1;
 			g.setFont(font);
@@ -1695,8 +1695,8 @@ public class Board extends Canvas implements MouseListener,
 		while (i.hasNext())
 		{
 			Change c = i.next().content();
-			P.color(c.I, c.J, c.C);
-			P.number(c.I, c.J, c.N);
+			boardPosition.color(c.I, c.J, c.C);
+			boardPosition.number(c.I, c.J, c.N);
 			update(c.I, c.J);
 		}
 		n.clearchanges();
@@ -1712,16 +1712,16 @@ public class Board extends Canvas implements MouseListener,
 		int i = Field.i(s);
 		int j = Field.j(s);
 		if ( !valid(i, j)) return;
-		n.addchange(new Change(i, j, P.color(i, j), P.number(i, j)));
-		P.color(i, j, c);
-		P.number(i, j, n.number() - 1);
+		n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
+		boardPosition.color(i, j, c);
+		boardPosition.number(i, j, n.number() - 1);
 		showlast = false;
 		update(lasti, lastj);
 		showlast = true;
 		lasti = i;
 		lastj = j;
 		update(i, j);
-		P.color( -c);
+		boardPosition.color( -c);
 		capture(i, j, n);
 	}
 
@@ -1736,8 +1736,8 @@ public class Board extends Canvas implements MouseListener,
 			j = Field.j(s);
 			if (valid(i, j))
 			{
-				n.addchange(new Change(i, j, P.color(i, j), P.number(i, j)));
-				P.color(i, j, c);
+				n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
+				boardPosition.color(i, j, c);
 				update(i, j);
 			}
 		}
@@ -1753,18 +1753,18 @@ public class Board extends Canvas implements MouseListener,
 			j = Field.j(s);
 			if (valid(i, j))
 			{
-				n.addchange(new Change(i, j, P.color(i, j), P.number(i, j)));
-				if (P.color(i, j) < 0)
+				n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
+				if (boardPosition.color(i, j) < 0)
 				{
 					n.Pw++;
 					Pw++;
 				}
-				else if (P.color(i, j) > 0)
+				else if (boardPosition.color(i, j) > 0)
 				{
 					n.Pb++;
 					Pb++;
 				}
-				P.color(i, j, 0);
+				boardPosition.color(i, j, 0);
 				update(i, j);
 			}
 		}
@@ -1791,7 +1791,7 @@ public class Board extends Canvas implements MouseListener,
 						if (ss != S)
 						{
 							S = ss;
-							P = new Position(S);
+							boardPosition = new Position(S);
 							makeimages();
 							updateall();
 							copy();
@@ -1853,7 +1853,7 @@ public class Board extends Canvas implements MouseListener,
 					lasti = i;
 					lastj = j;
 					update(lasti, lastj);
-					P.color( -P.color(i, j));
+					boardPosition.color( -boardPosition.color(i, j));
 				}
 			}
 		}
@@ -1971,9 +1971,9 @@ public class Board extends Canvas implements MouseListener,
 		if (Pos == p)
 		{
 			getinformation();
-			int c = P.color();
+			int c = boardPosition.color();
 			goforward();
-			P.color( -c);
+			boardPosition.color( -c);
 			showinformation();
 			GF.addComment(GF.resourceString("Pass"));
 		}
@@ -2003,7 +2003,7 @@ public class Board extends Canvas implements MouseListener,
 	void resettree ()
 	{
 		Pos = T.top();
-		P = new Position(S);
+		boardPosition = new Position(S);
 		lasti = lastj = -1;
 		Pb = Pw = 0;
 		updateall();
@@ -2361,8 +2361,8 @@ public class Board extends Canvas implements MouseListener,
 		n.expandaction(a);
 		if (Pos == p)
 		{
-			n.addchange(new Change(i, j, P.color(i, j), P.number(i, j)));
-			P.color(i, j, 1);
+			n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
+			boardPosition.color(i, j, 1);
 			update(i, j);
 			copy();
 		}
@@ -2390,8 +2390,8 @@ public class Board extends Canvas implements MouseListener,
 		n.expandaction(a);
 		if (Pos == p)
 		{
-			n.addchange(new Change(i, j, P.color(i, j), P.number(i, j)));
-			P.color(i, j, -1);
+			n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
+			boardPosition.color(i, j, -1);
 			update(i, j);
 			copy();
 		}
@@ -2405,7 +2405,7 @@ public class Board extends Canvas implements MouseListener,
 		if (Pos.haschildren()) return;
 		if (GF.blocked() && Pos.content().main()) return;
 		getinformation();
-		P.color( -P.color());
+		boardPosition.color( -boardPosition.color());
 		Node n = new Node(number);
 		Pos.addchild(new Tree<Node>(n));
 		n.main(Pos);
@@ -2423,25 +2423,25 @@ public class Board extends Canvas implements MouseListener,
 		int s = State;
 		varmaindown();
 		State = s;
-		if (P.color(i0, j0) == 0) return;
+		if (boardPosition.color(i0, j0) == 0) return;
 		Action a;
-		P.markgroup(i0, j0);
+		boardPosition.markgroup(i0, j0);
 		int i, j;
-		int c = P.color(i0, j0);
+		int c = boardPosition.color(i0, j0);
 		Node n = Pos.content();
 		if (GF.getParameter("puresgf", true)
 			&& (n.contains("B") || n.contains("W"))) n = newnode();
 		for (i = 0; i < S; i++)
 			for (j = 0; j < S; j++)
 			{
-				if (P.marked(i, j))
+				if (boardPosition.marked(i, j))
 				{
 					a = new Action("AE", Field.string(i, j));
 					n
-						.addchange(new Change(i, j, P.color(i, j), P.number(i,
+						.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i,
 							j)));
 					n.expandaction(a);
-					if (P.color(i, j) > 0)
+					if (boardPosition.color(i, j) > 0)
 					{
 						n.Pb++;
 						Pb++;
@@ -2451,7 +2451,7 @@ public class Board extends Canvas implements MouseListener,
 						n.Pw++;
 						Pw++;
 					}
-					P.color(i, j, 0);
+					boardPosition.color(i, j, 0);
 					update(i, j);
 				}
 			}
@@ -2513,14 +2513,14 @@ public class Board extends Canvas implements MouseListener,
 	{
 		if (Pos.parent() == null) return;
 		getinformation();
-		int c = P.color();
+		int c = boardPosition.color();
 		back();
 		Node n = new Node(2);
 		Pos.addchild(new Tree<Node>(n));
 		n.main(Pos);
 		Pos = Pos.lastchild();
 		setcurrent(Pos.content());
-		P.color( -c);
+		boardPosition.color( -c);
 		showinformation();
 		copy();
 	}
@@ -2562,7 +2562,7 @@ public class Board extends Canvas implements MouseListener,
 	{
 		getinformation();
 		State = 1;
-		P.color(1);
+		boardPosition.color(1);
 		showinformation();
 	}
 
@@ -2571,7 +2571,7 @@ public class Board extends Canvas implements MouseListener,
 	{
 		getinformation();
 		State = 2;
-		P.color( -1);
+		boardPosition.color( -1);
 		showinformation();
 	}
 
@@ -2636,7 +2636,7 @@ public class Board extends Canvas implements MouseListener,
 	{
 		if (s < 5 || s > 59) return;
 		S = s;
-		P = new Position(S);
+		boardPosition = new Position(S);
 		number = 1;
 		Node n = new Node(number);
 		n.main(true);
@@ -2714,7 +2714,7 @@ public class Board extends Canvas implements MouseListener,
 	public void print (Frame f)
 	// print the board
 	{
-		Position p = new Position(P);
+		Position p = new Position(boardPosition);
 		new Thread(new PrintBoard(p, Range, f)).start();
 	}
 
@@ -2779,22 +2779,22 @@ public class Board extends Canvas implements MouseListener,
 		getinformation();
 		int i, j;
 		int tb = 0, tw = 0, sb = 0, sw = 0;
-		P.getterritory();
+		boardPosition.getterritory();
 		for (i = 0; i < S; i++)
 			for (j = 0; j < S; j++)
 			{
-				if (P.territory(i, j) == 1 || P.territory(i, j) == -1)
+				if (boardPosition.territory(i, j) == 1 || boardPosition.territory(i, j) == -1)
 				{
-					markterritory(i, j, P.territory(i, j));
-					if (P.territory(i, j) > 0)
+					markterritory(i, j, boardPosition.territory(i, j));
+					if (boardPosition.territory(i, j) > 0)
 						tb++;
 					else tw++;
 				}
 				else
 				{
-					if (P.color(i, j) > 0)
+					if (boardPosition.color(i, j) > 0)
 						sb++;
-					else if (P.color(i, j) < 0) sw++;
+					else if (boardPosition.color(i, j) < 0) sw++;
 				}
 			}
 		String s = GF.resourceString("Chinese_count_") + "\n"
@@ -2819,22 +2819,22 @@ public class Board extends Canvas implements MouseListener,
 		getinformation();
 		int i, j;
 		int tb = 0, tw = 0, sb = 0, sw = 0;
-		P.getterritory();
+		boardPosition.getterritory();
 		for (i = 0; i < S; i++)
 			for (j = 0; j < S; j++)
 			{
-				if (P.territory(i, j) == 1 || P.territory(i, j) == -1)
+				if (boardPosition.territory(i, j) == 1 || boardPosition.territory(i, j) == -1)
 				{
-					markterritory(i, j, P.territory(i, j));
-					if (P.territory(i, j) > 0)
+					markterritory(i, j, boardPosition.territory(i, j));
+					if (boardPosition.territory(i, j) > 0)
 						tb++;
 					else tw++;
 				}
 				else
 				{
-					if (P.color(i, j) > 0)
+					if (boardPosition.color(i, j) > 0)
 						sb++;
-					else if (P.color(i, j) < 0) sw++;
+					else if (boardPosition.color(i, j) < 0) sw++;
 				}
 			}
 		showinformation();
@@ -2984,7 +2984,7 @@ public class Board extends Canvas implements MouseListener,
 			o.print(" |");
 			for (j = 0; j < S; j++)
 			{
-				switch (P.color(j, i))
+				switch (boardPosition.color(j, i))
 				{
 					case 1:
 						o.print(" #");
@@ -2993,11 +2993,11 @@ public class Board extends Canvas implements MouseListener,
 						o.print(" O");
 						break;
 					case 0:
-						if (P.haslabel(j, i))
-							o.print(" " + P.label(j, i));
-						else if (P.letter(j, i) > 0)
-							o.print(" " + (char)(P.letter(j, i) + 'a' - 1));
-						else if (P.marker(j, i) != Field.Marker.NONE)
+						if (boardPosition.haslabel(j, i))
+							o.print(" " + boardPosition.label(j, i));
+						else if (boardPosition.letter(j, i) > 0)
+							o.print(" " + (char)(boardPosition.letter(j, i) + 'a' - 1));
+						else if (boardPosition.marker(j, i) != Field.Marker.NONE)
 							o.print(" X");
 						else if (ishand(i) && ishand(j))
 							o.print(" ,");
@@ -3049,7 +3049,7 @@ public class Board extends Canvas implements MouseListener,
 			for (j = 0; j < S; j++)
 			{
 				String field = Field.string(i, j);
-				switch (P.color(i, j))
+				switch (boardPosition.color(i, j))
 				{
 					case 1:
 						n.expandaction(new Action("AB", field));
@@ -3058,9 +3058,9 @@ public class Board extends Canvas implements MouseListener,
 						n.expandaction(new Action("AW", field));
 						break;
 				}
-				if (P.marker(i, j) != Field.Marker.NONE)
+				if (boardPosition.marker(i, j) != Field.Marker.NONE)
 				{
-					switch (P.marker(i, j))
+					switch (boardPosition.marker(i, j))
 					{
 					case SQUARE:
 						n.expandaction(new Action(Field.Marker.SQUARE.value, field));
@@ -3075,10 +3075,10 @@ public class Board extends Canvas implements MouseListener,
 						n.expandaction(new MarkAction(field, GF));
 					}
 				}
-				else if (P.haslabel(i, j))
-					n.expandaction(new Action("LB", field + ":" + P.label(i, j)));
-				else if (P.letter(i, j) > 0)
-					n.expandaction(new Action("LB", field + ":" + P.letter(i, j)));
+				else if (boardPosition.haslabel(i, j))
+					n.expandaction(new Action("LB", field + ":" + boardPosition.label(i, j)));
+				else if (boardPosition.letter(i, j) > 0)
+					n.expandaction(new Action("LB", field + ":" + boardPosition.letter(i, j)));
 			}
 		}
 	}

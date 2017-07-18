@@ -29,14 +29,14 @@ public class ConnectedBoard extends Board
 
 	public synchronized void movemouse (int i, int j)
 	{	if (Pos.haschildren()) return;
-		if (P.color(i,j)!=0) return;
+		if (boardPosition.color(i,j)!=0) return;
 		if (captured==1 && capturei==i && capturej==j &&
 			GF.getParameter("preventko",true)) return;
 		if (Pos.content().main() && CGF.wantsmove())
 		{	if (CGF.moveset(i,j))
 			{	sendi=i; sendj=j;
 				update(i,j); copy();
-				MyColor=P.color();
+				MyColor= boardPosition.color();
 			}
 			JagoSound.play("click","",false);
 		}
@@ -50,7 +50,7 @@ public class ConnectedBoard extends Board
 	*/
 	public synchronized void removegroup (int i0, int j0)
 	{	if (Pos.haschildren()) return;
-		if (P.color(i0,j0)==0) return;
+		if (boardPosition.color(i0,j0)==0) return;
 		if (CGF.wantsmove() && Pos.content().main())
 		{	CGF.moveset(i0,j0);
 		}

@@ -537,21 +537,21 @@ class AskInsertQuestion extends Question
 /**
  * The GoFrame class is a frame, which contains the board, the comment window
  * and the navigation buttons (at least).
- * <P>
+ * <boardPosition>
  * This class implements BoardInterface. This is done to make clear what
  * routines are called from the board and to give the board a beans appearance.
- * <P>
+ * <boardPosition>
  * The layout is a panel of class BoardCommentPanel, containing two panels for
  * the board (BoardPanel) and for the comments (plus the ExtraSendField in
  * ConnectedGoFrame). Below is a 3D panel for the buttons. The BoardCommentPanel
  * takes care of the layout for its components.
- * <P>
+ * <boardPosition>
  * This class handles all actions in it, besides the mouse actions on the board,
  * which are handled by Board.
- * <P>
+ * <boardPosition>
  * Note that the Board class modifies the appearance of buttons and takes care
  * of the comment window, the next move label and the board position label.
- * <P>
+ * <boardPosition>
  * Several private classes in GoFrame.java contain dialogs to enter game
  * information, copyright, text marks, etc.
  * 

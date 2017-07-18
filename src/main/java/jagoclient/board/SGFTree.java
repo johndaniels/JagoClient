@@ -554,7 +554,7 @@ public class SGFTree
 		while (e.hasMoreElements())
 		{	XmlTree tree=(XmlTree)e.nextElement();
 			XmlTag tag=tree.getTag();
-			if (tag.name().equals("P"))
+			if (tag.name().equals("boardPosition"))
 			{	if (tree.children().isEmpty()) s.append("\n");
 				else
 				{	Tree<XmlTag> h=tree.xmlFirstContent();

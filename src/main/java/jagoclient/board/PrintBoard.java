@@ -16,7 +16,7 @@ Prints the Board in a separate Thread. This class does gets a copy of
 the board so that is can print asynchronously. However, it will display the
 print dialog in its constructor (i.e. blocking the event handling),
 but do the printing in in a separate thread.
-<P>
+<boardPosition>
 As to Java 1.1 the printing is not very beautiful.
 */
 
@@ -93,7 +93,7 @@ class PrintBoard implements Runnable, ImageObserver
 	}
 
 	/** update the field (i,j) in the print.
-	in dependance of the board position P.
+	in dependance of the board position boardPosition.
 	display the last move mark, if applicable.
 	*/
 	public void update1 (Graphics g, int x, int y, int i, int j, int D)

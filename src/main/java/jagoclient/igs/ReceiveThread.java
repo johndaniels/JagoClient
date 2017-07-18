@@ -174,13 +174,6 @@ public class ReceiveThread extends Thread
 				{
 					throw e;
 				}
-				catch (Exception e)
-				{
-					System.out
-						.println("Exception (please report to the author)\n"
-							+ e.toString() + "\n");
-					e.printStackTrace();
-				}
 			}
 		}
 		catch (IOException ex) // server has closed connection

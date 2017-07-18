@@ -8,10 +8,10 @@ import rene.util.list.Tree;
 A class to hold a single field in the game board.
 Contains data for labels, numbers, marks etc. and
 of course the color of the stone on the board.
-<P>
+<boardPosition>
 It may contain a reference to a tree, which is a variation
 starting at this (empty) board position.
-<P>
+<boardPosition>
 The Mark field is used for several purposes, like marking
 a group of stones or a territory.
 */
@@ -44,6 +44,7 @@ public class Field
 		Letter=0;
 		HaveLabel=false;
 		Number=0;
+		marker = Marker.NONE;
 	}
 
 	/** return its state */

@@ -45,7 +45,7 @@ public class ConnectedGoFrame extends GoFrame
 	 * Will modify the menues of the GoFrame. "endgame" is used for for the menu
 	 * entry to end a game (e.g. "remove groups"). "count" is the string to
 	 * count a game (e.g. "send done").
-	 * <P>
+	 * <boardPosition>
 	 * Optionally, the comment uses a card layout and a second text area to hold
 	 * the Kibitz window.
 	 */
