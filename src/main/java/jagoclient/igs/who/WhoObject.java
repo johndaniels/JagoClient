@@ -7,57 +7,154 @@ import rene.util.parser.StringParser;
 
 /**
 This is needed for the Sorter class.
-@see rene.util.sort.Sorter
 */
 
 public class WhoObject implements Comparable<WhoObject>
-{	protected static final Pattern WORD_PATTERN = Pattern.compile("\\w+");
+{
+	protected static final Pattern WORD_PATTERN = Pattern.compile("\\w+");
 	String S,Name,Stat;
-	public int V;
-	boolean SortName;
+	public int rankValue;
+	boolean sortName;
+
+	private boolean quiet;
+	private boolean silent;
+	private boolean looking;
+
+	private class WhoParser {
+		String s;
+		int position;
+
+
+		public WhoParser(String s) {
+			this.s = s;
+			this.position = 0;
+		}
+
+		private void parseStatus() {
+			while (true) {
+				switch (s.charAt(position)) {
+					case 'Q':
+						quiet = true;
+						break;
+					case 'X':
+						silent = true;
+						break;
+					case '!':
+						looking = true;
+						break;
+					default:
+						return;
+				}
+				position++;
+			}
+		}
+
+		private void skipSpaces() {
+			while (position < s.length() && s.charAt(position) == ' ') {
+				position++;
+			}
+		}
+
+		private int parseNumber() {
+			char digit = s.charAt(position);
+			int number = 0;
+			while (digit <= '9' && digit >= '0') {
+				number *= 10;
+				number += digit - '0';
+				position++;
+				digit = s.charAt(position);
+			}
+			return number;
+		}
+
+		private void parseNumberOrDashes() {
+			if (s.charAt(position) == '-') {
+				while (s.charAt(position) == '-') {
+					position++;
+				}
+				return;
+			}
+			parseNumber();
+		}
+
+		private String parseUsername() {
+			StringBuilder sb = new StringBuilder();
+			while (position < s.length() && s.charAt(position) != ' ') {
+				sb.append(s.charAt(position));
+				position++;
+			}
+			return sb.toString();
+		}
+
+		private void parseTime() {
+			parseNumber();
+			position++; // Skip minute/second marker
+		}
+
+		private int parseRank() {
+			if (s.charAt(position) == 'N') {
+				position += 2;
+				return 0 ;
+			}
+			int number = parseNumber();
+			int finalRank;
+			if (s.charAt(position) == 'k') {
+				finalRank = (20 - number) * 2;
+			} else if (s.charAt(position) == 'd'){
+				finalRank = 100 + number * 2;
+			} else {
+				finalRank = 200 + number * 2;
+			}
+			position++;
+			if (position < s.length() && s.charAt(position) == '+') {
+				finalRank++;
+				position++;
+			}
+			return finalRank;
+		}
+
+		public void parse() {
+			skipSpaces();
+			parseStatus();
+			skipSpaces();
+			parseNumberOrDashes();
+			skipSpaces();
+			parseNumberOrDashes();
+			skipSpaces();
+			Name = parseUsername();
+			skipSpaces();
+			parseTime();
+			skipSpaces();
+			rankValue = parseRank();
+		}
+	}
+
 	public WhoObject (String s, boolean sortname)
-	{	S=s; SortName=sortname;
-		if (s.length()<=30)
-		{	V=-50; Name=""; Stat=""; return;
-		}
-		Stat=s.substring(0,5);
-		Matcher matcher = WORD_PATTERN.matcher(s);
-		String h = matcher.find(30) ? matcher.group() : null;
-		StringParser p=new StringParser(h);
-		if (p.isint())
-		{	V=p.parseint();
-			if (p.skip("k")) V=100-V;
-			else if (p.skip("d")) V=100+V;
-			else if (p.skip("p")) V+=200;
-			else if (p.skip("NR")) V=0;
-		}
-		else V=-50;
-		if (s.length()<14) Name="";
-		else
-		{	matcher = WORD_PATTERN.matcher(s);
-			Name = matcher.find() ? matcher.group(12) : null;
-		}
+	{
+		this.S = s;
+		this.sortName=sortname;
+		new WhoParser(s).parse();
 	}
 	String who () { return S; }
 	@Override
 	public int compareTo (WhoObject g)
-	{	if (SortName)
+	{	if (sortName)
 		{	return Name.compareTo(g.Name);
 		}
 		else
-		{	if (V<g.V) return 1;
-			else if (V>g.V) return -1;
+		{	if (rankValue <g.rankValue) return 1;
+			else if (rankValue >g.rankValue) return -1;
 			else return 0;
 		}
 	}
 	public boolean looking ()
-	{	return Stat.indexOf('!')>=0;
+	{	return looking;
 	}
 	public boolean quiet ()
-	{	return Stat.indexOf('Q')>=0;
+	{	return quiet;
 	}
 	public boolean silent ()
-	{	return Stat.indexOf('X')>=0;
+	{	return silent;
 	}
 	public boolean friend ()
 	{	return Global.getParameter("friends","").indexOf(" "+Name)>=0;

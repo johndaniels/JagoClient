@@ -875,11 +875,11 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		else if (s.equals("allforward"))
 			doAction(">>I");
 		else if (s.equals("variationback"))
-			doAction("<V");
+			doAction("<rankValue");
 		else if (s.equals("variationstart"))
-			doAction("V");
+			doAction("rankValue");
 		else if (s.equals("variationforward"))
-			doAction("V>");
+			doAction("rankValue>");
 		else if (s.equals("main"))
 			doAction("*");
 		else if (s.equals("mainend"))
@@ -961,15 +961,15 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			{
 				B.allforward();
 			}
-			else if ("<V".equals(o))
+			else if ("<rankValue".equals(o))
 			{
 				B.varleft();
 			}
-			else if ("V>".equals(o))
+			else if ("rankValue>".equals(o))
 			{
 				B.varright();
 			}
-			else if ("V".equals(o))
+			else if ("rankValue".equals(o))
 			{
 				B.varup();
 			}

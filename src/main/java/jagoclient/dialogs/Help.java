@@ -41,8 +41,8 @@ public class Help extends CloseFrame
 		super(Global.resourceString("Help"));
 		seticon("ihelp.gif");
 		V = Global.getParameter("systemviewer", false) ? new SystemViewer() : new Viewer();
-		// V.setFont(Global.Monospaced);
-		// V.setBackground(Global.gray);
+		// rankValue.setFont(Global.Monospaced);
+		// rankValue.setBackground(Global.gray);
 		String s;
 		try (InputStream is = Global.class.getResourceAsStream("/helptexts/" +
 				subject + Global.resourceString("HELP_SUFFIX") + ".txt");

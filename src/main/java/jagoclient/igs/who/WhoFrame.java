@@ -448,11 +448,14 @@ public class WhoFrame extends CloseFrame implements CloseListener, DoItemListene
 		if (Closed) return;
 		if (L.size() > 2)
 		{
-			WhoObject v[] = new WhoObject[L.size()];
+			ArrayList<WhoObject> whoObjects = new ArrayList<>();
 			for (int i = 0; i < L.size(); i++)
 			{
-				v[i] = new WhoObject(L.get(i), SortName);
+				if (L.get(i).trim().length() != 0) {
+					whoObjects.add(new WhoObject(L.get(i), SortName));
+				}
 			}
+			WhoObject[] v = whoObjects.toArray(new WhoObject[0]);
 			Arrays.sort(v);
 			T.setText("");
 			T.appendLine0(Global
