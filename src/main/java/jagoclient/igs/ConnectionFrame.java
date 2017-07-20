@@ -14,7 +14,7 @@ import jagoclient.gui.MyLabel;
 import jagoclient.gui.MyMenu;
 import jagoclient.gui.MyPanel;
 import jagoclient.gui.Panel3D;
-import jagoclient.igs.connection.Connection;
+import jagoclient.igs.connection.ConnectionInfo;
 import jagoclient.igs.games.GamesFrame;
 import jagoclient.igs.who.WhoFrame;
 
@@ -201,7 +201,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 	JTextField Game;
 	CheckboxMenuItem CheckInfo, CheckMessages, CheckErrors, ReducedOutput,
 		AutoReply;
-	public int MoveStyle = Connection.MOVE;
+	public int MoveStyle = ConnectionInfo.MOVE;
 	JTextField WhoRange; // Kyu/Dan range for the who command.
 	String Waitfor; // Pop a a message, when this player connects.
 	List<OutputListener> OL; // List of Output-Listeners
@@ -209,10 +209,9 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 
 	public boolean hasClosed = false; // note that the user closed the window
 
-	public ConnectionFrame (String Name, String encoding)
+	public ConnectionFrame (String Name)
 	{
 		super(Name);
-		Encoding = encoding;
 		Waitfor = "";
 		OL = new ArrayList<OutputListener>();
 		setLayout(new BorderLayout());
@@ -363,7 +362,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		 * if (proxy) In= new ProxyIgsStream(this,Server.getInputStream(),Out);
 		 * else
 		 */
-			In = new IgsStream(this, Server.getInputStream(), Out);
+			In = new IgsStream();
 		}
 		catch (Exception e)
 		{
@@ -431,7 +430,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		}
 		try
 		{
-			In = new IgsStream(this, Server.getInputStream(), Out);
+			In = new IgsStream();
 		}
 		catch (Exception e)
 		{

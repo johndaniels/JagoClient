@@ -4,18 +4,19 @@ import jagoclient.Global;
 import jagoclient.dialogs.Message;
 import jagoclient.sound.JagoSound;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.net.Socket;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import rene.util.parser.StringParser;
+
+import javax.swing.*;
 
 /**
  * This class handles the line by line input from the server, parsing it for
@@ -39,59 +40,87 @@ public class IgsStream
 	int Number;
 	String Command;
 	final List<Distributor> DistributorList;
-	PrintWriter Out;
 	BufferedReader In;
-	ConnectionFrame CF;
+	OutputStream out;
+	boolean isLoggedIn = false;
+	Socket socket;
+	boolean stopThread;
+	Thread readingThread;
 
-	/**
-	 * The in and out streams to the server are opened by the ConnectionFrame.
-	 * However, the input stream is used for a BufferedReader, which does local
-	 * decoding. The output stream is already assumed to be using the correct
-	 * encoding.
-	 * 
-	 * @see jagoclient.igs.ProxyIgsStream
-	 */
-	public IgsStream (ConnectionFrame cf, InputStream in, PrintWriter out)
+	List<Runnable> loginListeners = new ArrayList<>();
+	CompletableFuture<Boolean> loginFuture;
+
+	public IgsStream ()
 	{
-		CF = cf;
-		Out = out;
 		Line = "";
 		L = 0;
 		Number = 0;
 		LOG.info("--> IgsStream opened");
 		DistributorList = new ArrayList<Distributor>();
 		C = new char[linesize];
-		initstream(in);
+	}
+
+	private void readForever() {
+		while (!stopThread) {
+			try {
+				readline();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	private void startReading() {
+		readingThread = new Thread(this::readForever);
+		readingThread.start();
+	}
+
+	public CompletionStage<Boolean> login(String username, String password) {
+		connect();
+		out(username);
+		out(password);
+		loginFuture = new CompletableFuture<>();
+		return loginFuture;
 	}
 
 	/**
 	 * This initializes a BufferedReader to do the decoding.
+	 * Must be called from awt event thread
 	 */
-	public void initstream (InputStream in)
+	private void connect ()
 	{
-		try
-		{
-			InputStream ina;
-			String encoding = CF.Encoding;
-			if (encoding.startsWith("!"))
-			{
-				ina = in;
-				encoding = encoding.substring(1);
+		try {
+			socket = new Socket("igs.joyjoy.net", 7777);
+			out = socket.getOutputStream();
+			InputStream input = socket.getInputStream();
+			String encoding = "utf-8";
+			InputStream telnetStream = new TelnetStream(input, out);
+			In = new BufferedReader(new InputStreamReader(telnetStream, encoding));
+			stopThread = false;
+			startReading();
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Must be called from awt event thread.
+	 */
+	private void disconnect() {
+		try {
+			stopThread = true;
+			try {
+				readingThread.join();
+			} catch(InterruptedException e) {
+				throw new RuntimeException(e);
 			}
-			else ina = new TelnetStream(CF, in, Out);
-			if (encoding.equals(""))
-				In = new BufferedReader(new InputStreamReader(ina));
-			else In = new BufferedReader(new InputStreamReader(ina, encoding));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			CF.append(e.toString() + "\n");
-			In = new BufferedReader(new InputStreamReader(in));
-		}
-		catch (IllegalArgumentException e)
-		{
-			CF.append(e.toString() + "\n");
-			In = new BufferedReader(new InputStreamReader(in));
+			socket.close();
+			socket = null;
+			In = null;
+			out = null;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -255,6 +284,10 @@ public class IgsStream
 		dis.allsended();
 	}
 
+	private <T> void completeOnSwingThread(CompletableFuture<T> future, T result) {
+		SwingUtilities.invokeLater(() -> future.complete(result));
+	}
+
 	/**
 	 * The most important method of this class.
 	 * <P>
@@ -302,6 +335,20 @@ public class IgsStream
 			}
 			Line = new String(C, 0, L);
 			LOG.log(Level.INFO, "IGS sent: {0}", Line);
+			if (!isLoggedIn) {
+				if (Line.contains("This is a guest account")) {
+					completeOnSwingThread(loginFuture, false);
+					SwingUtilities.invokeLater(this::disconnect);
+				} else if (Line.contains("Invalid Password")) {
+					completeOnSwingThread(loginFuture, false);
+					SwingUtilities.invokeLater(this::disconnect);
+				} else if (Line.contains("You have entered IGS")) {
+					completeOnSwingThread(loginFuture, true);
+					isLoggedIn = true;
+				}
+				L = 0;
+				break;
+			}
 			Number = 0;
 			Command = "";
 			if (full)
@@ -356,11 +403,6 @@ public class IgsStream
 						{
 							continue outerloop;
 						}
-					}
-					else if (Number == 21 && !CF.Waitfor.equals("")
-						&& Command.indexOf(CF.Waitfor) >= 0)
-					{
-						new Message(CF, Command).setVisible(true);
 					}
 					else if (Number == 21 && Command.startsWith("{")
 						&& Global.getParameter("reducedoutput", true)
@@ -464,14 +506,14 @@ public class IgsStream
 							dis.send(sp.upto((char)0));
 							continue outerloop;
 						}
-						ChannelDistributor cd = new ChannelDistributor(CF,
-							this, Out, G);
-						cd.send(sp.upto((char)0));
+						//ChannelDistributor cd = new ChannelDistributor(CF,
+						//	this, Out, G);
+						//cd.send(sp.upto((char)0));
 						continue outerloop;
 					}
 					else if (Number == 22)
 					{
-						Distributor dis = findDistributor(22);
+						/*Distributor dis = findDistributor(22);
 						if (dis != null)
 						{
 							dis.send(Command);
@@ -483,7 +525,7 @@ public class IgsStream
 						gf.repaint();
 						Status s = new Status(gf, this, Out);
 						s.PD.send(Command);
-						sendall(s.PD);
+						sendall(s.PD);*/
 					}
 					else if (Number == 9 && Command.startsWith("-- "))
 					{
@@ -606,9 +648,14 @@ public class IgsStream
 	{
 		if (s.startsWith("observe") || s.startsWith("moves")
 			|| s.startsWith("status")) return;
-		Out.println(s);
-		Out.flush();
 		LOG.log(Level.INFO, "Sending: {0}", s);
+		try {
+			out.write(s.getBytes("UTF-8"));
+			out.write(0x0a);
+			out.flush();
+		} catch(IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public int number ()

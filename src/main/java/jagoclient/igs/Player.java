@@ -1,6 +1,6 @@
 package jagoclient.igs;
 
-import jagoclient.igs.connection.Connection;
+import jagoclient.igs.connection.ConnectionInfo;
 
 import java.io.PrintWriter;
 import java.util.logging.Level;
@@ -248,9 +248,9 @@ public class Player implements Distributor.SizeTask
 		c[0]=(char)('a'+i);
 		String s=new String(c)+(BS-j);
 		switch (GF.CF.MoveStyle)
-		{   case Connection.MOVE_TIME :
+		{   case ConnectionInfo.MOVE_TIME :
 		        s=s+" "+sec; break;
-        	case Connection.MOVE_N_TIME :
+        	case ConnectionInfo.MOVE_N_TIME :
 		        s=s+" "+N+" "+sec; break;
 		}
 		Out.println(s);

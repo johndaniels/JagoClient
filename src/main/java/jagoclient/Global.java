@@ -494,14 +494,6 @@ public abstract class Global extends rene.gui.Global
 		return res;
 	}
 
-	public static void version51 ()
-	{
-		version51handle("go.cfg");
-		version51handle("server.cfg");
-		version51handle("partner.cfg");
-		version51handle("filter.cfg");
-	}
-
 	public static void version51handle (String s)
 	{
 		File f = new File(home() + s);

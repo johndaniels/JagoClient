@@ -9,14 +9,14 @@ import jagoclient.Global;
 A class, which holds a connection and can be initialized with
 a string from "server.cfg".
 */
-public class Connection
+public class ConnectionInfo
 {	public String Name="", Server="", User="", Password="";
 	public int Port;
 	public boolean Valid,Trying;
 	public static final int MOVE=0,MOVE_TIME=1,MOVE_N_TIME=2;
 	public int MoveStyle=MOVE;
 	public String Encoding;
-	public Connection (String line)
+	public ConnectionInfo(String line)
 	{	if (!Global.isApplet()) Encoding=System.getProperty("file.encoding");
 		if (Encoding==null) Encoding=""; 
 		StringParser p=new StringParser(line);

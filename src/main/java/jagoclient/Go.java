@@ -4,43 +4,25 @@ package jagoclient;
  This file contains the Go applet and its main method.
  */
 
-import jagoclient.board.Board;
 import jagoclient.board.GoFrame;
-import jagoclient.board.WoodPaint;
 import jagoclient.dialogs.GetParameter;
-import jagoclient.dialogs.Message;
 import jagoclient.gui.ButtonAction;
 import jagoclient.gui.CardPanel;
 import jagoclient.gui.MyLabel;
 import jagoclient.gui.MyPanel;
-import jagoclient.igs.Connect;
-import jagoclient.igs.ConnectionFrame;
-import jagoclient.igs.connection.Connection;
-import jagoclient.igs.connection.EditConnection;
-import jagoclient.partner.ConnectPartner;
+import jagoclient.igs.connection.ConnectionInfo;
 import jagoclient.partner.OpenPartnerFrame;
-import jagoclient.partner.PartnerFrame;
-import jagoclient.partner.partner.EditPartner;
 import jagoclient.partner.partner.Partner;
-import jagoclient.sound.JagoSound;
 
-import java.applet.Applet;
 import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.UIManager;
 
-import rene.gui.CloseFrame;
 import rene.gui.DoActionListener;
 
 /**
@@ -51,11 +33,11 @@ import rene.gui.DoActionListener;
 
 class GetPassword extends GetParameter
 {
-	Connection C;
+	ConnectionInfo C;
 	Go G;
 	public String Password;
 
-	public GetPassword (Frame f, Go g, Connection c)
+	public GetPassword (Frame f, Go g, ConnectionInfo c)
 	{
 		super(f, Global.resourceString("Enter_Password_"), Global
 			.resourceString("Password"), g, '*', true);
@@ -89,11 +71,10 @@ class GetPassword extends GetParameter
  * @see MainFrame
  */
 
-public class Go extends Applet implements DoActionListener, ActionListener
+public class Go extends JPanel implements DoActionListener, ActionListener
 {
 	int Test = 0;
-	java.awt.List L, PL;
-	List<Connection> ConnectionList;
+	List<ConnectionInfo> connectionInfoList;
 	List<Partner> PartnerList;
 	JButton CConnect, CEdit, CAdd, CDelete, PConnect, PEdit, PAdd, PDelete,
 		POpen;
@@ -101,35 +82,11 @@ public class Go extends Applet implements DoActionListener, ActionListener
 	String Server = "", MoveStyle = "", Encoding = "";
 	int Port;
 	public OpenPartnerFrame OPF = null;
+	Runnable onConnectClick;
 
-	/** Constructor for use with a specific server and port */
-	public Go (String server, int port, String movestyle, String encoding)
+	public Go (Runnable onConnectClick)
 	{
-		Server = server;
-		Port = port;
-		MoveStyle = movestyle;
-		Encoding = encoding;
-	}
-
-	public Go ()
-	{
-		Server = "";
-		Port = 0;
-		MoveStyle = "";
-		Encoding = "";
-	}
-
-	public void actionPerformed (ActionEvent e)
-	{
-		if (e.getSource() == L)
-		{
-			doAction("ConnectServer");
-		}
-		if (e.getSource() == PL)
-		{
-			doAction("ConnectPartner");
-		}
-		else doAction(e.getActionCommand());
+		this("", 0, "", "", onConnectClick);
 	}
 
 	/**
@@ -144,9 +101,14 @@ public class Go extends Applet implements DoActionListener, ActionListener
 	 * @see jagoclient.gui.CardPanel
 	 */
 
-	@Override
-	public void init ()
+	public Go (String server, int port, String movestyle, String encoding, 	Runnable onConnectClick)
 	{
+		Server = server;
+		Port = port;
+		MoveStyle = movestyle;
+		Encoding = encoding;
+		this.onConnectClick = onConnectClick;
+
 		setLayout(new BorderLayout());
 		if (Server.equals("")) // general setup
 		{
@@ -172,35 +134,7 @@ public class Go extends Applet implements DoActionListener, ActionListener
 				.resourceString("Delete"), "DeleteServer"));
 			p1.add("South", p);
 			// add center list with servers
-			L = new java.awt.List();
-			L.addActionListener(this);
-			// L.setFont(Global.Monospaced);
-			// L.setBackground(Global.gray);
-			Connection c;
-			String l;
-			ConnectionList = new ArrayList<Connection>();
-			try
-			// read servers from server.cfg
-			{
-				BufferedReader in = Global.getStream(".server.cfg");
-				while (true)
-				{
-					l = in.readLine();
-					if (l == null || l.equals("")) break;
-					c = new Connection(l);
-					if (c.valid())
-					{
-						L.add(c.Name);
-						ConnectionList.add(c);
-					}
-					else break;
-				}
-				in.close();
-			}
-			catch (Exception ex)
-			{}
-			if (L.getItemCount() > 0) L.select(0);
-			p1.add("Center", L);
+			ConnectionInfo c;
 			// add the partner panel to the card panel
 			cardp.add(p1, Global.resourceString("Server_Connections"));
 			// partner connections panel
@@ -210,198 +144,20 @@ public class Go extends Applet implements DoActionListener, ActionListener
 			p2.add("North", new MyLabel(Global
 				.resourceString("Partner_Connections__")));
 			// list class for partner connections
-			PL = new java.awt.List();
-			PL.addActionListener(this);
-			// PL.setFont(Global.Monospaced);
-			// PL.setBackground(Global.gray);
-			Partner cp;
-			PartnerList = new ArrayList<Partner>();
-			try
-			// read connections from partner.cfg
-			{
-				BufferedReader in = Global.getStream(".partner.cfg");
-				while (true)
-				{
-					l = in.readLine();
-					if (l == null || l.equals("")) break;
-					cp = new Partner(l);
-					if (cp.valid())
-					{
-						PL.add(cp.Name);
-						PartnerList.add(cp);
-					}
-					else break;
-				}
-				in.close();
-			}
-			catch (Exception ex)
-			{}
-			if (PL.getItemCount() > 0) PL.select(0);
-			Global.PartnerList = PartnerList;
-			p2.add("Center", PL);
-			// button panel
-			JPanel pp = new MyPanel();
-			pp.add(PConnect = new ButtonAction(this, Global
-				.resourceString("Connect"), "ConnectPartner"));
-			pp.add(new MyLabel(" "));
-			pp.add(PEdit = new ButtonAction(this,
-				Global.resourceString("Edit"), "EditPartner"));
-			pp.add(PAdd = new ButtonAction(this, Global.resourceString("Add"),
-				"AddPartner"));
-			pp.add(PDelete = new ButtonAction(this, Global
-				.resourceString("Delete"), "DeletePartner"));
-			pp.add(new MyLabel(" "));
-			pp.add(POpen = new ButtonAction(this, Global
-				.resourceString("Open_")));
-			p2.add("South", pp);
-			cardp.add(p2, Global.resourceString("Partner_Connections"));
-			// add the card panel to the applet
 			add("Center", cardp);
 		}
-		else
-		// specific server setup
-		{
-			// similar to the above, but simpler and using a single panel only
-			JPanel p1 = new MyPanel();
-			p1.setLayout(new BorderLayout());
-			p1.add("North", new MyLabel(Global
-				.resourceString("Server_Connection__")));
-			JPanel p = new MyPanel();
-			Global.setcomponent(p);
-			p.add(CConnect = new ButtonAction(this, Global
-				.resourceString("Connect"), "ConnectServer"));
-			p1.add("South", p);
-			L = new java.awt.List();
-			L.setFont(Global.Monospaced);
-			L.addActionListener(this);
-			Connection c;
-			String l;
-			ConnectionList = new ArrayList<Connection>();
-			ConnectionList.add(new Connection("[" + Server + "] [" + Server +
-				"] [" + Port + "] [" + "] [" + "] [" + MoveStyle + "] [" + Encoding + "]"));
-			L.add(Server);
-			if (L.getItemCount() > 0) L.select(0);
-			p1.add("Center", L);
-			add("Center", p1);
-		}
+	}
+
+	public void actionPerformed (ActionEvent e)
+	{
+		doAction(e.getActionCommand());
 	}
 
 	public void doAction (String o)
 	{
 		if ("ConnectServer".equals(o))
 		{
-			String s = L.getSelectedItem();
-			if (s == null) return;
-			Connection c = find(L.getSelectedItem());
-			if (c != null) // try to connect, if not already tried
-			{
-				if (c.Trying)
-				{
-					new Message(Global.frame(), Global
-						.resourceString("Already_trying_this_connection")).setVisible(true);
-					return;
-				}
-				if (c.Password.equals("") && !c.User.equals("")
-					&& Global.getParameter("automatic", true))
-				// get password, if there is a user name, but no password,
-				// and automatic login
-				{
-					GetPassword gp = new GetPassword(F, this, c);
-					gp.setVisible(true);
-					if (gp.Password.equals("")) return;
-					// create a connection frame and connect via
-					// the connect class
-					ConnectionFrame cf = new ConnectionFrame(Global
-						.resourceString("Connection_to_")
-						+ c.Name + Global.resourceString("_as_") + c.User,
-						c.Encoding);
-					Global.setwindow(cf, "connection", 500, 400);
-					new Thread(new Connect(c, gp.Password, cf)).start();
-				}
-				else
-				{ // create a connection frame and connect via
-					// the connect class
-					ConnectionFrame cf = new ConnectionFrame(Global
-						.resourceString("Connection_to_")
-						+ c.Name + Global.resourceString("_as_") + c.User,
-						c.Encoding);
-					Global.setwindow(cf, "connection", 500, 400);
-					new Thread(new Connect(c, cf)).start();
-				}
-				return;
-			}
-		}
-		else if ("ConnectPartner".equals(o))
-		{
-			String s = PL.getSelectedItem();
-			if (s == null) return;
-			Partner c = pfind(PL.getSelectedItem());
-			if (c != null) // try connecting to this partner server, if not
-			// trying already
-			{
-				if (c.Trying)
-				{
-					new Message(Global.frame(), Global
-						.resourceString("Already_trying_this_connection")).setVisible(true);
-					return;
-				}
-				// create a PartnerFrame and connect via ConnectPartner class
-				PartnerFrame cf = new PartnerFrame(Global.resourceString("Connection_to_") + c.Name, false);
-				Global.setwindow(cf, "partner", 500, 400);
-				new Thread(new ConnectPartner(c, cf)).start();
-			}
-		}
-		else if ("EditServer".equals(o))
-		{
-			String s = L.getSelectedItem();
-			if (s == null) return;
-			Connection c = find(L.getSelectedItem());
-			if (c != null)
-			{
-				new EditConnection(F, ConnectionList, c, this).setVisible(true);
-			}
-		}
-		else if ("EditPartner".equals(o))
-		{
-			String s = PL.getSelectedItem();
-			if (s == null) return;
-			Partner c = pfind(PL.getSelectedItem());
-			if (c != null)
-			{
-				new EditPartner(F, PartnerList, c, this).setVisible(true);
-			}
-		}
-		else if ("AddServer".equals(o))
-		{
-			new EditConnection(F, ConnectionList, this);
-		}
-		else if ("AddPartner".equals(o))
-		{
-			new EditPartner(F, PartnerList, this);
-		}
-		else if ("DeleteServer".equals(o) && L.getSelectedItem() != null)
-		{
-			for (Connection connection : ConnectionList)
-			{
-				if (connection.Name.equals(L.getSelectedItem()))
-				{
-					ConnectionList.remove(connection);
-					break;
-				}
-			}
-			updatelist();
-		}
-		else if ("DeletePartner".equals(o) && PL.getSelectedItem() != null)
-		{
-			for (Partner partner : PartnerList)
-			{
-				if (partner.Name.equals(PL.getSelectedItem()))
-				{
-					PartnerList.remove(partner);
-					break;
-				}
-			}
-			updateplist();
+			onConnectClick.run();
 		}
 		else if (Global.resourceString("Open_").equals(o))
 		{
@@ -415,11 +171,11 @@ public class Go extends Applet implements DoActionListener, ActionListener
 	{}
 
 	/** search a specific connection by name */
-	public Connection find (String s)
+	public ConnectionInfo find (String s)
 	{
-		for (Connection connection : ConnectionList)
+		for (ConnectionInfo connectionInfo : connectionInfoList)
 		{
-			if (connection.Name.equals(s)) return connection;
+			if (connectionInfo.Name.equals(s)) return connectionInfo;
 		}
 		return null;
 	}
@@ -436,137 +192,6 @@ public class Go extends Applet implements DoActionListener, ActionListener
 
 	/** The frame containing the Go applet */
 	public static MainFrame F = null;
-
-	/**
-	 * This is the main method for the JagoClient application. It is normally
-	 * envoced via "java Go".
-	 * <P>
-	 * It opens a frame of class MainFrame, initializes the parameter list and
-	 * starts a dump on request in the command line. If a game name is entered
-	 * in the command line, it will also open a GoFrame displaying the game.
-	 * <P>
-	 * An important point is that the application will write its setup to
-	 * go.cfg.
-	 * <P>
-	 * Available arguments are
-	 * <ul>
-	 * <li>-h sets the home directory for the application
-	 * <li>another argument opens a local SGF file immediately
-	 * </ul>
-	 */
-	public static void main (String args[])
-	{
-		try
-		{
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception e)
-		{}
-
-		// scan arguments
-		int na = 0;
-		boolean homefound = false;
-		String localgame = "";
-		while (args.length > na)
-		{
-			if (args.length - na >= 2 && args[na].startsWith("-l"))
-			{
-				Locale.setDefault(new Locale(args[na + 1], ""));
-				na += 2;
-			}
-			else if (args.length - na >= 2 && args[na].startsWith("-h"))
-			{
-				Global.home(args[na + 1]);
-				na += 2;
-				homefound = true;
-			}
-			else
-			{
-				localgame = args[na];
-				na++;
-			}
-		}
-		// initialize some Global things
-		Global.setApplet(false);
-		if ( !homefound) Global.home(System.getProperty("user.home"));
-		Global.version51();
-		Global.readparameter(".go.cfg"); // read setup
-		Global.createfonts();
-		CloseFrame CF;
-		Global.frame(CF = new CloseFrame("Global")); // a default invisible
-		// frame
-		CF.seticon("ijago.gif");
-		// create a MainFrame
-		F = new MainFrame(Global.resourceString("_Jago_"));
-		// add a go applet to it and initialize it
-		F.add("Center", go = new Go());
-		go.init();
-		go.start();
-		F.setVisible(true);
-		Global.loadmessagefilter(); // load message filters, if available
-		JagoSound.play("high", "", true); // play a welcome sound
-		if ( !localgame.equals(""))
-			openlocal(localgame);
-		// open a SGF file, if there was a parameter
-		else if (Global.getParameter("beauty", false))
-		// start a board painter with the last known
-		// board dimensions
-		{
-			Board.woodpaint = new Thread(new WoodPaint(F));
-			Board.woodpaint.setPriority(Board.woodpaint.getPriority()-1);
-			Board.woodpaint.start();
-		}
-	}
-
-	/** update the list of servers */
-	public void updatelist ()
-	{
-		if (Global.isApplet()) return;
-		try
-		{
-			PrintWriter out = new PrintWriter(new FileOutputStream(Global
-				.home()
-				+ ".server.cfg"));
-			L.removeAll();
-			for (Connection connection : ConnectionList)
-			{
-				L.add(connection.Name);
-				connection.write(out);
-			}
-			out.close();
-		}
-		catch (Exception e)
-		{
-			if (F != null)
-				new Message(F, Global
-					.resourceString("Could_not_write_to_server_cfg")).setVisible(true);
-		}
-	}
-
-	/** update the list of partners */
-	public void updateplist ()
-	{
-		if (Global.isApplet()) return;
-		try
-		{
-			PrintWriter out = new PrintWriter(new FileOutputStream(Global
-				.home()
-				+ ".partner.cfg"));
-			PL.removeAll();
-			for (Partner partner : PartnerList)
-			{
-				PL.add(partner.Name);
-				partner.write(out);
-			}
-			out.close();
-		}
-		catch (Exception e)
-		{
-			if (F != null)
-				new Message(F, Global
-					.resourceString("Could_not_write_to_partner_cfg")).setVisible(true);
-		}
-	}
 
 	/** open a local game window (called from main) */
 	static void openlocal (String file)

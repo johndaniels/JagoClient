@@ -2,7 +2,7 @@ package jagoclient.igs;
 
 import jagoclient.Global;
 import jagoclient.dialogs.Message;
-import jagoclient.igs.connection.Connection;
+import jagoclient.igs.connection.ConnectionInfo;
 
 /**
 A thread, which tries to connect to a server. It will open
@@ -12,13 +12,13 @@ If it fails, it will display an error message for 10 seconds.
 */
 
 public class Connect implements Runnable
-{	Connection C;
+{	ConnectionInfo C;
 	ConnectionFrame CF;
 	String S;
-	public Connect (Connection c, ConnectionFrame cf)
+	public Connect (ConnectionInfo c, ConnectionFrame cf)
 	{	C=c; CF=cf; S="";
 	}
-	public Connect (Connection c, String s, ConnectionFrame cf)
+	public Connect (ConnectionInfo c, String s, ConnectionFrame cf)
 	{	C=c; CF=cf; S=s;
 	}
 	public void run ()

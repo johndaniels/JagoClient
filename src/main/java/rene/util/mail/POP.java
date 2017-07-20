@@ -124,7 +124,7 @@ public class POP
 	boolean expectAnswer () throws IOException
 	{	while (true)
 		{	String s=In.readLine();
-			if (s==null) throw new IOException("Connection closed");
+			if (s==null) throw new IOException("ConnectionInfo closed");
 			if (s.startsWith("+OK"))
 			{	Answer=stripAnswer(s,3);
 				return true;

@@ -1,9 +1,6 @@
 package jagoclient.igs;
 
-import java.io.FilterInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,17 +11,14 @@ This is a stream, which filters Telnet commands.
 public class TelnetStream extends FilterInputStream
 {	private static final Logger LOG = Logger.getLogger(TelnetStream.class.getName());
 	InputStream In;
-	PrintWriter Out;
-	ConnectionFrame CF;
-	
-	int lastcr=0;
-	
-	public TelnetStream (ConnectionFrame cf, InputStream in, 
-		PrintWriter out)
+	OutputStream Out;
+
+
+	public TelnetStream (InputStream in,
+		OutputStream out)
 	{	super(in);
 		In=in;
 		Out=out;
-		CF=cf;
 	}
 		
 	public int read () throws IOException
@@ -35,13 +29,13 @@ public class TelnetStream extends FilterInputStream
 				LOG.log(Level.INFO, "Telnet received!{0}", command);
 				if (command==253)
 				{	c=In.read();
-					CF.Outstream.write(255);
-					CF.Outstream.write(252); 
-					CF.Outstream.write(c);
+					Out.write(255);
+					Out.write(252);
+					Out.write(c);
 				}
 				else if (command==246)
-				{	CF.Outstream.write(255);
-					CF.Outstream.write(241); 
+				{	Out.write(255);
+					Out.write(241);
 				}
 				if (c==-1) return c;
 				return 0;
