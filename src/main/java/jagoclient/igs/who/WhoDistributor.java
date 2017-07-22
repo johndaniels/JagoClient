@@ -8,17 +8,19 @@ A distributor for the player listing.
 */
 
 public class WhoDistributor extends Distributor
-{	WhoFrame P;
-	public WhoDistributor (IgsStream in, WhoFrame p)
-	{	super(in,27,0,null,p);
-		P=p;
+{
+	public interface WhoHandler {
+		void handleWho(WhoObject object);
+	}
+
+	WhoHandler handler;
+	public WhoDistributor (IgsStream in, WhoHandler handler)
+	{	super(in,27,0,null,null);
+		this.handler = handler;
 	}
 	@Override
 	public void send (String c)
-	{	P.receive(c);
-	}
-	@Override
-	public void allsended ()
-	{	P.allsended();
+	{
+		handler.handleWho(new WhoObject(c, false));
 	}
 }

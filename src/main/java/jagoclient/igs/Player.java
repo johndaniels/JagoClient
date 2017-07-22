@@ -63,7 +63,7 @@ public class Player implements Distributor.SizeTask
 
 	/**
 	This is called from PlayerSizeDistributor, when it gets
-	a line in answer to the status command, which Player sent
+	a raw in answer to the status command, which Player sent
 	to determine the board size.
 	@see jagoclient.igs.PlayerSizeDistributor
 	*/
@@ -123,13 +123,13 @@ public class Player implements Distributor.SizeTask
 	<li> a pass (PASS)
 	</ul>
 	<P>
-	The server sends a line with the game number in front of each
-	move. This line starts with "Game" and the rest of the line
+	The server sends a raw with the game number in front of each
+	move. This raw starts with "Game" and the rest of the raw
 	contains the times left for both players and other game information.
 	This is interpret by the settime method of the IgsGoFrame.
 	<p>
 	The server abuses the command number 7 to send other information.
-	One is the "{Game ..." comment line and the other are Kibitz
+	One is the "{Game ..." comment raw and the other are Kibitz
 	outputs.
 	@see jagoclient.igs.IgsGoFrame#settime
 	*/

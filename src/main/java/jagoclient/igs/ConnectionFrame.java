@@ -1,6 +1,5 @@
 package jagoclient.igs;
 
-import jagoclient.CloseConnection;
 import jagoclient.Global;
 import jagoclient.dialogs.GetParameter;
 import jagoclient.dialogs.Help;
@@ -15,7 +14,9 @@ import jagoclient.gui.MyMenu;
 import jagoclient.gui.MyPanel;
 import jagoclient.gui.Panel3D;
 import jagoclient.igs.connection.ConnectionInfo;
-import jagoclient.igs.games.GamesFrame;
+import jagoclient.igs.connection.ConnectionState;
+import jagoclient.igs.games.GamesPanel;
+import jagoclient.igs.users.UsersPanel;
 import jagoclient.igs.who.WhoFrame;
 
 import java.awt.BorderLayout;
@@ -34,20 +35,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import rene.dialogs.Question;
 import rene.gui.CloseFrame;
 import rene.gui.DoItemListener;
-import rene.viewer.SystemViewer;
-import rene.viewer.Viewer;
 
 class CloseConnectionQuestion extends Question
 {
@@ -185,18 +183,17 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 {
 	private static final Logger LOG = Logger.getLogger(ConnectionFrame.class.getName());
 	GridBagLayout girdbag;
-	Viewer Output;
+	JPanel usersPanel;
+	JPanel gamesPanel;
 	HistoryTextField Input;
 	GridBagLayout gridbag;
 	public WhoFrame Who;
-	public GamesFrame Games;
 
 	Socket Server;
 	PrintWriter Out;
 	public DataOutputStream Outstream;
 	String Encoding;
 	IgsStream In;
-	ReceiveThread RT;
 	String Dir;
 	JTextField Game;
 	CheckboxMenuItem CheckInfo, CheckMessages, CheckErrors, ReducedOutput,
@@ -204,14 +201,16 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 	public int MoveStyle = ConnectionInfo.MOVE;
 	JTextField WhoRange; // Kyu/Dan range for the who command.
 	String Waitfor; // Pop a a message, when this player connects.
-	List<OutputListener> OL; // List of Output-Listeners
+	List<OutputListener> OL; // List of usersPanel-Listeners
 	String Reply;
+	ConnectionState connectionState;
 
 	public boolean hasClosed = false; // note that the user closed the window
 
-	public ConnectionFrame (String Name)
+	public ConnectionFrame (String Name, ConnectionState connectionState)
 	{
 		super(Name);
+		this.connectionState = connectionState;
 		Waitfor = "";
 		OL = new ArrayList<OutputListener>();
 		setLayout(new BorderLayout());
@@ -259,18 +258,20 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			.resourceString("Observing_Playing")));
 		help.add(new MenuItemAction(this, Global.resourceString("Teaching")));
 		M.setHelpMenu(help);
-		MyPanel center = new MyPanel();
+		JPanel center = new JPanel();
 		center.setLayout(new BorderLayout());
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		// Text
-		Output = Global.getParameter("systemviewer", false)?new SystemViewer()
-			:new Viewer();
-		Output.setFont(Global.Monospaced);
-		// Output.setBackground(Global.gray);
-		center.add("Center", Output);
+		usersPanel = new UsersPanel(connectionState);
+		usersPanel.setFont(Global.Monospaced);
+		splitPane.setTopComponent(usersPanel);
+		gamesPanel = new GamesPanel(connectionState);
+		splitPane.setBottomComponent(gamesPanel);
+		center.add(splitPane, "Center");
+
 		// Input
 		Input = new HistoryTextField(this, "Input");
 		Input.loadHistory("input.history");
-		center.add("South", Input);
 		add("Center", center);
 		// Buttons:
 		MyPanel p = new MyPanel();
@@ -306,8 +307,8 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 	 * 
 	 * @returns success of failure
 	 * @see jagoclient.igs.IgsStream
-	 * @see jagoclient.igs.ReceiveThread
 	 */
+	/*
 	public boolean connect (String server, int port, String user,
 		String password, boolean proxy)
 	{
@@ -358,10 +359,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			return false;
 		}
 		try
-		{ /*
-		 * if (proxy) In= new ProxyIgsStream(this,Server.getInputStream(),Out);
-		 * else
-		 */
+		{
 			In = new IgsStream();
 		}
 		catch (Exception e)
@@ -369,8 +367,6 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			return false;
 		}
 		setVisible(true);
-		RT = new ReceiveThread(Output, In, Out, user, password, proxy, this);
-		RT.start();
 		new PlayDistributor(this, In, Out);
 		new MessageDistributor(this, In, Out);
 		new ErrorDistributor(this, In, Out);
@@ -439,7 +435,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		Out.println(server);
 		Out.println("" + port);
 		setVisible(true);
-		RT = new ReceiveThread(Output, In, Out, user, password, false, this);
+		RT = new ReceiveThread(usersPanel, In, Out, user, password, false, this);
 		RT.start();
 		new PlayDistributor(this, In, Out);
 		new MessageDistributor(this, In, Out);
@@ -447,7 +443,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		new InformationDistributor(this, In, Out);
 		new SayDistributor(this, In, Out);
 		return true;
-	}
+	}*/
 
 	@Override
 	public void doAction (String o)
@@ -460,7 +456,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			}
 			else if (Global.resourceString("Clear").equals(o))
 			{
-				Output.setText("");
+				//usersPanel.setText("");
 			}
 			else if (Global.resourceString("Save").equals(o))
 			{
@@ -481,7 +477,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 					else fo = new PrintWriter(new OutputStreamWriter(
 						new FileOutputStream(fd.getDirectory() + fn), Encoding),
 						true);
-					Output.save(fo);
+					//usersPanel.save(fo);
 					fo.close();
 				}
 				catch (IOException ex)
@@ -491,7 +487,6 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			}
 			else if (Global.resourceString("Who").equals(o))
 			{
-				goclient();
 				if (Global.getParameter("whowindow", true))
 				{
 					if (Who != null)
@@ -514,19 +509,9 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			}
 			else if (Global.resourceString("Games").equals(o))
 			{
-				goclient();
 				if (Global.getParameter("gameswindow", true))
 				{
-					if (Games != null)
-					{
-						Games.refresh();
-						Games.requestFocus();
-						return;
-					}
-					Games = new GamesFrame(this, Out, In);
-					Global.setwindow(Games, "games", 500, 400);
-					Games.setVisible(true);
-					Games.refresh();
+
 				}
 				else
 				{
@@ -535,7 +520,6 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			}
 			else if (Global.resourceString("Peek").equals(o))
 			{
-				goclient();
 				int n;
 				try
 				{
@@ -549,7 +533,6 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			}
 			else if (Global.resourceString("Status").equals(o))
 			{
-				goclient();
 				int n;
 				try
 				{
@@ -563,7 +546,6 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			}
 			else if (Global.resourceString("Observe").equals(o))
 			{
-				goclient();
 				int n;
 				try
 				{
@@ -709,12 +691,12 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 
 	public void peek (int n)
 	{
-		if (In.gamewaiting(n))
+		/*if (In.gamewaiting(n))
 		{
 			new Message(this, Global
 				.resourceString("There_is_already_a_board_for_this_game_")).setVisible(true);
 			return;
-		}
+		}*/
 		IgsGoFrame gf = new IgsGoFrame(this, Global.resourceString("Peek_game"));
 		gf.setVisible(true);
 		gf.repaint();
@@ -731,12 +713,12 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 
 	public void observe (int n)
 	{
-		if (In.gamewaiting(n))
+		/*if (In.gamewaiting(n))
 		{
 			new Message(this, Global
 				.resourceString("There_is_already_a_board_for_this_game_")).setVisible(true);
 			return;
-		}
+		}*/
 		IgsGoFrame gf = new IgsGoFrame(this, Global
 			.resourceString("Observe_game"));
 		gf.setVisible(true);
@@ -750,24 +732,21 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		Global.notewindow(this, "connection");
 		hasClosed = true;
 		Input.saveHistory("input.history");
-		if (In != null) In.removeall();
+		//if (In != null) In.removeall();
 		Out.println("quit");
 		Out.close();
 		LOG.info("doclose() called in connection");
-		new Thread(new CloseConnection(Server, In.getInputStream())).start();
+		new Thread(() -> {
+			try
+			{	if (Server!=null) Server.close();
+				if (In.getInputStream()!=null) In.getInputStream().close();
+			}
+			catch (IOException ex)
+			{	LOG.log(Level.WARNING, null, ex);
+			}
+		}).start();
 		inform();
 		super.doclose();
-	}
-
-	@Override
-	public boolean close ()
-	{
-		if (RT.isAlive())
-		{
-			if (Global.getParameter("confirmations", true)) { return new CloseConnectionQuestion(
-				this).result(); }
-		}
-		return true;
 	}
 
 	public void append (String s)
@@ -777,7 +756,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 
 	public void append (String s, Color c)
 	{
-		Output.append(s + "\n", c);
+		//usersPanel.append(s + "\n", c);
 		for (OutputListener ol : OL)
 		{
 			ol.append(s, c);
@@ -815,11 +794,6 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			|| s.startsWith("moves")) return;
 		LOG.info("---> " + s);
 		Out.println(s);
-	}
-
-	public void goclient ()
-	{
-		RT.goclient();
 	}
 
 	String reply ()

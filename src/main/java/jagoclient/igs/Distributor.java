@@ -24,7 +24,6 @@ public abstract class Distributor
 	public boolean Playing;
 	public Distributor (IgsStream in, int n, int game, SizeTask sizetask, Task task)
 	{	N=n; G=game;
-		in.append(this);
 		ST=sizetask;
 		T=task;
 		In=in;
@@ -37,7 +36,7 @@ public abstract class Distributor
 	public final Task task () { return T; }
 	public abstract void send (String s);
 	public void unchain ()
-	{	In.unchain(this);
+	{
 	}
 	public void remove () {} // dispose client (called from IgsStream at connection end)
 	public boolean blocked () { return false; }

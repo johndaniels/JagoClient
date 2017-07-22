@@ -4,6 +4,7 @@ import jagoclient.board.Board;
 import jagoclient.board.GoFrame;
 import jagoclient.board.WoodPaint;
 import jagoclient.igs.ConnectionFrame;
+import jagoclient.igs.IgsConnection;
 import jagoclient.igs.IgsStream;
 import jagoclient.igs.connection.ConnectionState;
 import jagoclient.sound.JagoSound;
@@ -21,11 +22,15 @@ public class JagoApplication {
     private Go go;
     private ConnectionState connectionState;
     IgsStream igsStream;
+    IgsConnection igsConnection;
     ConnectionFrame connectionFrame;
 
     public void loginSuccess() {
         loginDialog.setVisible(false);
+        connectionFrame.pack();
         connectionFrame.setVisible(true);
+        connectionState.userList();
+        connectionState.gameList();
     }
 
     public void tryLogin(String username, String password) {
@@ -51,7 +56,8 @@ public class JagoApplication {
         boolean homefound = false;
         String localgame = "";
         igsStream = new IgsStream();
-        connectionState = new ConnectionState(igsStream, this::loginSuccess);
+        igsConnection = new IgsConnection(igsStream);
+        connectionState = new ConnectionState(igsStream, igsConnection, this::loginSuccess);
         while (args.length > na)
         {
             if (args.length - na >= 2 && args[na].startsWith("-l"))
@@ -76,7 +82,7 @@ public class JagoApplication {
         if ( !homefound) Global.home(System.getProperty("user.home"));
         Global.readparameter(".go.cfg"); // read setup
         Global.createfonts();
-        connectionFrame = new ConnectionFrame("IGS");
+        connectionFrame = new ConnectionFrame("IGS", connectionState);
         // create a MainFrame
         startFrame = new MainFrame(Global.resourceString("_Jago_"));
         // add a go applet to it and initialize it

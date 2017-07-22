@@ -103,7 +103,7 @@ public class WhoFrame extends CloseFrame implements CloseListener, DoItemListene
 {	protected static final Pattern WORD_PATTERN = Pattern.compile("\\w+");
 	IgsStream In;
 	PrintWriter Out;
-	Lister T;
+	Lister whoLister;
 	ConnectionFrame CF;
 	WhoDistributor GD;
 	List<String> L;
@@ -180,10 +180,10 @@ public class WhoFrame extends CloseFrame implements CloseListener, DoItemListene
 		m.add(help);
 		setMenuBar(m);
 		setLayout(new BorderLayout());
-		T = Global.getParameter("systemlister", false)?new SystemLister():new Lister();
-		T.setFont(Global.Monospaced);
-		T.setText(Global.resourceString("Loading"));
-		add("Center", T);
+		whoLister = Global.getParameter("systemlister", false)?new SystemLister():new Lister();
+		whoLister.setFont(Global.Monospaced);
+		whoLister.setText(Global.resourceString("Loading"));
+		add("Center", whoLister);
 		MyPanel p = new MyPanel();
 		p.add(new ButtonAction(this, Global.resourceString("Refresh")));
 		p.add(WhoRange = new HistoryTextField(this, Global
@@ -225,7 +225,7 @@ public class WhoFrame extends CloseFrame implements CloseListener, DoItemListene
 			"who.button3.label", Global.resourceString("Stored")));
 		Global.setParameter("who.button3.text", Global.getParameter(
 			"who.button3.text", Global.resourceString("stored %%")));
-		if (T instanceof Lister) T.setPopupMenu(pop);
+		if (whoLister instanceof Lister) whoLister.setPopupMenu(pop);
 	}
 
 	public void addpop (PopupMenu pop, String label, String action)
@@ -398,7 +398,7 @@ public class WhoFrame extends CloseFrame implements CloseListener, DoItemListene
 
 	public String getuser ()
 	{
-		String s = T.getSelectedItem();
+		String s = whoLister.getSelectedItem();
 		if (s == null || s.length() < 14) return "";
 		Matcher matcher = WORD_PATTERN.matcher(s);
 		matcher.find(12);
@@ -430,10 +430,10 @@ public class WhoFrame extends CloseFrame implements CloseListener, DoItemListene
 	synchronized public void refresh ()
 	{
 		L = new ArrayList<String>();
-		T.setText(Global.resourceString("Loading"));
+		whoLister.setText(Global.resourceString("Loading"));
 		if (GD != null) GD.unchain();
 		GD = null;
-		GD = new WhoDistributor(In, this);
+		//GD = new WhoDistributor(In, this);
 		Out.println("who " + WhoRange.getText());
 	}
 
@@ -457,8 +457,8 @@ public class WhoFrame extends CloseFrame implements CloseListener, DoItemListene
 			}
 			WhoObject[] v = whoObjects.toArray(new WhoObject[0]);
 			Arrays.sort(v);
-			T.setText("");
-			T.appendLine0(Global
+			whoLister.setText("");
+			whoLister.appendLine0(Global
 				.resourceString("_Info_______Name_______Idle___Rank"));
 			Color FC = Color.green.darker(), CM = Color.red.darker();
 			for (WhoObject who : v)
@@ -466,18 +466,18 @@ public class WhoFrame extends CloseFrame implements CloseListener, DoItemListene
 				if ( !(Looking.getState() && !who.looking()
 					|| OmitX.getState() && who.silent() || OmitQ.getState()
 					&& who.quiet() || FriendsOnly.getState() && !who.friend()))
-					T.appendLine0(who.who(), who.friend()?FC:who.marked()?CM
+					whoLister.appendLine0(who.who(), who.friend()?FC:who.marked()?CM
 						:Color.black);
 			}
-			T.doUpdate(false);
+			whoLister.doUpdate(false);
 		}
 		else
 		{
 			for (String s : L)
 			{
-				T.appendLine(s);
+				whoLister.appendLine(s);
 			}
-			T.doUpdate(false);
+			whoLister.doUpdate(false);
 		}
 	}
 
