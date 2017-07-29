@@ -517,13 +517,13 @@ public class Board extends Canvas implements MouseListener,
 
 	boolean MouseDown = false; // mouse release only, if mouse pressed
 
-	public synchronized void mousePressed (MouseEvent e)
+	public void mousePressed (MouseEvent e)
 	{
 		MouseDown = true;
 		requestFocus();
 	}
 
-	public synchronized void mouseReleased (MouseEvent e)
+	public void mouseReleased (MouseEvent e)
 	// handle mouse input
 	{
 		if ( !MouseDown) return;
@@ -1054,27 +1054,25 @@ public class Board extends Canvas implements MouseListener,
 
 	public void setc (int i, int j, int c)
 	{
-		synchronized (Pos)
+
+		Action a;
+		if (boardPosition.color(i, j) == 0) // empty?
 		{
-			Action a;
-			if (boardPosition.color(i, j) == 0) // empty?
+			Node n = Pos.content();
+			if (GF.getParameter("puresgf", true)
+				&& (n.contains("B") || n.contains("W"))) n = newnode();
+			n.addchange(new Change(i, j, 0));
+			if (c > 0)
 			{
-				Node n = Pos.content();
-				if (GF.getParameter("puresgf", true)
-					&& (n.contains("B") || n.contains("W"))) n = newnode();
-				n.addchange(new Change(i, j, 0));
-				if (c > 0)
-				{
-					a = new Action("AB", Field.string(i, j));
-				}
-				else
-				{
-					a = new Action("AW", Field.string(i, j));
-				}
-				n.expandaction(a); // note the move action
-				boardPosition.color(i, j, c);
-				update(i, j);
+				a = new Action("AB", Field.string(i, j));
 			}
+			else
+			{
+				a = new Action("AW", Field.string(i, j));
+			}
+			n.expandaction(a); // note the move action
+			boardPosition.color(i, j, c);
+			update(i, j);
 		}
 	}
 
@@ -1549,7 +1547,7 @@ public class Board extends Canvas implements MouseListener,
 		int n;
 		int xi = O + OTU + i * D;
 		int xj = O + OTU + j * D;
-		if (boardPosition.color(i, j) > 0 || boardPosition.color(i, j) < 0)
+		if (boardPosition.color(i, j) > 0)
 		{
 			if (BlackStone != null)
 			{

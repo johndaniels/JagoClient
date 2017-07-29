@@ -127,16 +127,6 @@ public class JagoGameFrame extends GoFrame
 		options.add(new MenuItemAction(this, Global.resourceString("Last_50")));
 		options.add(new MenuItemAction(this, Global.resourceString("Last_100")));
 		options.addSeparator();
-		options.add(TrueColor = new CheckboxMenuItemAction(this, Global.resourceString("True_Color_Board")));
-		TrueColor.setState(Global.getParameter("beauty", true));
-		options.add(TrueColorStones = new CheckboxMenuItemAction(this, Global.resourceString("True_Color_Stones")));
-		TrueColorStones.setState(Global.getParameter("beautystones", true));
-		options.add(Alias = new CheckboxMenuItemAction(this, Global.resourceString("Anti_alias_Stones")));
-		Alias.setState(Global.getParameter("alias", true));
-		options.add(Shadows = new CheckboxMenuItemAction(this, Global.resourceString("Shadows")));
-		Shadows.setState(Global.getParameter("shadows", true));
-		options.add(BlackOnly = new CheckboxMenuItemAction(this, Global.resourceString("Black_Only")));
-		BlackOnly.setState(Global.getParameter("blackonly", false));
 		M.add(options);
 		// Board
 		Comment = new TextArea("", 0, 0, TextArea.SCROLLBARS_VERTICAL_ONLY);
