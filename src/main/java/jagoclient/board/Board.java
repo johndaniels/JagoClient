@@ -298,17 +298,15 @@ public class Board extends Canvas implements MouseListener,
 	{
 		int col = BoardColor.getRGB();
 		int blue = col & 0x0000FF, green = (col & 0x00FF00) >> 8, red = (col & 0xFF0000) >> 16;
-		boolean Alias = GF.getParameter("alias", true);
 		if (BlackStone == null || BlackStone.getWidth(this) != D + 2)
 		{
 			int d = D + 2;
 			int pb[] = new int[d * d];
 			int pw[] = new int[d * d];
 			int i, j, g, k;
-			double di, dj, d2 = d / 2.0 - 5e-1, r = d2 - 2e-1, f = Math.sqrt(3);
+			double di, dj, d2 = d / 2.0 - 5e-1, r = d2 - 2e-1 - 1, f = Math.sqrt(3);
 			double x, y, z, xr, xg, hh;
 			k = 0;
-			if (GF.getParameter("smallerstones", false)) r -= 1;
 			for (i = 0; i < d; i++)
 				for (j = 0; j < d; j++)
 				{
@@ -328,7 +326,7 @@ public class Board extends Canvas implements MouseListener,
 						if (xr > 0.9)
 							xg = (xr - 0.9) * 10;
 						else xg = 0;
-						if (hh > pixel || !Alias)
+						if (hh > pixel)
 						{
 							g = (int)(10 + 10 * xr + xg * 140);
 							pb[k] = 255 << 24 | g << 16 | g << 8 | g;
@@ -379,8 +377,7 @@ public class Board extends Canvas implements MouseListener,
 
 			g.setColor(Global.ControlBackground);
 			g.fillRect(0, 0, S * D + 2 * OP + 100, S * D + 2 * OP + 100);
-			if ( !GF.getParameter("beauty", true)
-				|| !trywood(g, gs, S * D + 2 * OP)) // beauty board not
+			if ( !trywood(g, gs, S * D + 2 * OP)) // beauty board not
 			// available
 			{
 				g.setColor(BoardColor);
@@ -390,7 +387,7 @@ public class Board extends Canvas implements MouseListener,
 				gs.fillRect(O + OTU - OP, O + OTU - OP, S * D + 2 * OP, S * D
 					+ 2 * OP);
 			}
-			if (GF.getParameter("beautystones", true)) stonespaint();
+			stonespaint();
 			g.setColor(Color.black);
 			gs.setColor(Color.black);
 			int i, j, x, y1, y2;
@@ -1510,38 +1507,34 @@ public class Board extends Canvas implements MouseListener,
 		synchronized (this)
 		{
 			g.drawImage(Empty, xi, xj, xi + D, xj + D, xi, xj, xi + D, xj + D, this);
-			if (GF.getParameter("shadows", true)
-				&& GF.getParameter("beauty", true)
-				&& GF.getParameter("beautystones", true))
+
+			if (boardPosition.color(i, j) != 0)
 			{
-				if (boardPosition.color(i, j) != 0)
-				{
-					g.drawImage(EmptyShadow, xi - OP / 2, xj + OP / 2, xi + D
-						- OP / 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi
-						+ D - OP / 2, xj + D + OP / 2, this);
-				}
-				else
-				{
-					g.drawImage(Empty, xi - OP / 2, xj + OP / 2, xi + D - OP
-						/ 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi + D
-						- OP / 2, xj + D + OP / 2, this);
-				}
-				g.setClip(xi - OP / 2, xj + OP / 2, D, D);
-				update1(g, i - 1, j);
-				update1(g, i, j + 1);
-				update1(g, i - 1, j + 1);
-				g.setClip(xi, xj, D, D);
-				if (i < S - 1 && boardPosition.color(i + 1, j) != 0)
-				{
-					g.drawImage(EmptyShadow, xi + D - OP / 2, xj + OP / 2, xi
-						+ D, xj + D, xi + D - OP / 2, xj + OP / 2, xi + D, xj
-						+ D, this);
-				}
-				if (j > 0 && boardPosition.color(i, j - 1) != 0)
-				{
-					g.drawImage(EmptyShadow, xi, xj, xi + D - OP / 2, xj + OP
-						/ 2, xi, xj, xi + D - OP / 2, xj + OP / 2, this);
-				}
+				g.drawImage(EmptyShadow, xi - OP / 2, xj + OP / 2, xi + D
+					- OP / 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi
+					+ D - OP / 2, xj + D + OP / 2, this);
+			}
+			else
+			{
+				g.drawImage(Empty, xi - OP / 2, xj + OP / 2, xi + D - OP
+					/ 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi + D
+					- OP / 2, xj + D + OP / 2, this);
+			}
+			g.setClip(xi - OP / 2, xj + OP / 2, D, D);
+			update1(g, i - 1, j);
+			update1(g, i, j + 1);
+			update1(g, i - 1, j + 1);
+			g.setClip(xi, xj, D, D);
+			if (i < S - 1 && boardPosition.color(i + 1, j) != 0)
+			{
+				g.drawImage(EmptyShadow, xi + D - OP / 2, xj + OP / 2, xi
+					+ D, xj + D, xi + D - OP / 2, xj + OP / 2, xi + D, xj
+					+ D, this);
+			}
+			if (j > 0 && boardPosition.color(i, j - 1) != 0)
+			{
+				g.drawImage(EmptyShadow, xi, xj, xi + D - OP / 2, xj + OP
+					/ 2, xi, xj, xi + D - OP / 2, xj + OP / 2, this);
 			}
 		}
 		g.setClip(xi, xj, D, D);

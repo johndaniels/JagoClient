@@ -575,9 +575,8 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	CheckboxMenuItem SetBlack, SetWhite, Black, White, Mark, Letter, Hide,
 		Square, Cross, Circle, Triangle, TextMark;
 	CheckboxMenuItem Coordinates, UpperLeftCoordinates, LowerRightCoordinates;
-	CheckboxMenuItem PureSGF, CommentSGF, DoSound, BeepOnly, TrueColor, Alias,
-		TrueColorStones, SmallerStones, MenuLastNumber, MenuTarget, Shadows,
-		BlackOnly, UseXML, UseSGF;
+	CheckboxMenuItem PureSGF, CommentSGF, DoSound, BeepOnly,
+		MenuLastNumber, MenuTarget, UseXML, UseSGF;
 	public boolean BWColor = false, LastNumber = false, ShowTarget = false;
 	CheckboxMenuItem MenuBWColor, ShowButtons;
 	CheckboxMenuItem VHide, VCurrent, VChild, VNumbers;
@@ -727,18 +726,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		options.add(new MenuItemAction(this, Global.resourceString("Last_50")));
 		options.add(new MenuItemAction(this, Global.resourceString("Last_100")));
 		options.addSeparator();
-		options.add(TrueColor = new CheckboxMenuItemAction(this, Global.resourceString("True_Color_Board")));
-		TrueColor.setState(Global.getParameter("beauty", true));
-		options.add(TrueColorStones = new CheckboxMenuItemAction(this, Global.resourceString("True_Color_Stones")));
-		TrueColorStones.setState(Global.getParameter("beautystones", true));
-		options.add(Alias = new CheckboxMenuItemAction(this, Global.resourceString("Anti_alias_Stones")));
-		Alias.setState(Global.getParameter("alias", true));
-		options.add(Shadows = new CheckboxMenuItemAction(this, Global.resourceString("Shadows")));
-		Shadows.setState(Global.getParameter("shadows", true));
-		options.add(SmallerStones = new CheckboxMenuItemAction(this, Global.resourceString("Smaller_Stones")));
-		SmallerStones.setState(Global.getParameter("smallerstones", false));
-		options.add(BlackOnly = new CheckboxMenuItemAction(this, Global.resourceString("Black_Only")));
-		BlackOnly.setState(Global.getParameter("blackonly", false));
 		options.addSeparator();
 		options.add(new MenuItemAction(this, Global.resourceString("Set_Encoding")));
 		options.add(ShowButtons = new CheckboxMenuItemAction(this, Global.resourceString("Show_Buttons")));
@@ -1569,11 +1556,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			Global.setParameter("shadows", flag);
 			updateall();
 		}
-		else if (Global.resourceString("Smaller_Stones").equals(o))
-		{
-			Global.setParameter("smallerstones", flag);
-			updateall();
-		}
 		else if (Global.resourceString("Black_Only").equals(o))
 		{
 			Global.setParameter("blackonly", flag);
@@ -2361,11 +2343,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	public Frame frame ()
 	{
 		return Global.frame();
-	}
-
-	public boolean blackOnly ()
-	{
-		return BlackOnly != null && BlackOnly.getState();
 	}
 
 	public Color backgroundColor ()

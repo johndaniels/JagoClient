@@ -135,8 +135,6 @@ public class JagoGameFrame extends GoFrame
 		Alias.setState(Global.getParameter("alias", true));
 		options.add(Shadows = new CheckboxMenuItemAction(this, Global.resourceString("Shadows")));
 		Shadows.setState(Global.getParameter("shadows", true));
-		options.add(SmallerStones = new CheckboxMenuItemAction(this, Global.resourceString("Smaller_Stones")));
-		SmallerStones.setState(Global.getParameter("smallerstones", false));
 		options.add(BlackOnly = new CheckboxMenuItemAction(this, Global.resourceString("Black_Only")));
 		BlackOnly.setState(Global.getParameter("blackonly", false));
 		M.add(options);
