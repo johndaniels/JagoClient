@@ -1,6 +1,9 @@
 package jagoclient.board;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import rene.util.list.ListClass;
 import rene.util.list.ListElement;
@@ -21,32 +24,36 @@ of the next expected move in the game tree),
 */
 
 public class Node
-{	ListClass<Action> Actions; // actions and variations
+{
+	LinkedList<Action> Actions; // actions and variations
 	int N; // next exptected number
 	boolean Main; // belongs to main variation
-	ListClass<Change> Changes;
+	LinkedList<Change> Changes;
 	public int Pw,Pb; // changes in prisoners in this node
 	
 	/** initialize with the expected number */
 	public Node (int n)
-	{	Actions=new ListClass<Action>();
+	{
+		Actions=new LinkedList<>();
 		N=n;
 		Main=false;
-		Changes=new ListClass<Change>();
+		Changes=new LinkedList<>();
 		Pw=Pb=0;
 	}
 	
 	/** add an action (at end) */
 	public void addaction (Action a)
-	{	Actions.append(a);
+	{	Actions.add(a);
 	}
 
 	/** expand an action of the same type as a, else generate a new action */
 	public void expandaction (Action a)
-	{	ListElement p=find(a.type());
-		if (p==null) addaction(a);
-		else
-		{	Action pa=(Action)p.content();
+	{
+		Action pa = find(a.type());
+		if (pa==null) {
+			addaction(a);
+		}
+		else {
 			pa.addargument(a.argument());
 		}
 	}
@@ -57,29 +64,31 @@ public class Node
 	that argument from the action.
 	*/
 	public void toggleaction (Action a)
-	{	ListElement p=find(a.type());
-		if (p==null) addaction(a);
+	{	Action pa =find(a.type());
+		if (a==null) {
+			addaction(a);
+		}
 		else
-		{	Action pa=(Action)p.content();
+		{
 			pa.toggleargument(a.argument());
 		}
 	}
 
 	/** find the list element containing the action of type s */
-	ListElement find (String s)
+	Action find (String s)
 	{	
-		for (ListElement<Action> p : Actions)
-		{	Action a=p.content();
-			if (a.type().equals(s)) return p;
+		for (Action a : Actions)
+		{
+			if (a.type().equals(s)) return a;
 		}
 		return null;
 	}
 	
 	/** find the action and a specified tag */
 	public boolean contains (String s, String argument)
-	{	ListElement p=find(s);
-		if (p==null) return false;
-		Action a=(Action)p.content();
+	{
+		Action a=find(s);
+		if (a==null) return false;
 		return a.contains(argument);
 	}
 	
@@ -90,7 +99,7 @@ public class Node
 
 	/** add an action (at front) */
 	public void prependaction (Action a)
-	{	Actions.prepend(a);
+	{	Actions.add(0, a);
 	}
 	
 	/**
@@ -100,11 +109,11 @@ public class Node
 	*/
 	public void setaction (String type, String arg, boolean front)
 	{	
-		for (ListElement<Action> l : Actions)
-		{	Action a=l.content();
+		for (Action a : Actions)
+		{
 			if (a.type().equals(type))
 			{	if (arg.equals(""))
-				{	Actions.remove(l);
+				{	Actions.remove(a);
 					return;
 				}
 				else
@@ -125,8 +134,8 @@ public class Node
 	/** get the argument of this action (or "") */
 	public String getaction (String type)
 	{
-		for (ListElement<Action> l : Actions)
-		{	Action a=l.content();
+		for (Action a : Actions)
+		{
 			if (a.type().equals(type))
 			{	if (!a.arguments().isEmpty()) return a.arguments().get(0);
 				else return "";
@@ -141,8 +150,8 @@ public class Node
 	*/
 	public void print (PrintWriter o)
 	{	o.print(";");
-		for (ListElement<Action> p : Actions)
-		{	Action a=p.content();
+		for (Action a : Actions)
+		{
 			a.print(o);
 		}
 		o.println("");
@@ -150,9 +159,9 @@ public class Node
 	
 	public void print (XmlWriter xml, int size)
 	{	int count=0;
-		Action ra=null,a;
-		for (ListElement<Action> p : Actions)
-		{	a=p.content();
+		Action ra=null;
+		for (Action a : Actions)
+		{
 			if (a.isRelevant())
 			{	count++;
 				ra=a;
@@ -168,7 +177,8 @@ public class Node
 			{	ra.printMove(xml,size,number,this);
 				number++;
 				if (contains("C"))
-				{	a=((Action)find("C").content());
+				{
+					Action a=find("C");
 					a.print(xml,size,number);
 				}
 				return;
@@ -179,8 +189,8 @@ public class Node
 		if (contains("BL")) xml.printArg("blacktime",getaction("BL"));
 		if (contains("WL")) xml.printArg("whitetime",getaction("WL"));
 		xml.startTagEndNewLine();
-		for (ListElement<Action> p : Actions)
-		{	a=p.content();
+		for (Action a : Actions)
+		{
 			a.print(xml,size,number);
 			if (a.type().equals("B") || a.type().equals("W")) number++;
 		}
@@ -189,12 +199,12 @@ public class Node
 
 	/** remove all actions */
 	public void removeactions ()
-	{	Actions=new ListClass();
+	{	Actions= new LinkedList<>();
 	}
 
 	/** add a new change to this node */
 	public void addchange (Change c)
-	{	Changes.append(c);
+	{	Changes.add(c);
 	}
 
 	/** clear the list of changes */
@@ -206,7 +216,7 @@ public class Node
 	public void main (boolean m) { Main=m; }
 	/** 
 	Set the Main flag
-	@param Tree is the tree, which contains this node on root.
+	@param p is the tree, which contains this node on root.
 	*/
 	public void main (Tree p)
 	{   Main=false;
@@ -230,8 +240,8 @@ public class Node
 	}
 
 	// access methods:
-	public ListClass<Action> actions () { return Actions; }
-	public ListClass<Change> changes () { return Changes; }
+	public LinkedList<Action> actions () { return Actions; }
+	public LinkedList<Change> changes () { return Changes; }
 	public int number () { return N; }
 	public boolean main () { return Main; }
 }

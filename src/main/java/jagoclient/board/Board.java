@@ -935,9 +935,8 @@ public class Board extends Canvas implements MouseListener,
 		if (boardPosition.color(i, j) != 0) return;
 		synchronized (Pos)
 		{
-			for (ListElement<Action> la : Pos.content().actions())
+			for (Action a : Pos.content().actions())
 			{
-				Action a = la.content();
 				if (a.type().equals("B") || a.type().equals("W"))
 				{
 					undonode();
@@ -1323,9 +1322,8 @@ public class Board extends Canvas implements MouseListener,
 			}
 		String sc = "";
 		int let = 1;
-		for (ListElement<Action> la : Pos.content().actions()) // setup the marks and letters
+		for (Action a : Pos.content().actions()) // setup the marks and letters
 		{
-			Action a = la.content();
 			if (a.type().equals("C"))
 			{
 				sc = a.argument();
@@ -1424,9 +1422,8 @@ public class Board extends Canvas implements MouseListener,
 		{
 			if (p != Pos)
 			{
-				for (ListElement<Action> la : p.content().actions())
+				for (Action a : p.content().actions())
 				{
-					Action a = la.content();
 					if (a.type().equals("W") || a.type().equals("B"))
 					{
 						String s = a.argument();
@@ -1472,15 +1469,13 @@ public class Board extends Canvas implements MouseListener,
 	private void getinformation ()
 	// update the comment, when leaving the position
 	{
-		Action a;
 		clearsend();
-		for (ListElement<Action> la : Pos.content().actions())
+		for (Action a : Pos.content().actions())
 		{
-			a = la.content();
 			if (a.type().equals("C"))
 			{
 				if (GF.getComment().equals("")) {
-					Pos.content().actions().remove(la);
+					Pos.content().actions().remove(a);
 				} else a.arguments().set(0, GF.getComment());
 				return;
 			}
@@ -1683,10 +1678,10 @@ public class Board extends Canvas implements MouseListener,
 	{
 		Node n = Pos.content();
 		clearrange();
-		Iterator<ListElement<Change>> i = n.changes().descendingIterator();
+		Iterator<Change> i = n.changes().descendingIterator();
 		while (i.hasNext())
 		{
-			Change c = i.next().content();
+			Change c = i.next();
 			boardPosition.color(c.I, c.J, c.C);
 			boardPosition.number(c.I, c.J, c.N);
 			update(c.I, c.J);
@@ -1766,12 +1761,10 @@ public class Board extends Canvas implements MouseListener,
 	// interpret all actions of a node
 	{
 		if (n.actions().isEmpty()) return;
-		Action a;
 		String s;
 		int i, j;
-		for (ListElement<Action> p : n.actions())
+		for (Action a : n.actions())
 		{
-			a = p.content();
 			if (a.type().equals("SZ"))
 			{
 				if (Pos.parent() == null)
@@ -1796,9 +1789,8 @@ public class Board extends Canvas implements MouseListener,
 		}
 		n.clearchanges();
 		n.Pw = n.Pb = 0;
-		for (ListElement<Action> p : n.actions())
+		for (Action a : n.actions())
 		{
-			a = p.content();
 			if (a.type().equals("B"))
 			{
 				setaction(n, a, 1);
@@ -1826,15 +1818,13 @@ public class Board extends Canvas implements MouseListener,
 	// update the last move marker applying all
 	// set move actions in the node
 	{
-		Action a;
 		String s;
 		int i = lasti, j = lastj;
 		lasti = -1;
 		lastj = -1;
 		update(i, j);
-		for (ListElement<Action> l : n.actions())
+		for (Action a : n.actions())
 		{
-			a = l.content();
 			if (a.type().equals("B") || a.type().equals("W"))
 			{
 				s = a.argument();
@@ -2447,8 +2437,7 @@ public class Board extends Canvas implements MouseListener,
 	{
 		getinformation();
 		undonode();
-		Pos.content().actions().removeIf((ListElement<Action> t) -> {
-			Action a = t.content();
+		Pos.content().actions().removeIf((Action a) -> {
 			return (a.type().equals("M") || a.type().equals("L")
 				|| a.type().equals(Field.Marker.CROSS.value) || a.type().equals(Field.Marker.SQUARE.value)
 				|| a.type().equals("SL") || a.type().equals(Field.Marker.CIRCLE.value)
@@ -2465,8 +2454,7 @@ public class Board extends Canvas implements MouseListener,
 		if (!Pos.children().isEmpty()) return;
 		getinformation();
 		undonode();
-		Pos.content().actions().removeIf((ListElement<Action> t) -> {
-			Action a = t.content();
+		Pos.content().actions().removeIf((Action a) -> {
 			return (a.type().equals("AB") || a.type().equals("AW") || a.type().equals("AE"));
 		});
 		act(Pos.content());
@@ -2719,13 +2707,11 @@ public class Board extends Canvas implements MouseListener,
 		while (p.haschildren())
 			p = p.firstchild();
 		if (Pos == p) getinformation();
-		Action a;
 		String Added = "";
 		outer: while (true)
 		{
-			for (ListElement<Action> la : p.content().actions())
+			for (Action a : p.content().actions())
 			{
-				a = la.content();
 				if (a.type().equals("C"))
 				{
 					String larg = a.arguments().get(0);

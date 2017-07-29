@@ -1,4 +1,4 @@
 package jagoclient.board;
 
-public class History {
+public class BoardState {
 }
