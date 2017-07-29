@@ -574,8 +574,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	// menu check items:
 	CheckboxMenuItem SetBlack, SetWhite, Black, White, Mark, Letter, Hide,
 		Square, Cross, Circle, Triangle, TextMark;
-	public Color BoardColor, BlackColor, BlackSparkleColor, WhiteColor,
-		WhiteSparkleColor, MarkerColor, LabelColor;
 	CheckboxMenuItem Coordinates, UpperLeftCoordinates, LowerRightCoordinates;
 	CheckboxMenuItem PureSGF, CommentSGF, DoSound, BeepOnly, TrueColor, Alias,
 		TrueColorStones, SmallerStones, MenuLastNumber, MenuTarget, Shadows,
@@ -597,25 +595,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		super(s);
 		DefaultTitle = s;
 		seticon("iboard.gif");
-		setcolors();
-	}
-
-	void setcolors ()
-	{ // Take colors from Global parameters.
-		BoardColor = Global.getColor("boardcolor", 170, 120, 70, Color.RED);
-		BlackColor = Global.getColor("blackcolor", 30, 30, 30, Color.WHITE);
-		BlackSparkleColor = Global.getColor("blacksparklecolor", 120, 120, 120, Color.GRAY);
-		WhiteColor = Global.getColor("whitecolor", 210, 210, 210, Color.DARK_GRAY);
-		WhiteSparkleColor = Global.getColor("whitesparklecolor", 250, 250, 250, Color.BLACK);
-		MarkerColor = Global.getColor("markercolor", Color.BLUE);
-		LabelColor = Global.getColor("labelcolor", Color.PINK.darker());
-		Global.setColor("boardcolor", BoardColor);
-		Global.setColor("blackcolor", BlackColor);
-		Global.setColor("blacksparklecolor", BlackSparkleColor);
-		Global.setColor("whitecolor", WhiteColor);
-		Global.setColor("whitesparklecolor", WhiteSparkleColor);
-		Global.setColor("markercolor", MarkerColor);
-		Global.setColor("labelcolor", LabelColor);
 	}
 
 	public GoFrame (Frame f, String s)
@@ -624,7 +603,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		super(s);
 		DefaultTitle = s;
 		// Colors
-		setcolors();
 		seticon("iboard.gif");
 		setLayout(new BorderLayout());
 		// Menu
@@ -715,15 +693,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		LowerRightCoordinates.setState(Global.getParameter("lowerrightcoordinates", true));
 		options.add(mc);
 		options.addSeparator();
-		Menu colors = new MyMenu(Global.resourceString("Colors"));
-		colors.add(new MenuItemAction(this, Global.resourceString("Board_Color")));
-		colors.add(new MenuItemAction(this, Global.resourceString("Black_Color")));
-		colors.add(new MenuItemAction(this, Global.resourceString("Black_Sparkle_Color")));
-		colors.add(new MenuItemAction(this, Global.resourceString("White_Color")));
-		colors.add(new MenuItemAction(this, Global.resourceString("White_Sparkle_Color")));
-		colors.add(new MenuItemAction(this, Global.resourceString("Label_Color")));
-		colors.add(new MenuItemAction(this, Global.resourceString("Marker_Color")));
-		options.add(colors);
 		options.add(MenuBWColor = new CheckboxMenuItemAction(this, Global.resourceString("Use_B_W_marks")));
 		MenuBWColor.setState(Global.getParameter("bwcolor", false));
 		BWColor = MenuBWColor.getState();
@@ -1411,34 +1380,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 					+ Global.resourceString("__White__") + B.Pb + "\n"
 					+ Global.resourceString("Komi") + " " + B.getKomi();
 				new Message(this, s).setVisible(true);
-			}
-			else if (Global.resourceString("Board_Color").equals(o))
-			{
-				new BoardColorEdit(this, "boardcolor", BoardColor).setVisible(true);
-			}
-			else if (Global.resourceString("Black_Color").equals(o))
-			{
-				new BoardColorEdit(this, "blackcolor", BlackColor).setVisible(true);
-			}
-			else if (Global.resourceString("Black_Sparkle_Color").equals(o))
-			{
-				new BoardColorEdit(this, "blacksparklecolor", BlackSparkleColor).setVisible(true);
-			}
-			else if (Global.resourceString("White_Color").equals(o))
-			{
-				new BoardColorEdit(this, "whitecolor", WhiteColor).setVisible(true);
-			}
-			else if (Global.resourceString("White_Sparkle_Color").equals(o))
-			{
-				new BoardColorEdit(this, "whitesparklecolor", WhiteSparkleColor).setVisible(true);
-			}
-			else if (Global.resourceString("Label_Color").equals(o))
-			{
-				new BoardColorEdit(this, "labelcolor", LabelColor).setVisible(true);
-			}
-			else if (Global.resourceString("Marker_Color").equals(o))
-			{
-				new BoardColorEdit(this, "markercolor", MarkerColor).setVisible(true);
 			}
 			else if (Global.resourceString("Board_Font").equals(o))
 			{
@@ -2238,7 +2179,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	/** Repaint the board, when color or font changes. */
 	public void updateall ()
 	{
-		setcolors();
 		B.updateboard();
 	}
 
@@ -2358,62 +2298,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		return ShowTarget;
 	}
 
-	public Color blackColor ()
-	{
-		return BlackColor;
-	}
-
-	public Color whiteColor ()
-	{
-		return WhiteColor;
-	}
-
-	public Color whiteSparkleColor ()
-	{
-		return WhiteSparkleColor;
-	}
-
-	public Color blackSparkleColor ()
-	{
-		return BlackSparkleColor;
-	}
-
-	public Color markerColor (int color)
-	{
-		switch (color)
-		{
-			case 1:
-				return MarkerColor.brighter().brighter();
-			case -1:
-				return MarkerColor.darker().darker();
-			default:
-				return MarkerColor;
-		}
-	}
-
-	public Color boardColor ()
-	{
-		return BoardColor;
-	}
-
-	public Color labelColor (int color)
-	{
-		switch (color)
-		{
-			case 1:
-				return LabelColor.brighter().brighter();
-			case -1:
-				return LabelColor.darker().darker();
-			default:
-				return LabelColor.brighter();
-		}
-	}
-
-	public boolean bwColor ()
-	{
-		return BWColor;
-	}
-
 	/**
 	 * Process the insert key, which set the node name by opening the
 	 * correspinding dialog.
@@ -2481,8 +2365,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 
 	public boolean blackOnly ()
 	{
-		if (BlackOnly != null) return BlackOnly.getState();
-		return false;
+		return BlackOnly != null && BlackOnly.getState();
 	}
 
 	public Color backgroundColor ()

@@ -494,15 +494,8 @@ public abstract class Global extends rene.gui.Global
 		return res;
 	}
 
-	public static void version51handle (String s)
+	public static String version ()
 	{
-		File f = new File(home() + s);
-		File f1 = new File(home() + "." + s);
-		if (f.exists())
-		{
-			if (f1.exists())
-				f.delete();
-			else f.renameTo(f1);
-		}
+		return "Version " + resourceString("Version");
 	}
 }

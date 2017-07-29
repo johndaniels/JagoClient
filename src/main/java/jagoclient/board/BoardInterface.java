@@ -17,27 +17,6 @@ public interface BoardInterface
 
 	// board is painted and displayed for the first time
 
-	// Various Color settings:
-	public boolean bwColor (); // black and white only?
-
-	public boolean blackOnly ();
-
-	public Color boardColor ();
-
-	public Color blackColor ();
-
-	public Color blackSparkleColor ();
-
-	public Color whiteColor ();
-
-	public Color whiteSparkleColor ();
-
-	public Color markerColor (int color);
-
-	public Color labelColor (int color);
-
-	public Color backgroundColor ();
-
 	public boolean blocked ();
 
 	// blocks changed at the end of main variation
@@ -107,28 +86,9 @@ public interface BoardInterface
 	// sends the result of a game back from the done function
 	// when counted at the end of the main tree.
 
-	public String resourceString (String S);
-
-	// translate the Resource for me
-	// check Board.java for necessary translations
-
 	public boolean getParameter (String S, boolean f);
 
 	// get a named parameter with boolean value
 	// check Board.java for necessary parameters
 	// default is f
-
-	public Color getColor (String key, int red, int green, int blue, Color c);
-
-	// get a named parameter with Color value
-	// check Board.java for necessary parameters
-	// default is the given color
-
-	public String version ();
-
-	// return the program version for SGF versioning
-
-	public Font boardFont ();
-	// return a font for the board
-
 }

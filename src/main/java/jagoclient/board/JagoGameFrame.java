@@ -28,7 +28,6 @@ public class JagoGameFrame extends GoFrame
 	{
 		super(s);
 		// Colors
-		setcolors();
 		seticon("iboard.gif");
 		setLayout(new BorderLayout());
 		// Menu

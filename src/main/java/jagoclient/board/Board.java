@@ -51,45 +51,53 @@ import rene.util.xml.XmlWriter;
 public class Board extends Canvas implements MouseListener,
 	MouseMotionListener, KeyListener
 {
-	int O, W, D, S, OT, OTU, OP; // pixel coordinates
+	private int O, W, D, S, OT, OTU, OP; // pixel coordinates
 	// O=offset, W=total width, D=field width, S=board size (9,11,13,19)
 	// OT=offset for coordinates to the right and below
 	// OTU=offset above the board and below for coordinates
-	int lasti = -1, lastj = 0; // last move (used to highlight the move)
-	boolean showlast; // internal flag, if last move is to be highlighted
-	Image Empty, EmptyShadow, ActiveImage;
+	private int lasti = -1, lastj = 0; // last move (used to highlight the move)
+	private boolean showlast; // internal flag, if last move is to be highlighted
+	private Image Empty, EmptyShadow, ActiveImage;
 	// offscreen images of empty and current board
-	SGFTree T; // the game tree
-	Vector Trees; // the game trees (one of them is T)
-	int CurrentTree; // the currently displayed tree
+	private SGFTree T; // the game tree
+	private Vector Trees; // the game trees (one of them is T)
+	private int CurrentTree; // the currently displayed tree
 	Position boardPosition; // current board position
 	int number; // number of the next move
 	Tree<Node> Pos; // the current board position in this presentation
 	int State; // states: 1 is black, 2 is white, 3 is set black etc.
 	// see GoFrame.setState(int)
-	Font font; // Font for board letters and coordinates
-	FontMetrics fontmetrics; // metrics of this font
+	private Font font; // Font for board letters and coordinates
+	private FontMetrics fontmetrics; // metrics of this font
 	BoardInterface GF; // frame containing the board
-	boolean Active;
-	int MainColor = 1;
+	private boolean Active;
+	private int MainColor = 1;
 	public int MyColor = 0;
 	int sendi = -1, sendj;
 	// board position which has been sended to server
-	Dimension Dim; // Note size to check for resizeing at paint
-	Field.Marker SpecialMarker = Field.Marker.SQUARE;
-	String TextMarker = "A";
-	public int Pw, Pb; // Prisoners (white and black)
+	private Dimension Dim; // Note size to check for resizeing at paint
+	private Field.Marker SpecialMarker = Field.Marker.SQUARE;
+	private String TextMarker = "A";
+	int Pw, Pb; // Prisoners (white and black)
 	BufferedReader LaterLoad = null; // File to be loaded at repaint
-	Image BlackStone, WhiteStone;
-	int Range = -1; // Numbers display from this one
-	boolean KeepRange = false;
-	String NodeName = "", LText = "";
-	boolean DisplayNodeName = false;
-	public boolean Removing = false;
-	boolean Activated = false;
+	private Image BlackStone, WhiteStone;
+	private int Range = -1; // Numbers display from this one
+	private boolean KeepRange = false;
+	private String NodeName = "", LText = "";
+	private boolean DisplayNodeName = false;
+	private boolean Removing = false;
+	private boolean Activated = false;
 	public boolean Teaching = false; // enable teaching mode
-	boolean VCurrent = false; // show variations to current move
-	boolean VHide = false; // hide variation markers
+	private boolean VCurrent = false; // show variations to current move
+	private boolean VHide = false; // hide variation markers
+
+	private Color BoardColor = new Color(170, 120, 70);
+	private Color BlackColor = new Color(30, 30, 30);
+	private Color BlackSparkleColor = new Color(120, 120, 120);
+	private Color WhiteColor = new Color(210, 210, 210);
+	private Color WhiteSparkleColor = new Color( 250, 250, 250);
+	Color MarkerColor = Color.BLUE;
+	Color LabelColor = Color.PINK.darker();
 
 	// ******************** initialize board *******************
 
@@ -123,10 +131,36 @@ public class Board extends Canvas implements MouseListener,
 		VCurrent = GF.getParameter("vcurrent", true);
 	}
 
+	public Color labelColor (int color)
+	{
+		switch (color)
+		{
+			case 1:
+				return LabelColor.brighter().brighter();
+			case -1:
+				return LabelColor.darker().darker();
+			default:
+				return LabelColor.brighter();
+		}
+	}
+
+	public Color markerColor (int color)
+	{
+		switch (color)
+		{
+			case 1:
+				return MarkerColor.brighter().brighter();
+			case -1:
+				return MarkerColor.darker().darker();
+			default:
+				return MarkerColor;
+		}
+	}
+
 	void setfonts ()
 	// get the font from the go frame
 	{
-		font = GF.boardFont();
+		font = Global.BoardFont;
 		fontmetrics = getFontMetrics(font);
 	}
 
@@ -208,7 +242,8 @@ public class Board extends Canvas implements MouseListener,
 			Activated = true;
 			GF.activate();
 		}
-		g.setColor(GF.backgroundColor());
+		Color backgroundColor = Color.GRAY;
+		g.setColor(backgroundColor);
 		if (d.width > W) g.fillRect(W, 0, d.width - W, W);
 		if (d.height > W) g.fillRect(0, W, d.width, d.height - W);
 	}
@@ -226,15 +261,15 @@ public class Board extends Canvas implements MouseListener,
 
 	// Now come the normal routine to draw a board.
 
-	Thread EPThread = null;
+	private Thread EPThread = null;
 
 	/**
 	 * Try to paint the wooden board. If the size is correct, use the predraw
 	 * board. Otherwise generate an EmptyPaint thread to paint a board.
 	 */
-	public synchronized boolean trywood (Graphics gr, Graphics grs, int w)
+	private synchronized boolean trywood (Graphics gr, Graphics grs, int w)
 	{
-		if (EmptyPaint.haveImage(w, w, GF.getColor("boardcolor", 170, 120, 70, Color.RED),
+		if (EmptyPaint.haveImage(w, w, new Color(170, 120, 70),
 			OP + OP / 2, OP - OP / 2, D))
 		// use predrawn image
 		{
@@ -248,8 +283,8 @@ public class Board extends Canvas implements MouseListener,
 		else
 		{
 			if (EPThread != null && EPThread.isAlive()) EPThread.interrupt();
-			EPThread = new Thread(new EmptyPaint(this, w, w, GF.getColor("boardcolor",
-				170, 120, 70, Color.RED), true, OP + OP / 2, OP - OP / 2, D));
+			EPThread = new Thread(new EmptyPaint(this, w, w, new Color(
+				170, 120, 70), true, OP + OP / 2, OP - OP / 2, D));
 			EPThread.setPriority(EPThread.getPriority()-1);
 			EPThread.start();
 		}
@@ -258,10 +293,10 @@ public class Board extends Canvas implements MouseListener,
 
 	final double pixel = 0.8, shadow = 0.7;
 
-	public void stonespaint ()
+	private void stonespaint ()
 	// Create the (beauty) images of the stones (black and white)
 	{
-		int col = GF.boardColor().getRGB();
+		int col = BoardColor.getRGB();
 		int blue = col & 0x0000FF, green = (col & 0x00FF00) >> 8, red = (col & 0xFF0000) >> 16;
 		boolean Alias = GF.getParameter("alias", true);
 		if (BlackStone == null || BlackStone.getWidth(this) != D + 2)
@@ -348,10 +383,10 @@ public class Board extends Canvas implements MouseListener,
 				|| !trywood(g, gs, S * D + 2 * OP)) // beauty board not
 			// available
 			{
-				g.setColor(GF.boardColor());
+				g.setColor(BoardColor);
 				g.fillRect(O + OTU - OP, O + OTU - OP, S * D + 2 * OP, S * D
 					+ 2 * OP);
-				gs.setColor(GF.boardColor());
+				gs.setColor(BoardColor);
 				gs.fillRect(O + OTU - OP, O + OTU - OP, S * D + 2 * OP, S * D
 					+ 2 * OP);
 			}
@@ -619,9 +654,7 @@ public class Board extends Canvas implements MouseListener,
 		if (g == null) return;
 		i = O + OTU + i * D + D / 2;
 		j = O + OTU + j * D + D / 2;
-		if (GF.bwColor())
-			g.setColor(Color.white);
-		else g.setColor(Color.gray.brighter());
+		g.setColor(Color.gray.brighter());
 		g.drawRect(i - D / 4, j - D / 4, D / 2, D / 2);
 		g.dispose();
 	}
@@ -1191,54 +1224,54 @@ public class Board extends Canvas implements MouseListener,
 		switch (State)
 		{
 			case 3:
-				LText = ms + GF.resourceString("Set_black_stones");
+				LText = ms + Global.resourceString("Set_black_stones");
 				break;
 			case 4:
-				LText = ms + GF.resourceString("Set_white_stones");
+				LText = ms + Global.resourceString("Set_white_stones");
 				break;
 			case 5:
-				LText = ms + GF.resourceString("Mark_fields");
+				LText = ms + Global.resourceString("Mark_fields");
 				break;
 			case 6:
-				LText = ms + GF.resourceString("Place_letters");
+				LText = ms + Global.resourceString("Place_letters");
 				break;
 			case 7:
-				LText = ms + GF.resourceString("Delete_stones");
+				LText = ms + Global.resourceString("Delete_stones");
 				break;
 			case 8:
-				LText = ms + GF.resourceString("Remove_prisoners");
+				LText = ms + Global.resourceString("Remove_prisoners");
 				break;
 			case 9:
-				LText = ms + GF.resourceString("Set_special_marker");
+				LText = ms + Global.resourceString("Set_special_marker");
 				break;
 			case 10:
-				LText = ms + GF.resourceString("Text__") + TextMarker;
+				LText = ms + Global.resourceString("Text__") + TextMarker;
 				break;
 			default:
 				if (boardPosition.color() > 0)
 				{
 					String s = lookuptime("BL");
 					if ( !s.equals(""))
-						LText = ms + GF.resourceString("Next_move__Black_")
+						LText = ms + Global.resourceString("Next_move__Black_")
 							+ number + " (" + s + ")";
-					else LText = ms + GF.resourceString("Next_move__Black_")
+					else LText = ms + Global.resourceString("Next_move__Black_")
 						+ number;
 				}
 				else
 				{
 					String s = lookuptime("WL");
 					if ( !s.equals(""))
-						LText = ms + GF.resourceString("Next_move__White_")
+						LText = ms + Global.resourceString("Next_move__White_")
 							+ number + " (" + s + ")";
-					else LText = ms + GF.resourceString("Next_move__White_")
+					else LText = ms + Global.resourceString("Next_move__White_")
 						+ number;
 				}
 		}
 		if (Pos.parent() != null)
 		{
-			LText += " (" + siblings() + " " + GF.resourceString("Siblings") + ", ";
+			LText += " (" + siblings() + " " + Global.resourceString("Siblings") + ", ";
 		}
-		LText += children() + " " + GF.resourceString("Children") + ")";
+		LText += children() + " " + Global.resourceString("Children") + ")";
 		if (NodeName.equals(""))
 		{
 			GF.setLabel(LText);
@@ -1431,7 +1464,7 @@ public class Board extends Canvas implements MouseListener,
 		return Pos.children().size();
 	}
 
-	public void clearsend ()
+	private void clearsend ()
 	{
 		if (sendi >= 0)
 		{
@@ -1441,7 +1474,7 @@ public class Board extends Canvas implements MouseListener,
 		}
 	}
 
-	public void getinformation ()
+	private void getinformation ()
 	// update the comment, when leaving the position
 	{
 		Action a;
@@ -1523,7 +1556,7 @@ public class Board extends Canvas implements MouseListener,
 		int n;
 		int xi = O + OTU + i * D;
 		int xj = O + OTU + j * D;
-		if (boardPosition.color(i, j) > 0 || boardPosition.color(i, j) < 0 && GF.blackOnly())
+		if (boardPosition.color(i, j) > 0 || boardPosition.color(i, j) < 0)
 		{
 			if (BlackStone != null)
 			{
@@ -1531,9 +1564,9 @@ public class Board extends Canvas implements MouseListener,
 			}
 			else
 			{
-				g.setColor(GF.blackColor());
+				g.setColor(BlackColor);
 				g.fillOval(xi + 1, xj + 1, D - 2, D - 2);
-				g.setColor(GF.blackSparkleColor());
+				g.setColor(BlackSparkleColor);
 				g.drawArc(xi + D / 2, xj + D / 4, D / 4, D / 4, 40, 50);
 			}
 		}
@@ -1545,21 +1578,15 @@ public class Board extends Canvas implements MouseListener,
 			}
 			else
 			{
-				g.setColor(GF.whiteColor());
+				g.setColor(WhiteColor);
 				g.fillOval(xi + 1, xj + 1, D - 2, D - 2);
-				g.setColor(GF.whiteSparkleColor());
+				g.setColor(WhiteSparkleColor);
 				g.drawArc(xi + D / 2, xj + D / 4, D / 4, D / 4, 40, 50);
 			}
 		}
 		if (boardPosition.marker(i, j) != Field.Marker.NONE)
 		{
-			if (GF.bwColor())
-			{
-				if (boardPosition.color(i, j) >= 0)
-					g.setColor(Color.white);
-				else g.setColor(Color.black);
-			}
-			else g.setColor(GF.markerColor(boardPosition.color(i, j)));
+			g.setColor(markerColor(boardPosition.color(i, j)));
 			int h = D / 4;
 			switch (boardPosition.marker(i, j))
 			{
@@ -1581,13 +1608,7 @@ public class Board extends Canvas implements MouseListener,
 		}
 		if (boardPosition.letter(i, j) != 0)
 		{
-			if (GF.bwColor())
-			{
-				if (boardPosition.color(i, j) >= 0)
-					g.setColor(Color.white);
-				else g.setColor(Color.black);
-			}
-			else g.setColor(GF.labelColor(boardPosition.color(i, j)));
+			g.setColor(labelColor(boardPosition.color(i, j)));
 			c[0] = (char)('a' + boardPosition.letter(i, j) - 1);
 			String hs = new String(c);
 			int w = fontmetrics.stringWidth(hs) / 2;
@@ -1597,13 +1618,7 @@ public class Board extends Canvas implements MouseListener,
 		}
 		else if (boardPosition.haslabel(i, j))
 		{
-			if (GF.bwColor())
-			{
-				if (boardPosition.color(i, j) >= 0)
-					g.setColor(Color.white);
-				else g.setColor(Color.black);
-			}
-			else g.setColor(GF.labelColor(boardPosition.color(i, j)));
+			g.setColor(labelColor(boardPosition.color(i, j)));
 			String hs = boardPosition.label(i, j);
 			int w = fontmetrics.stringWidth(hs) / 2;
 			int h = fontmetrics.getAscent() / 2 - 1;
@@ -1612,9 +1627,7 @@ public class Board extends Canvas implements MouseListener,
 		}
 		else if (boardPosition.tree(i, j) != null && !VHide)
 		{
-			if (GF.bwColor())
-				g.setColor(Color.white);
-			else g.setColor(Color.green);
+			g.setColor(Color.green);
 			g.drawLine(xi + D / 2 - D / 6, xj + D / 2, xi + D / 2 + D / 6, xj
 				+ D / 2);
 			g.drawLine(xi + D / 2, xj + D / 2 - D / 6, xi + D / 2, xj + D / 2
@@ -1622,13 +1635,7 @@ public class Board extends Canvas implements MouseListener,
 		}
 		if (sendi == i && sendj == j)
 		{
-			if (GF.bwColor())
-			{
-				if (boardPosition.color(i, j) > 0)
-					g.setColor(Color.white);
-				else g.setColor(Color.black);
-			}
-			else g.setColor(Color.gray);
+			g.setColor(Color.gray);
 			g.drawLine(xi + D / 2 - 1, xj + D / 2, xi + D / 2 + 1, xj + D / 2);
 			g.drawLine(xi + D / 2, xj + D / 2 - 1, xi + D / 2, xj + D / 2 + 1);
 		}
@@ -1647,13 +1654,7 @@ public class Board extends Canvas implements MouseListener,
 			}
 			else
 			{
-				if (GF.bwColor())
-				{
-					if (boardPosition.color(i, j) > 0)
-						g.setColor(Color.white);
-					else g.setColor(Color.black);
-				}
-				else g.setColor(Color.red);
+				g.setColor(Color.red);
 				g.drawLine(xi + D / 2 - D / 6, xj + D / 2, xi + D / 2 + D / 6,
 					xj + D / 2);
 				g.drawLine(xi + D / 2, xj + D / 2 - D / 6, xi + D / 2, xj + D
@@ -1872,7 +1873,7 @@ public class Board extends Canvas implements MouseListener,
 		else doundo(Pos);
 	}
 
-	public void doundo (Tree<Node> pos1)
+	void doundo (Tree<Node> pos1)
 	{
 		if (pos1 != Pos) return;
 		if (Pos.parent() == null)
@@ -1894,7 +1895,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public void goback ()
+	void goback ()
 	// go one move back
 	{
 		State = 1;
@@ -1904,7 +1905,7 @@ public class Board extends Canvas implements MouseListener,
 		setcurrent(Pos.content());
 	}
 
-	public void goforward ()
+	void goforward ()
 	// go one move forward
 	{
 		if ( !Pos.haschildren()) return;
@@ -1913,7 +1914,7 @@ public class Board extends Canvas implements MouseListener,
 		setcurrent(Pos.content());
 	}
 
-	public void gotoMove (int move)
+	void gotoMove (int move)
 	{
 		while (number <= move && Pos.firstchild() != null)
 		{
@@ -1921,17 +1922,7 @@ public class Board extends Canvas implements MouseListener,
 		}
 	}
 
-	public void tovarleft ()
-	{
-		if (Pos.parent() == null) return;
-		if (Pos.parent().previouschild(Pos) == null) return;
-		Tree<Node> newpos = previouschild(Pos);
-		goback();
-		Pos = newpos;
-		act(Pos.content());
-	}
-
-	public void tovarright ()
+	void tovarright ()
 	{
 		if (Pos.parent() == null) return;
 		if (Pos.parent().previouschild(Pos) == null) return;
@@ -1941,19 +1932,19 @@ public class Board extends Canvas implements MouseListener,
 		act(Pos.content());
 	}
 
-	public static Tree<Node> previouschild (Tree<Node> p)
+	static Tree<Node> previouschild (Tree<Node> p)
 	{
 		if (p.parent() == null) return null;
 		return p.parent().previouschild(p);
 	}
 
-	public static Tree<Node> nextchild (Tree<Node> p)
+	static Tree<Node> nextchild (Tree<Node> p)
 	{
 		if (p.parent() == null) return null;
 		return p.parent().nextchild(p);
 	}
 
-	public void territory (int i, int j)
+	void territory (int i, int j)
 	{
 		mark(i, j);
 		copy();
@@ -1975,7 +1966,7 @@ public class Board extends Canvas implements MouseListener,
 			goforward();
 			boardPosition.color( -c);
 			showinformation();
-			GF.addComment(GF.resourceString("Pass"));
+			GF.addComment(Global.resourceString("Pass"));
 		}
 		MainColor = -MainColor;
 		captured = 0;
@@ -2098,7 +2089,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void fastforward ()
+	void fastforward ()
 	// 10 moves down
 	{
 		getinformation();
@@ -2108,7 +2099,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void allback ()
+	void allback ()
 	// to top of tree
 	{
 		getinformation();
@@ -2118,7 +2109,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void allforward ()
+	void allforward ()
 	// to end of variation
 	{
 		getinformation();
@@ -2128,7 +2119,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void varleft ()
+	void varleft ()
 	// one variation to the left
 	{
 		State = 1;
@@ -2143,7 +2134,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void varright ()
+	void varright ()
 	// one variation to the right
 	{
 		State = 1;
@@ -2158,7 +2149,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void varmain ()
+	void varmain ()
 	// to the main variation
 	{
 		State = 1;
@@ -2172,7 +2163,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void varmaindown ()
+	void varmaindown ()
 	// to end of main variation
 	{
 		State = 1;
@@ -2205,7 +2196,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void gotonext ()
+	void gotonext ()
 	// goto next named node
 	{
 		State = 1;
@@ -2220,7 +2211,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void gotoprevious ()
+	void gotoprevious ()
 	// gotoprevious named node
 	{
 		State = 1;
@@ -2235,13 +2226,13 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void gotonextmain ()
+	void gotonextmain ()
 	// goto next game tree
 	{
 		if (CurrentTree + 1 >= Trees.size()) return;
 		State = 1;
 		getinformation();
-		T.top().content().setaction("AP", "Jago:" + GF.version(), true);
+		T.top().content().setaction("AP", "Jago:" + Global.version(), true);
 		T.top().content().setaction("SZ", "" + S, true);
 		T.top().content().setaction("GM", "1", true);
 		T.top().content().setaction("FF", GF.getParameter("puresgf", false)?"4":"1", true);
@@ -2253,13 +2244,13 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void gotopreviousmain ()
+	synchronized void gotopreviousmain ()
 	// goto previous game tree
 	{
 		if (CurrentTree == 0) return;
 		State = 1;
 		getinformation();
-		T.top().content().setaction("AP", "Jago:" + GF.version(), true);
+		T.top().content().setaction("AP", "Jago:" + Global.version(), true);
 		T.top().content().setaction("SZ", "" + S, true);
 		T.top().content().setaction("GM", "1", true);
 		T.top().content().setaction("FF", GF.getParameter("puresgf", false)?"4":"1", true);
@@ -2275,7 +2266,7 @@ public class Board extends Canvas implements MouseListener,
 	{
 		State = 1;
 		getinformation();
-		T.top().content().setaction("AP", "Jago:" + GF.version(), true);
+		T.top().content().setaction("AP", "Jago:" + Global.version(), true);
 		T.top().content().setaction("SZ", "" + S, true);
 		T.top().content().setaction("GM", "1", true);
 		T.top().content().setaction("FF", GF.getParameter("puresgf", false)?"4":"1", true);
@@ -2291,7 +2282,7 @@ public class Board extends Canvas implements MouseListener,
 		copy();
 	}
 
-	public synchronized void removegame ()
+	void removegame ()
 	{
 		if (Trees.size() == 1) return;
 		Trees.removeElementAt(CurrentTree);
@@ -2413,7 +2404,7 @@ public class Board extends Canvas implements MouseListener,
 		setcurrent(Pos.content());
 		showinformation();
 		copy();
-		GF.addComment(GF.resourceString("Pass"));
+		GF.addComment(Global.resourceString("Pass"));
 		captured = 0;
 	}
 
@@ -2536,7 +2527,7 @@ public class Board extends Canvas implements MouseListener,
 			showinformation();
 			copy();
 		}
-		GF.addComment(GF.resourceString("Undo"));
+		GF.addComment(Global.resourceString("Undo"));
 	}
 
 	// ********** set board state ******************
@@ -2583,7 +2574,7 @@ public class Board extends Canvas implements MouseListener,
 		showinformation();
 	}
 
-	public void specialmark (Field.Marker i)
+	void specialmark (Field.Marker i)
 	// marking
 	{
 		getinformation();
@@ -2592,7 +2583,7 @@ public class Board extends Canvas implements MouseListener,
 		showinformation();
 	}
 
-	public void textmark (String s)
+	void textmark (String s)
 	// marking
 	{
 		getinformation();
@@ -2609,7 +2600,7 @@ public class Board extends Canvas implements MouseListener,
 		showinformation();
 	}
 
-	public void deletestones ()
+	void deletestones ()
 	// hide stones
 	{
 		getinformation();
@@ -2689,23 +2680,23 @@ public class Board extends Canvas implements MouseListener,
 	public String extraInformation ()
 	// get a mixture from handicap, komi and prisoners
 	{
-		StringBuffer b = new StringBuffer(GF.resourceString("_("));
+		StringBuffer b = new StringBuffer(Global.resourceString("_("));
 		Node n = T.top().content();
 		if (n.contains("HA"))
 		{
-			b.append(GF.resourceString("Ha_"));
+			b.append(Global.resourceString("Ha_"));
 			b.append(n.getaction("HA"));
 		}
 		if (n.contains("KM"))
 		{
-			b.append(GF.resourceString("__Ko"));
+			b.append(Global.resourceString("__Ko"));
 			b.append(n.getaction("KM"));
 		}
-		b.append(GF.resourceString("__B"));
+		b.append(Global.resourceString("__B"));
 		b.append("" + Pw);
-		b.append(GF.resourceString("__W"));
+		b.append(Global.resourceString("__W"));
 		b.append("" + Pb);
-		b.append(GF.resourceString("_)"));
+		b.append(Global.resourceString("_)"));
 		return b.toString();
 	}
 
@@ -2797,12 +2788,12 @@ public class Board extends Canvas implements MouseListener,
 					else if (boardPosition.color(i, j) < 0) sw++;
 				}
 			}
-		String s = GF.resourceString("Chinese_count_") + "\n"
-			+ GF.resourceString("Black__") + (sb + tb)
-			+ GF.resourceString("__White__") + (sw + tw) + "\n"
-			+ GF.resourceString("Japanese_count_") + "\n"
-			+ GF.resourceString("Black__") + (Pw + tb)
-			+ GF.resourceString("__White__") + (Pb + tw);
+		String s = Global.resourceString("Chinese_count_") + "\n"
+			+ Global.resourceString("Black__") + (sb + tb)
+			+ Global.resourceString("__White__") + (sw + tw) + "\n"
+			+ Global.resourceString("Japanese_count_") + "\n"
+			+ Global.resourceString("Black__") + (Pw + tb)
+			+ Global.resourceString("__White__") + (Pb + tw);
 		showinformation();
 		copy();
 		if (Pos.content().main())
@@ -2839,12 +2830,12 @@ public class Board extends Canvas implements MouseListener,
 			}
 		showinformation();
 		copy();
-		return GF.resourceString("Chinese_count_") + "\n"
-			+ GF.resourceString("Black__") + (sb + tb)
-			+ GF.resourceString("__White__") + (sw + tw) + "\n"
-			+ GF.resourceString("Japanese_count_") + "\n"
-			+ GF.resourceString("Black__") + (Pw + tb)
-			+ GF.resourceString("__White__") + (Pb + tw);
+		return Global.resourceString("Chinese_count_") + "\n"
+			+ Global.resourceString("Black__") + (sb + tb)
+			+ Global.resourceString("__White__") + (sw + tw) + "\n"
+			+ Global.resourceString("Japanese_count_") + "\n"
+			+ Global.resourceString("Black__") + (Pw + tb)
+			+ Global.resourceString("__White__") + (Pb + tw);
 	}
 
 	public void load (BufferedReader in) throws IOException
@@ -2896,7 +2887,7 @@ public class Board extends Canvas implements MouseListener,
 	// in SGF
 	{
 		getinformation();
-		T.top().content().setaction("AP", "Jago:" + GF.version(), true);
+		T.top().content().setaction("AP", "Jago:" + Global.version(), true);
 		T.top().content().setaction("SZ", "" + S, true);
 		T.top().content().setaction("GM", "1", true);
 		T.top().content().setaction("FF", GF.getParameter("puresgf", false)?"4":"1", true);
@@ -2920,7 +2911,7 @@ public class Board extends Canvas implements MouseListener,
 	// save the file in Jago's XML format
 	{
 		getinformation();
-		T.top().content().setaction("AP", "Jago:" + GF.version(), true);
+		T.top().content().setaction("AP", "Jago:" + Global.version(), true);
 		T.top().content().setaction("SZ", "" + S, true);
 		T.top().content().setaction("GM", "1", true);
 		T.top().content().setaction("FF", GF.getParameter("puresgf", false)?"4":"1", true);
@@ -2940,7 +2931,7 @@ public class Board extends Canvas implements MouseListener,
 	// save the file in Jago's XML format
 	{
 		getinformation();
-		T.top().content().setaction("AP", "Jago:" + GF.version(), true);
+		T.top().content().setaction("AP", "Jago:" + Global.version(), true);
 		T.top().content().setaction("SZ", "" + S, true);
 		T.top().content().setaction("GM", "1", true);
 		T.top().content().setaction("FF", GF.getParameter("puresgf", false)?"4":"1", true);
@@ -3030,7 +3021,7 @@ public class Board extends Canvas implements MouseListener,
 	public void positionToNode (Node n)
 	// copy the current position to a node.
 	{
-		n.setaction("AP", "Jago:" + GF.version(), true);
+		n.setaction("AP", "Jago:" + Global.version(), true);
 		n.setaction("SZ", "" + S, true);
 		n.setaction("GM", "1", true);
 		n.setaction("FF", GF.getParameter("puresgf", false)?"4":"1", true);
