@@ -184,7 +184,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 	private static final Logger LOG = Logger.getLogger(ConnectionFrame.class.getName());
 	GridBagLayout girdbag;
 	JPanel usersPanel;
-	JPanel gamesPanel;
+	GamesPanel gamesPanel;
 	HistoryTextField Input;
 	GridBagLayout gridbag;
 	public WhoFrame Who;
@@ -213,7 +213,6 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		this.connectionState = connectionState;
 		Waitfor = "";
 		OL = new ArrayList<OutputListener>();
-		setLayout(new BorderLayout());
 		// Menu
 		MenuBar M = new MenuBar();
 		setMenuBar(M);
@@ -258,6 +257,10 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 			.resourceString("Observing_Playing")));
 		help.add(new MenuItemAction(this, Global.resourceString("Teaching")));
 		M.setHelpMenu(help);
+		JPanel roomsPanel = new JPanel();
+		roomsPanel.setLayout(new BorderLayout());
+
+
 		JPanel center = new JPanel();
 		center.setLayout(new BorderLayout());
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -272,20 +275,24 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		// Input
 		Input = new HistoryTextField(this, "Input");
 		Input.loadHistory("input.history");
-		add("Center", center);
+		JTabbedPane tabbedPane = new JTabbedPane();
+		roomsPanel.add("Center", center);
 		// Buttons:
 		MyPanel p = new MyPanel();
 		p.add(new ButtonAction(this, Global.resourceString("Who")));
 		p.add(WhoRange = new HistoryTextField(this, "WhoRange", 5));
 		WhoRange.setText(Global.getParameter("whorange", "20k-8d"));
-		p.add(new ButtonAction(this, Global.resourceString("Games")));
+		ButtonAction observeButton = new ButtonAction(this, Global.resourceString("Observe"));
+		observeButton.addActionListener(actionEvent -> connectionState.observeGame(gamesPanel.getSelectedGame().getGameNumber()));
 		p.add(new MyLabel(" "));
 		p.add(new ButtonAction(this, Global.resourceString("Peek")));
 		p.add(new ButtonAction(this, Global.resourceString("Status")));
-		p.add(new ButtonAction(this, Global.resourceString("Observe")));
+		p.add(observeButton);
 		Game = new GrayTextField(4);
 		p.add(Game);
-		add("South", new Panel3D(p));
+		roomsPanel.add("South", new Panel3D(p));
+		tabbedPane.addTab("Rooms", roomsPanel);
+		add(tabbedPane);
 		//
 		Dir = new String("");
 		seticon("iconn.gif");

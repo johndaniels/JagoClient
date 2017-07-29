@@ -2,7 +2,11 @@ package jagoclient.igs;
 
 import jagoclient.Global;
 import jagoclient.igs.games.GameInfo;
+import jagoclient.igs.games.GameInfoChangedHandler;
+import jagoclient.igs.games.GameUpdatesHandler;
+import jagoclient.igs.games.TimeInfo;
 import jagoclient.igs.users.UserInfo;
+import jagoclient.igs.users.UsersChangedHandler;
 import jagoclient.sound.JagoSound;
 import rene.util.parser.StringParser;
 
@@ -21,10 +25,12 @@ import java.util.logging.Logger;
 public class IgsConnection {
     private static final Logger LOG = Logger.getLogger(IgsStream.class.getName());
 
-    Map<Integer, List<IgsStream.LineResult>> linesSeen = new HashMap<>();
+    List<IgsStream.LineResult> linesSeen = new ArrayList<>();
+    int currentCommand = 0;
 
-    CompletableFuture<List<UserInfo>> pendingUserList;
-    CompletableFuture<List<GameInfo>> pendingGameList;
+    List<UsersChangedHandler> usersChangedHandlers = new ArrayList<>();
+    List<GameInfoChangedHandler> gameInfoChangedHandlers = new ArrayList<>();
+    Map<Integer, List<GameUpdatesHandler>> gameUpdateHandlers = new HashMap<>();
 
     List<Distributor> distributorList;
     IgsStream igsStream;
@@ -32,6 +38,21 @@ public class IgsConnection {
         distributorList = new ArrayList<Distributor>();
         this.igsStream = igsStream;
         this.igsStream.addLineListener(this::handleLine);
+    }
+
+    public void addUsersChangedHandler(UsersChangedHandler handler) {
+        usersChangedHandlers.add(handler);
+    }
+
+    public void addGameInfoChangedHandler(GameInfoChangedHandler handler) {
+        gameInfoChangedHandlers.add(handler);
+    }
+
+    public void addGameUpdateHandler(int game, GameUpdatesHandler handler) {
+        if (!gameUpdateHandlers.containsKey(game)) {
+            gameUpdateHandlers.put(game, new ArrayList<>());
+        }
+        gameUpdateHandlers.get(game).add(handler);
     }
 
     /**
@@ -166,44 +187,48 @@ public class IgsConnection {
     public void handleLine(IgsStream.LineResult lineResult) {
         int number = lineResult.getNumber();
         String command = lineResult.getCommand();
-        if (number == 1) {
-            if (linesSeen.size() > 0) {
-                //userlist response
-                if (linesSeen.containsKey(42)) {
-                    List<UserInfo> whoObjects = new ArrayList<UserInfo>();
-                    for (IgsStream.LineResult l : linesSeen.get(42)) {
-                        if (l.getCommand().startsWith("Name")) {
-                            continue; // This is the header line.
-                        }
-                        whoObjects.add(new UserInfo(l.getCommand()));
+        if (currentCommand > 0 && number != currentCommand) {
+            //userlist response
+            if (currentCommand == 42) {
+                List<UserInfo> whoObjects = new ArrayList<UserInfo>();
+                for (IgsStream.LineResult l : linesSeen) {
+                    if (l.getCommand().startsWith("Name")) {
+                        continue; // This is the header line.
                     }
-                    if (pendingUserList != null) {
-                        pendingUserList.complete(whoObjects);
-                        pendingUserList = null;
+                    whoObjects.add(new UserInfo(l.getCommand()));
+                }
+                for (UsersChangedHandler handler : usersChangedHandlers) {
+                    handler.usersChanged(whoObjects);
+                }
+            }
+            // gamelist response
+            if (currentCommand == 87) {
+                List<GameInfo> gameInfos = new ArrayList<>();
+                for (IgsStream.LineResult l : linesSeen) {
+                    if (l.getCommand().startsWith("[##]")) {
+                        continue; // This is the header line.
+                    }
+                    gameInfos.add(new GameInfo(l.getCommand()));
+                }
+                for (GameInfoChangedHandler handler : gameInfoChangedHandlers) {
+                    handler.gameInfosChanged(gameInfos);
+                }
+            }
+
+            if (currentCommand == 15) {
+                for (IgsStream.LineResult l : linesSeen) {
+                    if (command.startsWith("TIME")) {
+                        TimeInfo info = new TimeInfo(command);
+                        for (GameUpdatesHandler handler : gameUpdateHandlers.get(info.getGame())) {
+                            handler.time(new TimeInfo(command));
+                        }
                     }
                 }
-                // gamelist response
-                if (linesSeen.containsKey(87)) {
-                    List<GameInfo> gameInfos = new ArrayList<>();
-                    for (IgsStream.LineResult l : linesSeen.get(87)) {
-                        if (l.getCommand().startsWith("[##]")) {
-                            continue; // This is the header line.
-                        }
-                        gameInfos.add(new GameInfo(l.getCommand()));
-                    }
-                    if (pendingGameList != null) {
-                        pendingGameList.complete(gameInfos);
-                        pendingGameList = null;
-                    }
-                }
-                linesSeen.clear();
             }
-        } else {
-            if (!linesSeen.containsKey(lineResult.getNumber())) {
-                linesSeen.put(lineResult.getNumber(), new ArrayList<>());
-            }
-            linesSeen.get(lineResult.getNumber()).add(lineResult);
+            linesSeen.clear();
         }
+        currentCommand = number;
+        linesSeen.add(lineResult);
         StringParser sp;
         if (number == 21
                 && (command.startsWith("{Game") || command
@@ -393,20 +418,17 @@ public class IgsConnection {
         }
     }
 
-    public CompletionStage<List<UserInfo>> userList() {
+    public void userList() {
         igsStream.out("userlist2");
-        if (pendingUserList == null) {
-            pendingUserList = new CompletableFuture<>();
-        }
-        return pendingUserList;
     }
 
-    public CompletionStage<List<GameInfo>> gameList() {
+    public void gameList() {
         igsStream.out("gamelist3");
-        if (pendingGameList == null) {
-            pendingGameList = new CompletableFuture<>();
-        }
-        return pendingGameList;
+    }
+
+    public void observeGame(int gameNumber) {
+        igsStream.out(String.format("observe %s", gameNumber));
+        igsStream.out(String.format("moves %s", gameNumber));
     }
 
     public void addDistributor(Distributor distributor) {

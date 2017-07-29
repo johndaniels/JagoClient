@@ -17,29 +17,19 @@ import java.util.List;
  */
 public class UsersPanel extends JPanel {
     ConnectionState connectionState;
-    Lister whoLister;
+    JTable whoLister;
     public UsersPanel(ConnectionState connectionState) {
         super();
         this.connectionState = connectionState;
         setLayout(new BorderLayout());
-        whoLister = Global.getParameter("systemlister", false)?new SystemLister():new Lister();
+        whoLister = new JTable();
         whoLister.setFont(Global.Monospaced);
-        whoLister.setText(Global.resourceString("Loading"));
+        JScrollPane scrollPane = new JScrollPane(whoLister);
         connectionState.addUsersChangedHandler(this::usersChanged);
-        add("Center", whoLister);
+        add("Center", scrollPane);
     }
 
     public void usersChanged(List<UserInfo> userInfos) {
-        List<UserInfo> localUserInfos = new ArrayList<>(userInfos);
-        Collections.sort(localUserInfos, (UserInfo a, UserInfo b) -> Integer.compare(a.getRankValue(), b.getRankValue()));
-        whoLister.setText("");
-        whoLister.appendLine0(Global
-                .resourceString("_Info_______Name_______Idle___Rank"));
-        Color FC = Color.green.darker(), CM = Color.red.darker();
-        for (UserInfo who : localUserInfos)
-        {
-            whoLister.appendLine0(who.getUsername());
-        }
-        whoLister.doUpdate(false);
+        whoLister.setModel(new UsersTableModel(userInfos));
     }
 }

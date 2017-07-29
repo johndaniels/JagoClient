@@ -45,25 +45,27 @@ import javax.swing.*;
 
 public class GamesPanel extends JPanel implements CloseListener, Distributor.Task
 {
-	Lister gameLister;
+	JTable gameLister;
 
 	public GamesPanel (ConnectionState connectionState)
 	{
 		super();
 		setLayout(new BorderLayout());
 		connectionState.addGamesChangedHandler(this::gamesChanged);
-		gameLister = Global.getParameter("systemlister", false)?new SystemLister():new Lister();
+		gameLister = new JTable();
 		gameLister.setFont(Global.Monospaced);
-		gameLister.setText(Global.resourceString("Loading"));
-		add("Center", gameLister);
+		JScrollPane scrollPane = new JScrollPane(gameLister);
+		add("Center", scrollPane);
 		PopupMenu pop = new PopupMenu();
 	}
 
 	public void gamesChanged(List<GameInfo> gameInfos) {
-		gameLister.setText("");
-		for (GameInfo info : gameInfos) {
-			gameLister.appendLine0(" " + info.getGameNumber());
-		}
+		gameLister.setModel(new GamesTableModel(gameInfos));
+	}
+
+	public GameInfo getSelectedGame() {
+		int row = gameLister.getSelectedRow();
+		return ((GamesTableModel)gameLister.getModel()).getGame(row);
 	}
 
 	public void doAction (String o)
@@ -73,33 +75,12 @@ public class GamesPanel extends JPanel implements CloseListener, Distributor.Tas
 		}
 		else if (Global.resourceString("Peek").equals(o))
 		{
-			String s = gameLister.getSelectedItem();
-			if (s == null) return;
-			StringParser p = new StringParser(s);
-			p.skipblanks();
-			if ( !p.skip("[")) return;
-			p.skipblanks();
-			if ( !p.isint()) return;
 		}
 		else if (Global.resourceString("Status").equals(o))
 		{
-			String s = gameLister.getSelectedItem();
-			if (s == null) return;
-			StringParser p = new StringParser(s);
-			p.skipblanks();
-			if ( !p.skip("[")) return;
-			p.skipblanks();
-			if ( !p.isint()) return;
 		}
 		else if (Global.resourceString("Observe").equals(o))
 		{
-			String s = gameLister.getSelectedItem();
-			if (s == null) return;
-			StringParser p = new StringParser(s);
-			p.skipblanks();
-			if ( !p.skip("[")) return;
-			p.skipblanks();
-			if ( !p.isint()) return;
 		}
 		else if (Global.resourceString("About_this_Window").equals(o))
 		{

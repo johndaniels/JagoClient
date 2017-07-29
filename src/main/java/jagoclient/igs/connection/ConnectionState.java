@@ -1,5 +1,6 @@
 package jagoclient.igs.connection;
 
+import jagoclient.board.Position;
 import jagoclient.igs.IgsConnection;
 import jagoclient.igs.IgsStream;
 import jagoclient.igs.games.GameInfo;
@@ -8,7 +9,9 @@ import jagoclient.igs.users.UserInfo;
 import jagoclient.igs.users.UsersChangedHandler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This contains all the known state about an open Connection to IGS.
@@ -22,6 +25,7 @@ public class ConnectionState {
     List<GameInfo> gameInfos = new ArrayList<>();
     List<UsersChangedHandler> usersChangedHandlers = new ArrayList<>();
     List<GameInfoChangedHandler> gameInfoChangedHandlers = new ArrayList<>();
+    Map<Integer, Position> gameStateMap = new HashMap<>();
 
     public void addUsersChangedHandler(UsersChangedHandler whoChangedHandler) {
         usersChangedHandlers.add(whoChangedHandler);
@@ -31,13 +35,15 @@ public class ConnectionState {
         gameInfoChangedHandlers.add(gameInfoChangedHandler);
     }
 
-    private void onUsersChanged() {
+    private void onUsersChanged(List<UserInfo> userInfos) {
+        this.userInfos = userInfos;
         for (UsersChangedHandler handler : usersChangedHandlers) {
             handler.usersChanged(userInfos);
         }
     }
 
-    private void onGameInfosChanged() {
+    private void onGameInfosChanged(List<GameInfo> gameInfos) {
+        this.gameInfos = gameInfos;
         for (GameInfoChangedHandler handler : gameInfoChangedHandlers) {
             handler.gameInfosChanged(gameInfos);
         }
@@ -47,6 +53,8 @@ public class ConnectionState {
         this.onLogin = onLogin;
         this.stream = stream;
         this.connection = connection;
+        connection.addGameInfoChangedHandler(this::onGameInfosChanged);
+        connection.addUsersChangedHandler(this::onUsersChanged);
     }
 
     private void handleLogin() {
@@ -58,16 +66,19 @@ public class ConnectionState {
     }
 
     public void userList() {
-        connection.userList().thenAccept(newWhoObjects -> {
-            this.userInfos = newWhoObjects;
-            onUsersChanged();
-        });
+        connection.userList();
     }
 
     public void gameList() {
-        connection.gameList().thenAccept(newGameInfoObjects -> {
-            this.gameInfos = newGameInfoObjects;
-            onGameInfosChanged();
-        });
+        connection.gameList();
+    }
+
+    public void observeGame(int gameNumber) {
+        if (!gameStateMap.containsKey(gameNumber)) {
+            //Position state = new Position();
+            //connection.addGameUpdateHandler(gameNumber, state);
+            //gameStateMap.put(gameNumber, state);
+        }
+        connection.observeGame(gameNumber);
     }
 }
