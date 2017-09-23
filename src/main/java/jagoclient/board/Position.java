@@ -2,22 +2,32 @@ package jagoclient.board;
 
 import rene.util.list.Tree;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
-Store a complete game position.
-Contains methods for group determination and liberties.
+ * Store a complete game position. Used primarily to draw the
+ * current state of the board.
+ * Contains methods for group determination and liberties.
 */
-
 public class Position
 {	int S; // size (9,11,13 or 19)
 	int C; // next turn (1 is black, -1 is white)
 	Field[][] F; // the board
+	List<PositionUpdatedHandler> positionUpdatedHandlers = new ArrayList<>();
+
+	public interface PositionUpdatedHandler {
+		void positionUpdated(int i, int j);
+		void allPositionsUpdated();
+	}
 	
 	/** 
 	Initialize F with an empty board, and set the next turn to black.
 	*/
 	public Position (int size)
-	{	S=size;
+	{
+		S=size;
 		F=new Field[S][S];
 		int i,j;
 		for (i=0; i<S; i++)
@@ -31,7 +41,8 @@ public class Position
 	the next turn to black.
 	*/
 	public Position (Position P)
-	{	S=P.S;
+	{
+		S=P.S;
 		F=new Field[S][S];
 		int i,j;
 		for (i=0; i<S; i++)
@@ -47,6 +58,22 @@ public class Position
 			    if (P.haslabel(i,j)) setlabel(i,j,P.label(i,j));
 			}
 		color(P.color());
+	}
+
+	public void addPositionUpdatedHandler(PositionUpdatedHandler handler) {
+		positionUpdatedHandlers.add(handler);
+	}
+
+	void update(int i, int j) {
+		for (PositionUpdatedHandler handler : positionUpdatedHandlers) {
+			handler.positionUpdated(i, j);
+		}
+	}
+
+	void updateall() {
+		for (PositionUpdatedHandler handler : positionUpdatedHandlers) {
+			handler.allPositionsUpdated();
+		}
 	}
 
 	// Interface routines to set or ask a field:

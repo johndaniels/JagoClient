@@ -18,7 +18,7 @@ public class ConnectedBoard extends Board
 	}
 
 	public synchronized void setmouse (int i, int j, int c)	
-	{	if (Pos.content().main() && CGF.wantsmove()) return;
+	{	if (boardState.current().content().main() && CGF.wantsmove()) return;
 		super.setmouse(i,j,c);
 	}
 
@@ -28,19 +28,19 @@ public class ConnectedBoard extends Board
 	public synchronized void setmousec (int i, int j, int c) {}
 
 	public synchronized void movemouse (int i, int j)
-	{	if (Pos.haschildren()) return;
+	{	if (boardState.hasChildren()) return;
 		if (boardPosition.color(i,j)!=0) return;
 		if (captured==1 && capturei==i && capturej==j &&
 			GF.getParameter("preventko",true)) return;
-		if (Pos.content().main() && CGF.wantsmove())
+		if (boardState.current().content().main() && CGF.wantsmove())
 		{	if (CGF.moveset(i,j))
-			{	sendi=i; sendj=j;
+			{
 				update(i,j); copy();
 				MyColor= boardPosition.color();
 			}
 			JagoSound.play("click","",false);
 		}
-		else set(i,j); // try to set a new move
+		else boardState.set(i,j); // try to set a new move
 	}
 
 	/**
@@ -49,22 +49,22 @@ public class ConnectedBoard extends Board
 	the GoFrame wants the removal, it gets it.
 	*/
 	public synchronized void removegroup (int i0, int j0)
-	{	if (Pos.haschildren()) return;
+	{	if (boardState.hasChildren()) return;
 		if (boardPosition.color(i0,j0)==0) return;
-		if (CGF.wantsmove() && Pos.content().main())
+		if (CGF.wantsmove() && boardState.current().content().main())
 		{	CGF.moveset(i0,j0);
 		}
-		super.removegroup(i0,j0);
+		boardState.removegroup(i0,j0);
 	}
 
 	/**
 	Take back the last move.
 	*/
 	public synchronized void undo ()
-	{	if (Pos.content().main()
+	{	if (boardState.current().content().main()
 			&& CGF.wantsmove())
-		{	if (!Pos.haschildren())
-			{	if (State!=1 && State!=2) clearremovals();
+		{	if (!boardState.hasChildren())
+			{	if (State!=1 && State!=2) boardState.clearremovals();
 				CGF.undo();
 			}
 			return;
@@ -76,12 +76,11 @@ public class ConnectedBoard extends Board
 	Pass (report to the GoFrame if necessary.
 	*/
 	public synchronized void pass ()
-	{	if (Pos.haschildren()) return;
-		if (GF.blocked() && Pos.content().main()) return;
-		if (Pos.content().main() && CGF.wantsmove())
+	{	if (boardState.hasChildren()) return;
+		if (GF.blocked() && boardState.current().content().main()) return;
+		if (boardState.current().content().main() && CGF.wantsmove())
 		{	CGF.movepass(); return;
 		}
-		super.pass();
 	}
 
 	/**
@@ -89,8 +88,7 @@ public class ConnectedBoard extends Board
 	Will not be possible, if the GoFrame wants moves.
 	*/
 	public synchronized void insertnode ()
-	{	if (!Pos.haschildren() && Pos.content().main() && CGF.wantsmove()) return;
-		super.insertnode();
+	{	if (!boardState.hasChildren() && boardState.current().content().main() && CGF.wantsmove()) return;
 	}
 	
 	/**

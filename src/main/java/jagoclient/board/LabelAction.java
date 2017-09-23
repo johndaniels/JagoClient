@@ -10,28 +10,25 @@ Jago notes labes in consecutive letters, but SGF does not have this
 feature, thus it outputs labels as LB[field:letter].
 */
 
-public class LabelAction extends Action
-{	BoardInterface GF;
-	public LabelAction (String arg, BoardInterface gf)
-	{	super("L",arg);
-		GF=gf;
+public class LabelAction extends Action {
+	public LabelAction (String arg)
+	{
+		super("L",arg);
 	}
-	public LabelAction (BoardInterface gf)
-	{	super("L");
-		GF=gf;
+	public LabelAction ()
+	{
+		super("L");
 	}
 	public void print (PrintWriter o)
-	{	if (GF.getParameter("puresgf",false))
-		{	o.println();
-			o.print("LB");
-			char[] c=new char[1];
-			int i=0;
-			for (String argument : Arguments)
-			{	c[0]=(char)('a'+i);
-				o.print("["+argument+":"+new String(c)+"]");
-				i++;
-			}
+	{
+		o.println();
+		o.print("LB");
+		char[] c=new char[1];
+		int i=0;
+		for (String argument : Arguments)
+		{	c[0]=(char)('a'+i);
+			o.print("["+argument+":"+new String(c)+"]");
+			i++;
 		}
-		else super.print(o);
 	}
 }

@@ -51,7 +51,7 @@ public class GMPGoFrame extends ConnectedGoFrame implements TimedBoard
 	public void gotPass (int color)
 	{	updateTime();
 		LOG.info("Opponent passed");
-		B.setpass();
+		boardState.setpass();
 		new Message(this,Global.resourceString("Pass")).setVisible(true);
 	}
 
@@ -61,7 +61,7 @@ public class GMPGoFrame extends ConnectedGoFrame implements TimedBoard
 		updateTime();
 		LOG.info("I pass");
 		C.pass();
-		B.setpass();
+		boardState.setpass();
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class GMPGoFrame extends ConnectedGoFrame implements TimedBoard
 	}
 
 	public void doundo (int n)
-	{	B.undo(n);
+	{	boardState.undo(n);
 	}
 
 	@Override

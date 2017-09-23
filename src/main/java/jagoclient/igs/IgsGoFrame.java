@@ -115,7 +115,6 @@ public class IgsGoFrame extends ConnectedGoFrame implements TimedBoard,
 		}
 		else if (Global.resourceString("Refresh").equals(o) && Dis != null)
 		{
-			B.deltree();
 			Dis.refresh();
 		}
 		else if (Global.resourceString("Remove_groups").equals(o))
@@ -124,7 +123,7 @@ public class IgsGoFrame extends ConnectedGoFrame implements TimedBoard,
 		}
 		else if (Global.resourceString("Send_done").equals(o))
 		{
-			if (B.canfinish() && Dis != null && Dis.wantsmove())
+			if (boardState.canfinish() && Dis != null && Dis.wantsmove())
 			{
 				Dis.out("done");
 				addComment("--> done <--");
@@ -295,7 +294,7 @@ public class IgsGoFrame extends ConnectedGoFrame implements TimedBoard,
 			+ formmoves(WhiteMoves) + " - " + BlackName + " "
 			+ formtime(BlackTime - BlackRun) + " " + formmoves(BlackMoves);
 		if (Global.getParameter("extrainformation", true))
-			S = S + " " + B.extraInformation();
+			S = S + " " + boardState.extraInformation();
 		if ( !S.equals(OldS))
 		{
 			if ( !TimerInTitle)
@@ -388,7 +387,7 @@ public class IgsGoFrame extends ConnectedGoFrame implements TimedBoard,
 		if (s
 			.startsWith("Board is restored to what it was when you started scoring"))
 		{
-			B.clearremovals();
+			boardState.clearremovals();
 			s = Global.resourceString("Opponent_undid_removals_");
 		}
 		if (ShortLines.getState() && s.length() > 100) return;
@@ -437,6 +436,6 @@ public class IgsGoFrame extends ConnectedGoFrame implements TimedBoard,
 	public void setinformation (String black, String blackrank, String white,
 		String whiterank, String komi, String handicap)
 	{
-		B.setinformation(black, blackrank, white, whiterank, komi, handicap);
+		boardState.setinformation(black, blackrank, white, whiterank, komi, handicap);
 	}
 }

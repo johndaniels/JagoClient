@@ -43,7 +43,8 @@ public class Node
 	
 	/** add an action (at end) */
 	public void addaction (Action a)
-	{	Actions.add(a);
+	{
+		Actions.add(a);
 	}
 
 	/** expand an action of the same type as a, else generate a new action */

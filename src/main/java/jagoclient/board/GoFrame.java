@@ -571,6 +571,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	TextArea Comment; // For comments
 	String Dir; // FileDialog directory
 	public Board B; // The board itself
+	protected BoardState boardState;
 	// menu check items:
 	CheckboxMenuItem SetBlack, SetWhite, Black, White, Mark, Letter, Hide,
 		Square, Cross, Circle, Triangle, TextMark;
@@ -743,6 +744,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		L = new OutputLabel(Global.resourceString("New_Game"));
 		Lm = new OutputLabel("--");
 		B = new Board(19, this);
+		boardState =  B.boardState;
 		MyPanel BP = new MyPanel(new BorderLayout());
 		BP.add("Center", B);
 		// Add the label
@@ -754,7 +756,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		JPanel bcp;
 		if (Global.getParameter("shownavigationtree", true))
 		{
-			Navigation = new NavigationPanel(B);
+			Navigation = new NavigationPanel(boardState);
 			bcp = new BoardCommentPanel(new Panel3D(BP),
 				new CommentNavigationPanel(new Panel3D(Comment), new Panel3D(
 					Navigation)), B);
@@ -872,7 +874,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		else if (s.equals("delete"))
 			B.deletestones();
 		else if (s.equals("deletemarks"))
-			B.clearmarks();
+			boardState.clearmarks();
 		else if (s.equals("play")) B.resume();
 	}
 
@@ -895,51 +897,51 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			}
 			else if ("<".equals(o))
 			{
-				B.back();
+				boardState.back();
 			}
 			else if (">".equals(o))
 			{
-				B.forward();
+				boardState.forward();
 			}
 			else if (">>".equals(o))
 			{
-				B.fastforward();
+				boardState.fastforward();
 			}
 			else if ("<<".equals(o))
 			{
-				B.fastback();
+				boardState.fastback();
 			}
 			else if ("I<<".equals(o))
 			{
-				B.allback();
+				boardState.allback();
 			}
 			else if (">>I".equals(o))
 			{
-				B.allforward();
+				boardState.allforward();
 			}
 			else if ("<rankValue".equals(o))
 			{
-				B.varleft();
+				boardState.varleft();
 			}
 			else if ("rankValue>".equals(o))
 			{
-				B.varright();
+				boardState.varright();
 			}
 			else if ("rankValue".equals(o))
 			{
-				B.varup();
+				boardState.varup();
 			}
 			else if ("**".equals(o))
 			{
-				B.varmaindown();
+				boardState.varmaindown();
 			}
 			else if ("*".equals(o))
 			{
-				B.varmain();
+				boardState.varmain();
 			}
 			else if (Global.resourceString("Pass").equals(o))
 			{
-				B.pass();
+				boardState.pass();
 				notepass();
 			}
 			else if (Global.resourceString("Resume_playing").equals(o))
@@ -948,11 +950,11 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			}
 			else if (Global.resourceString("Clear_all_marks").equals(o))
 			{
-				B.clearmarks();
+				boardState.clearmarks();
 			}
 			else if (Global.resourceString("Undo_Adding_Removing").equals(o))
 			{
-				B.clearremovals();
+				boardState.clearremovals();
 			}
 			else if (Global.resourceString("Remove_groups").equals(o))
 			{
@@ -960,16 +962,15 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			}
 			else if (Global.resourceString("Score").equals(o))
 			{
-				String s = B.done();
+				String s = boardState.done();
 				if (s != null) new Message(this, s).setVisible(true);
 			}
 			else if (Global.resourceString("Local_Count").equals(o))
 			{
-				new Message(this, B.docount()).setVisible(true);
+				new Message(this, boardState.docount()).setVisible(true);
 			}
 			else if (Global.resourceString("New").equals(o))
 			{
-				B.deltree();
 				B.copy();
 				setTitle(DefaultTitle);
 			}
@@ -982,13 +983,13 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 					{
 						PrintWriter po = new PrintWriter(new OutputStreamWriter(ba,
 							"UTF8"), true);
-						B.saveXML(po, "utf-8");
+						boardState.saveXML(po, "utf-8");
 						po.close();
 					}
 					else
 					{
 						PrintWriter po = new PrintWriter(ba, true);
-						B.save(po);
+						boardState.save(po);
 						po.close();
 					}
 				}
@@ -1004,7 +1005,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				PrintWriter po = new PrintWriter(ba, true);
 				try
 				{
-					B.asciisave(po);
+					boardState.asciisave(po);
 				}
 				catch (Exception ex)
 				{}
@@ -1020,7 +1021,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				FileDialog fd = new FileDialog(this, Global.resourceString("Save"),
 					FileDialog.SAVE);
 				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = B.firstnode().getaction("GN");
+				String s = boardState.firstnode().getaction("GN");
 				if (s != null && !s.equals(""))
 					fd.setFile(s
 						+ "."
@@ -1047,7 +1048,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 							fo = new PrintWriter(new OutputStreamWriter(
 								new FileOutputStream(fd.getDirectory() + fn),
 								"UTF8"));
-							B.saveXML(fo, "utf-8");
+							boardState.saveXML(fo, "utf-8");
 						}
 						else
 						{
@@ -1058,7 +1059,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 								fo = new PrintWriter(new OutputStreamWriter(
 									new FileOutputStream(fd.getDirectory() + fn),
 									"UTF8"));
-								B.saveXML(fo, "utf-8");
+								boardState.saveXML(fo, "utf-8");
 							}
 							else
 							{
@@ -1089,7 +1090,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 									fo = new PrintWriter(new OutputStreamWriter(
 										fos, Encoding));
 								}
-								B.saveXML(fo, XMLEncoding);
+								boardState.saveXML(fo, XMLEncoding);
 							}
 						}
 					}
@@ -1103,7 +1104,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 							new FileOutputStream(fd.getDirectory() + fn), Global
 								.getParameter("encoding", System
 									.getProperty("file.encoding"))));
-						B.save(fo);
+						boardState.save(fo);
 					}
 					fo.close();
 				}
@@ -1120,7 +1121,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				FileDialog fd = new FileDialog(this, Global
 					.resourceString("Save Position"), FileDialog.SAVE);
 				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = B.firstnode().getaction("GN");
+				String s = boardState.firstnode().getaction("GN");
 				if (s != null && !s.equals(""))
 					fd.setFile(s
 						+ "."
@@ -1146,7 +1147,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 							fo = new PrintWriter(new OutputStreamWriter(
 								new FileOutputStream(fd.getDirectory() + fn),
 								"UTF8"));
-							B.saveXML(fo, "utf-8");
+							boardState.saveXML(fo, "utf-8");
 						}
 						else
 						{
@@ -1157,7 +1158,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 								fo = new PrintWriter(new OutputStreamWriter(
 									new FileOutputStream(fd.getDirectory() + fn),
 									"UTF8"));
-								B.saveXMLPos(fo, "utf-8");
+								boardState.saveXMLPos(fo, "utf-8");
 							}
 							else
 							{
@@ -1188,7 +1189,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 									fo = new PrintWriter(new OutputStreamWriter(
 										fos, Encoding));
 								}
-								B.saveXMLPos(fo, XMLEncoding);
+								boardState.saveXMLPos(fo, XMLEncoding);
 							}
 						}
 					}
@@ -1202,7 +1203,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 							new FileOutputStream(fd.getDirectory() + fn), Global
 								.getParameter("encoding", System
 									.getProperty("file.encoding"))));
-						B.savePos(fo);
+						boardState.savePos(fo);
 					}
 					fo.close();
 				}
@@ -1219,7 +1220,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				FileDialog fd = new FileDialog(this, Global
 					.resourceString("Save_Bitmap"), FileDialog.SAVE);
 				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = B.firstnode().getaction("GN");
+				String s = boardState.firstnode().getaction("GN");
 				if (s != null && !s.equals(""))
 					fd.setFile(s + "." + Global.getParameter("extension", "bmp"));
 				else fd.setFile("*." + Global.getParameter("extension", "bmp"));
@@ -1266,7 +1267,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 						InputStream in = new FileInputStream(fd.getDirectory() + fn);
 						try
 						{
-							B.loadXml(new XmlReader(in));
+							boardState.loadXml(new XmlReader(in));
 						}
 						catch (XmlReaderException e)
 						{
@@ -1287,7 +1288,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 									.getProperty("file.encoding"))));
 						try
 						{
-							B.load(fi);
+							boardState.load(fi);
 						}
 						catch (IOException e)
 						{
@@ -1302,12 +1303,12 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 						+ ex.toString()).setVisible(true);
 					return;
 				}
-				String s = B.firstnode().getaction("GN");
+				String s = boardState.firstnode().getaction("GN");
 				if (s != null && !s.equals(""))
 					setTitle(s);
 				else
 				{
-					B.firstnode().setaction("GN", FileName.purefilename(fn));
+					boardState.firstnode().setaction("GN", FileName.purefilename(fn));
 					setTitle(FileName.purefilename(fn));
 				}
 				if (fn.toLowerCase().indexOf("kogo") >= 0)
@@ -1347,25 +1348,25 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			}
 			else if (Global.resourceString("Insert_Node").equals(o))
 			{
-				B.insertnode();
+				boardState.insertnode();
 			}
 			else if (Global.resourceString("Insert_Variation").equals(o))
 			{
-				B.insertvariation();
+				boardState.insertvariation();
 			}
 			else if (Global.resourceString("Game_Information").equals(o))
 			{
-				new EditInformation(this, B.firstnode()).setVisible(true);
+				new EditInformation(this, boardState.firstnode()).setVisible(true);
 			}
 			else if (Global.resourceString("Game_Copyright").equals(o))
 			{
-				new EditCopyright(this, B.firstnode()).setVisible(true);
+				new EditCopyright(this, boardState.firstnode()).setVisible(true);
 			}
 			else if (Global.resourceString("Prisoner_Count").equals(o))
 			{
 				String s = Global.resourceString("Black__") + B.Pw
 					+ Global.resourceString("__White__") + B.Pb + "\n"
-					+ Global.resourceString("Komi") + " " + B.getKomi();
+					+ Global.resourceString("Komi") + " " + boardState.getKomi();
 				new Message(this, s).setVisible(true);
 			}
 			else if (Global.resourceString("Board_Font").equals(o))
@@ -1403,27 +1404,23 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			}
 			else if (Global.resourceString("Goto_Next_Name").equals(o))
 			{
-				B.gotonext();
+				boardState.gotonext();
 			}
 			else if (Global.resourceString("Goto_Previous_Name").equals(o))
 			{
-				B.gotoprevious();
+				boardState.gotoprevious();
 			}
 			else if (Global.resourceString("Next_Game").equals(o))
 			{
-				B.gotonextmain();
 			}
 			else if (Global.resourceString("Previous_Game").equals(o))
 			{
-				B.gotopreviousmain();
 			}
 			else if (Global.resourceString("Add_Game").equals(o))
 			{
-				B.addnewgame();
 			}
 			else if (Global.resourceString("Remove_Game").equals(o))
 			{
-				B.removegame();
 			}
 			else if (Global.resourceString("Set_Encoding").equals(o))
 			{
@@ -1454,7 +1451,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 
 	public void search ()
 	{
-		B.search(Global.getParameter("searchstring", "++"));
+		boardState.search(Global.getParameter("searchstring", "++"));
 	}
 
 	@Override
@@ -1632,31 +1629,31 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	/** set a black move at i,j */
 	public void black (int i, int j)
 	{
-		B.black(i, j);
+		boardState.black(i, j);
 	}
 
 	/** set a white move at i,j */
 	public void white (int i, int j)
 	{
-		B.white(i, j);
+		boardState.white(i, j);
 	}
 
 	/** set a black stone at i,j */
 	public void setblack (int i, int j)
 	{
-		B.setblack(i, j);
+		boardState.setblack(i, j);
 	}
 
 	/** set a black stone at i,j */
 	public void setwhite (int i, int j)
 	{
-		B.setwhite(i, j);
+		boardState.setwhite(i, j);
 	}
 
 	/** mark the field at i,j as territory */
 	public void territory (int i, int j)
 	{
-		B.territory(i, j);
+		territory(i, j);
 	}
 
 	/** Next to move */
@@ -1866,12 +1863,12 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	/** pass the Board */
 	public void pass ()
 	{
-		B.pass();
+		boardState.pass();
 	}
 
 	public void setpass ()
 	{
-		B.setpass();
+		boardState.setpass();
 	}
 
 	/** Notify about pass */
@@ -1907,7 +1904,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	 */
 	public void undo (int n)
 	{
-		B.undo(n);
+		boardState.undo(n);
 	}
 
 	/** undo (only processed from ConnectedGoFrame) */
@@ -1944,7 +1941,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	 */
 	public void doboardsize (int s)
 	{
-		B.setsize(s);
+		boardState.setsize(s);
 	}
 
 	/** called by menu action, opens a SizeQuestion dialog */
@@ -1966,7 +1963,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	/** add a comment to the board (called from external sources) */
 	public void addComment (String s)
 	{
-		B.addcomment(s);
+		boardState.addcomment(s);
 	}
 
 	public void result (int b, int w)
@@ -2047,10 +2044,10 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		validate();
 		try
 		{
-			B.load(new BufferedReader(file));
+			boardState.load(new BufferedReader(file));
 			file.close();
 			setGameTitle(LaterFilename);
-			B.gotoMove(LaterMove);
+			boardState.gotoMove(LaterMove);
 		}
 		catch (Exception ex)
 		{
@@ -2063,14 +2060,14 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 
 	public void setGameTitle (String filename)
 	{
-		String s = B.firstnode().getaction("GN");
+		String s = boardState.firstnode().getaction("GN");
 		if (s != null && !s.equals(""))
 		{
 			setTitle(s);
 		}
 		else
 		{
-			B.firstnode().addaction(new Action("GN", filename));
+			boardState.firstnode().addaction(new Action("GN", filename));
 			setTitle(filename);
 		}
 	}
@@ -2082,7 +2079,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		try
 		{
 			XmlReader xml = new XmlReader(new BufferedReader(file));
-			B.loadXml(xml);
+			boardState.loadXml(xml);
 			file.close();
 			setGameTitle(LaterFilename);
 		}
@@ -2122,13 +2119,13 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				{
 					PrintWriter po = new PrintWriter(new OutputStreamWriter(ba,
 						"UTF8"), true);
-					B.saveXML(po, "utf-8");
+					boardState.saveXML(po, "utf-8");
 					po.close();
 				}
 				else
 				{
 					PrintWriter po = new PrintWriter(ba, true);
-					B.save(po);
+					boardState.save(po);
 					po.close();
 				}
 			}
@@ -2193,7 +2190,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	 */
 	public void setname (String s)
 	{
-		B.setname(s);
+		boardState.setname(s);
 	}
 
 	/**
@@ -2202,7 +2199,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	 */
 	public void callInsert ()
 	{
-		new NodeNameEdit(this, B.getname()).setVisible(true);
+		new NodeNameEdit(this, boardState.getname()).setVisible(true);
 	}
 
 	/**
@@ -2210,7 +2207,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	 */
 	public void remove (int i, int j)
 	{
-		B.remove(i, j);
+		boardState.remove(i, j);
 	}
 
 	/**
@@ -2301,7 +2298,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			{
 				case 'f':
 				case 'F':
-					B.search(Global.getParameter("searchstring", "++"));
+					boardState.search(Global.getParameter("searchstring", "++"));
 					break;
 			}
 		}

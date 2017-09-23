@@ -316,7 +316,7 @@ public class ConnectedGoFrame extends GoFrame
 	public void addComment (String s)
 	// add a comment to the board (called from external sources)
 	{
-		B.addcomment(s);
+		boardState.addcomment(s);
 		if (AllComments != null) AllComments.append(s + "\n");
 	}
 

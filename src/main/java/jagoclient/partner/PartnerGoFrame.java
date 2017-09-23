@@ -62,14 +62,14 @@ public class PartnerGoFrame extends ConnectedGoFrame
 			return;
 		}
 		else if (Global.resourceString("Count").equals(o))
-		{	if (Ended || !B.ismain())
-			{	String s=B.done();
+		{	if (Ended || !boardState.ismain())
+			{	String s=boardState.done();
 				if (s!=null) new Message(this,s).setVisible(true);
 			}
 			return;
 		}
 		else if (Global.resourceString("Undo").equals(o))
-		{	if (Ended || !B.ismain()) B.undo();
+		{	if (Ended || !boardState.ismain()) B.undo();
 			else
 			{	if (Col!=B.maincolor()) return;
 				B.undo();
@@ -77,7 +77,7 @@ public class PartnerGoFrame extends ConnectedGoFrame
 			return;
 		}
 		else if (Global.resourceString("Undo_Adding_Removing").equals(o))
-		{	B.clearremovals();
+		{	boardState.clearremovals();
 			return;
 		}
 		else super.doAction(o);
@@ -121,13 +121,13 @@ public class PartnerGoFrame extends ConnectedGoFrame
 	}
 
 	public void dopass ()
-	{	B.setpass();
+	{	boardState.setpass();
 	}
 
 	public void undo () { PF.undo(); }
 
 	public void undo (int n)
-	{	B.undo(n);
+	{	boardState.undo(n);
 	}
 
 	public void settimes (int bt, int bm, int wt, int wm)

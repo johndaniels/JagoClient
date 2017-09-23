@@ -12,7 +12,7 @@ import rene.util.list.Tree;
 
 public class NavigationPanel extends MyPanel
 {
-	Board B;
+	BoardState boardState;
 	final int size = 5;
 	int w, h;
 	boolean OverflowRequest, Overflow;
@@ -21,9 +21,9 @@ public class NavigationPanel extends MyPanel
 	Vector Parents;
 	Color BoardColor;
 
-	public NavigationPanel (Board b)
+	public NavigationPanel (BoardState boardState)
 	{
-		B = b;
+		this.boardState = boardState;
 		BoardColor = Global.ControlBackground;
 	}
 
@@ -38,7 +38,7 @@ public class NavigationPanel extends MyPanel
 		h = getSize().height;
 		g.setColor(BoardColor);
 		g.fillRect(0, 0, w, h);
-		Tree<Node> Pos = B.Pos;
+		Tree<Node> Pos = boardState.Pos;
 		Parents.addElement(Pos);
 		Tree<Node> ParentPos = Pos.parent();
 		Tree<Node> StartPos = Pos;
@@ -121,7 +121,7 @@ public class NavigationPanel extends MyPanel
 			g.drawLine(x, y + size, x, y + 2 * size);
 			int x0 = x;
 			x = paint(g, p, x, y + 3 * size, current, line + 1, currentline);
-			if (Board.nextchild(p) != null)
+			if (boardState.nextchild(p) != null)
 			{
 				g.setColor(Color.black);
 				g.drawLine(x0, y + size * 3 / 2, x0 + size, y + size * 3 / 2);

@@ -9,23 +9,17 @@ new SGF format no longer allows the "M" tag.
 @see jagoclient.board.Action
 */
 
-public class MarkAction extends Action
-{	BoardInterface GF;
-	public MarkAction (String arg, BoardInterface gf)
-	{	super("M",arg);
-		GF=gf;
+public class MarkAction extends Action {
+	public MarkAction (String arg)
+	{
+		super("M",arg);
 	}
-	public MarkAction (BoardInterface gf)
-	{	super("M");
-		GF=gf;
+	public MarkAction ()
+	{
+		super("M");
 	}
 	public void print (PrintWriter o)
-	{	if (GF.getParameter("puresgf",false))
-		{	o.println(); o.print(Field.Marker.CROSS);
-			for (String argument : Arguments)
-			{	o.print("["+argument+"]");
-			}
-		}
-		else super.print(o);
+	{
+		super.print(o);
 	}
 }

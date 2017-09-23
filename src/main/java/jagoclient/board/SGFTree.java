@@ -37,7 +37,6 @@ public class SGFTree
 	final int maxbuffer=4096;
 	char[] Buffer=new char[maxbuffer]; // the buffer for reading of files
 	int BufferN;
-	BoardInterface GF;
 
 	char readnext (BufferedReader in) throws IOException
 	{	int c=readchar(in);
@@ -78,7 +77,7 @@ public class SGFTree
 	// return the character, which did not fit into node properties,
 	// usually ;, ( or )
 	char readnode (Tree<Node> p, BufferedReader in) throws IOException
-	{	boolean sgf=GF.getParameter("sgfcomments",false);
+	{	boolean sgf=false;
 		char c=readnext(in);
 		Action a;
 		Node n=new Node(p.content().number());
@@ -99,8 +98,8 @@ public class SGFTree
 			}
 			if (BufferN==0) throw new IOException();
 			s=new String(Buffer,0,BufferN);
-			if (s.equals("L")) a=new LabelAction(GF);
-			else if (s.equals("M")) a=new MarkAction(GF);
+			if (s.equals("L")) a=new LabelAction();
+			else if (s.equals("M")) a=new MarkAction();
 			else a=new Action(s);
 			while (c=='[')
 			{	BufferN=0;
@@ -206,7 +205,7 @@ public class SGFTree
 	Read the tree from an BufferedReader in SGF format.
 	The BoardInterfaces is only used to determine the "sgfcomments" parameter.
 	*/	
-	public static Vector load (BufferedReader in, BoardInterface gf)
+	public static Vector load (BufferedReader in)
 		throws IOException
 	{	Vector v=new Vector();
 		boolean linestart=true;
@@ -224,7 +223,6 @@ public class SGFTree
 				if (c=='\n') linestart=true;
 				else linestart=false;
 			}
-			T.GF=gf;
 			T.readnodes(T.History,in); // read the nodes
 			v.addElement(T);
 		}
@@ -243,7 +241,7 @@ public class SGFTree
 	Read all games from a tree.
 	@return Vector of trees.
 	*/
-	static Vector readnodes (XmlTree tree, BoardInterface gf)
+	static Vector readnodes (XmlTree tree)
 		throws XmlReaderException
 	{	Vector v=new Vector();
 		Enumeration root=tree.getContent();
@@ -266,7 +264,6 @@ public class SGFTree
 				testTag(information.getTag(),"Information");
 				getBoardSize(information);
 				SGFTree t=new SGFTree(new Node(1));
-				t.GF=gf;
 				Tree<Node> p=t.readnodes(e,null,tree,true,1);
 				if (p!=null) setInformation(p,information);
 				t.History=p;
@@ -514,7 +511,7 @@ public class SGFTree
 					{	n.expandaction(new Action("TB",xmlToSgf(t)));
 					}
 				}
-				else n.expandaction(new MarkAction(xmlToSgf(t),GF));
+				else n.expandaction(new MarkAction(xmlToSgf(t)));
 			}
 			else if (tag.name().equals("BlackTimeLeft"))
 			{	n.addaction(new Action("BL",getText(t)));
@@ -529,8 +526,12 @@ public class SGFTree
 			{	if (!tag.hasParam("type"))
 					throw new XmlReaderException("Illegal <SGF> tag.");
 				Action a;
-				if (tag.getValue("type").equals("M")) a=new MarkAction(GF);
-				else a=new Action(tag.getValue("type"));
+				if (tag.getValue("type").equals("M")) {
+					a=new MarkAction();
+				}
+				else {
+					a=new Action(tag.getValue("type"));
+				}
 				Enumeration eh=t.getContent();
 				while (eh.hasMoreElements())
 				{	XmlTree th=(XmlTree)eh.nextElement();
@@ -662,11 +663,11 @@ public class SGFTree
 	/**
 	Read a number of trees from an XML file.
 	*/
-	public static Vector load (XmlReader xml, BoardInterface gf)
+	public static Vector load (XmlReader xml)
 		throws XmlReaderException
 	{	XmlTree t=xml.scan();
 		if (t==null) throw new XmlReaderException("Illegal file format");
-		Vector v=readnodes(t,gf);
+		Vector v=readnodes(t);
 		return v;
 	}
 
