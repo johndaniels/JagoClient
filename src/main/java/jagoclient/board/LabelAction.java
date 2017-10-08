@@ -13,11 +13,11 @@ feature, thus it outputs labels as LB[field:letter].
 public class LabelAction extends Action {
 	public LabelAction (String arg)
 	{
-		super("L",arg);
+		super(Type.LABEL,arg);
 	}
 	public LabelAction ()
 	{
-		super("L");
+		super(Type.LABEL);
 	}
 	public void print (PrintWriter o)
 	{

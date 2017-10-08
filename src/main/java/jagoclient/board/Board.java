@@ -816,7 +816,7 @@ public class Board extends Canvas implements MouseListener,
 	{
 		Node n = boardState.current().content();
 		number = n.number();
-		NodeName = n.getaction("N");
+		NodeName = n.getaction(Action.Type.NAME);
 		String ms = "";
 		if (n.main())
 		{
@@ -853,7 +853,7 @@ public class Board extends Canvas implements MouseListener,
 			default:
 				if (boardPosition.color() > 0)
 				{
-					String s = boardState.lookuptime("BL");
+					String s = boardState.lookuptime(Action.Type.BLACK_TIME);
 					if ( !s.equals(""))
 						LText = ms + Global.resourceString("Next_move__Black_")
 							+ number + " (" + s + ")";
@@ -862,7 +862,7 @@ public class Board extends Canvas implements MouseListener,
 				}
 				else
 				{
-					String s = boardState.lookuptime("WL");
+					String s = boardState.lookuptime(Action.Type.WHITE_TIME);
 					if ( !s.equals(""))
 						LText = ms + Global.resourceString("Next_move__White_")
 							+ number + " (" + s + ")";

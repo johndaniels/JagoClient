@@ -12,11 +12,11 @@ new SGF format no longer allows the "M" tag.
 public class MarkAction extends Action {
 	public MarkAction (String arg)
 	{
-		super("M",arg);
+		super(Type.MARK,arg);
 	}
 	public MarkAction ()
 	{
-		super("M");
+		super(Type.MARK);
 	}
 	public void print (PrintWriter o)
 	{

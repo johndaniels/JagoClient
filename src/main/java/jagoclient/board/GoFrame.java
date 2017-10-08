@@ -88,25 +88,25 @@ class EditInformation extends CloseDialog
 		F = f;
 		JPanel p = new MyPanel(new GridLayout(0, 2));
 		p.add(new MyLabel(Global.resourceString("Game_Name")));
-		p.add(GameName = new FormTextField(n.getaction("GN")));
+		p.add(GameName = new FormTextField(n.getaction(Action.Type.GAME_NAME)));
 		p.add(new MyLabel(Global.resourceString("Date")));
-		p.add(Date = new FormTextField(n.getaction("DT")));
+		p.add(Date = new FormTextField(n.getaction(Action.Type.DATE)));
 		p.add(new MyLabel(Global.resourceString("Black")));
-		p.add(Black = new FormTextField(n.getaction("PB")));
+		p.add(Black = new FormTextField(n.getaction(Action.Type.BLACK_PLAYER_NAME)));
 		p.add(new MyLabel(Global.resourceString("Black_Rank")));
-		p.add(BlackRank = new FormTextField(n.getaction("BR")));
+		p.add(BlackRank = new FormTextField(n.getaction(Action.Type.BLACK_PLAYER_RANK)));
 		p.add(new MyLabel(Global.resourceString("White")));
-		p.add(White = new FormTextField(n.getaction("PW")));
+		p.add(White = new FormTextField(n.getaction(Action.Type.WHITE_PLAYER_NAME)));
 		p.add(new MyLabel(Global.resourceString("White_Rank")));
-		p.add(WhiteRank = new FormTextField(n.getaction("WR")));
+		p.add(WhiteRank = new FormTextField(n.getaction(Action.Type.WHITE_PLAYER_RANK)));
 		p.add(new MyLabel(Global.resourceString("Result")));
-		p.add(Result = new FormTextField(n.getaction("RE")));
+		p.add(Result = new FormTextField(n.getaction(Action.Type.RESULT)));
 		p.add(new MyLabel(Global.resourceString("Time")));
-		p.add(Time = new FormTextField(n.getaction("TM")));
+		p.add(Time = new FormTextField(n.getaction(Action.Type.TIME)));
 		p.add(new MyLabel(Global.resourceString("Komi")));
-		p.add(Komi = new FormTextField(n.getaction("KM")));
+		p.add(Komi = new FormTextField(n.getaction(Action.Type.KOMI)));
 		p.add(new MyLabel(Global.resourceString("Handicap")));
-		p.add(Handicap = new FormTextField(n.getaction("HA")));
+		p.add(Handicap = new FormTextField(n.getaction(Action.Type.HANDICAP)));
 		add("Center", p);
 		JPanel pb = new MyPanel();
 		pb.add(new ButtonAction(this, Global.resourceString("OK")));
@@ -121,16 +121,16 @@ class EditInformation extends CloseDialog
 		Global.notewindow(this, "editinformation");
 		if (Global.resourceString("OK").equals(o))
 		{
-			N.setaction("GN", GameName.getText());
-			N.setaction("PB", Black.getText());
-			N.setaction("PW", White.getText());
-			N.setaction("BR", BlackRank.getText());
-			N.setaction("WR", WhiteRank.getText());
-			N.setaction("DT", Date.getText());
-			N.setaction("TM", Time.getText());
-			N.setaction("KM", Komi.getText());
-			N.setaction("RE", Result.getText());
-			N.setaction("HA", Handicap.getText());
+			N.setaction(Action.Type.GAME_NAME, GameName.getText());
+			N.setaction(Action.Type.BLACK_PLAYER_NAME, Black.getText());
+			N.setaction(Action.Type.WHITE_PLAYER_NAME, White.getText());
+			N.setaction(Action.Type.BLACK_PLAYER_RANK, BlackRank.getText());
+			N.setaction(Action.Type.WHITE_PLAYER_RANK, WhiteRank.getText());
+			N.setaction(Action.Type.DATE, Date.getText());
+			N.setaction(Action.Type.TIME, Time.getText());
+			N.setaction(Action.Type.KOMI, Komi.getText());
+			N.setaction(Action.Type.RESULT, Result.getText());
+			N.setaction(Action.Type.HANDICAP, Handicap.getText());
 			if ( !GameName.getText().equals(""))
 				F.setTitle(GameName.getText());
 		}
@@ -456,7 +456,7 @@ class EditCopyright extends CloseDialog
 		N = n;
 		p1.setLayout(new GridLayout(0, 2));
 		p1.add(new MyLabel(Global.resourceString("User")));
-		p1.add(User = new GrayTextField(n.getaction("US")));
+		p1.add(User = new GrayTextField(n.getaction(Action.Type.USER)));
 		add("North", p1);
 		JPanel p2 = new MyPanel();
 		p2.setLayout(new BorderLayout());
@@ -468,7 +468,7 @@ class EditCopyright extends CloseDialog
 		pb.add(new ButtonAction(this, Global.resourceString("Cancel")));
 		add("South", pb);
 		Global.setwindow(this, "editcopyright", 350, 400);
-		Copyright.setText(n.getaction("CP"));
+		Copyright.setText(n.getaction(Action.Type.COPYRIGHT));
 	}
 
 	@Override
@@ -477,8 +477,8 @@ class EditCopyright extends CloseDialog
 		Global.notewindow(this, "editcopyright");
 		if (Global.resourceString("OK").equals(o))
 		{
-			N.setaction("US", User.getText());
-			N.setaction("CP", Copyright.getText());
+			N.setaction(Action.Type.USER, User.getText());
+			N.setaction(Action.Type.COPYRIGHT, Copyright.getText());
 		}
 		setVisible(false);
 		dispose();
@@ -1021,7 +1021,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				FileDialog fd = new FileDialog(this, Global.resourceString("Save"),
 					FileDialog.SAVE);
 				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = boardState.firstnode().getaction("GN");
+				String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
 				if (s != null && !s.equals(""))
 					fd.setFile(s
 						+ "."
@@ -1121,7 +1121,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				FileDialog fd = new FileDialog(this, Global
 					.resourceString("Save Position"), FileDialog.SAVE);
 				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = boardState.firstnode().getaction("GN");
+				String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
 				if (s != null && !s.equals(""))
 					fd.setFile(s
 						+ "."
@@ -1220,7 +1220,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				FileDialog fd = new FileDialog(this, Global
 					.resourceString("Save_Bitmap"), FileDialog.SAVE);
 				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = boardState.firstnode().getaction("GN");
+				String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
 				if (s != null && !s.equals(""))
 					fd.setFile(s + "." + Global.getParameter("extension", "bmp"));
 				else fd.setFile("*." + Global.getParameter("extension", "bmp"));
@@ -1303,12 +1303,12 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 						+ ex.toString()).setVisible(true);
 					return;
 				}
-				String s = boardState.firstnode().getaction("GN");
+				String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
 				if (s != null && !s.equals(""))
 					setTitle(s);
 				else
 				{
-					boardState.firstnode().setaction("GN", FileName.purefilename(fn));
+					boardState.firstnode().setaction(Action.Type.GAME_NAME, FileName.purefilename(fn));
 					setTitle(FileName.purefilename(fn));
 				}
 				if (fn.toLowerCase().indexOf("kogo") >= 0)
@@ -2060,14 +2060,14 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 
 	public void setGameTitle (String filename)
 	{
-		String s = boardState.firstnode().getaction("GN");
+		String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
 		if (s != null && !s.equals(""))
 		{
 			setTitle(s);
 		}
 		else
 		{
-			boardState.firstnode().addaction(new Action("GN", filename));
+			boardState.firstnode().addaction(new Action(Action.Type.GAME_NAME, filename));
 			setTitle(filename);
 		}
 	}

@@ -81,7 +81,7 @@ public class SGFTree
 		char c=readnext(in);
 		Action a;
 		Node n=new Node(p.content().number());
-		String s;
+		Action.Type s;
 		loop: while (true) // read all actions
 		{	BufferN=0;
 			while (true)
@@ -97,9 +97,9 @@ public class SGFTree
 				c=readnext(in);
 			}
 			if (BufferN==0) throw new IOException();
-			s=new String(Buffer,0,BufferN);
-			if (s.equals("L")) a=new LabelAction();
-			else if (s.equals("M")) a=new MarkAction();
+			s = Action.Type.fromString(new String(Buffer,0,BufferN));
+			if (s.equals(Action.Type.LABEL)) a=new LabelAction();
+			else if (s.equals(Action.Type.MARK)) a=new MarkAction();
 			else a=new Action(s);
 			while (c=='[')
 			{	BufferN=0;
@@ -123,7 +123,7 @@ public class SGFTree
 			}
 			// no more arguments
 			n.addaction(a);
-			if (a.type().equals("B") || a.type().equals("W"))
+			if (a.type().equals(Action.Type.BLACK) || a.type().equals(Action.Type.WHITE))
 			{	n.number(n.number()+1);
 			}
 		} // end of actions has been found
@@ -162,11 +162,11 @@ public class SGFTree
 
 	// Check for the terrible compressed point list and expand into
 	// single points
-	boolean expand (Action a, String s)
-	{	String t=a.type();
+	private boolean expand (Action a, String s)
+	{	Action.Type t=a.type();
 		if (!(t.equals(Field.Marker.CROSS.value) || t.equals(Field.Marker.SQUARE.value) ||
 			 t.equals(Field.Marker.TRIANGLE.value) || t.equals(Field.Marker.CIRCLE.value) ||
-			 t.equals("AW") || t.equals("AB") || t.equals("AE") || t.equals("SL"))) return false;
+			 t.equals(Action.Type.ADD_WHITE) || t.equals(Action.Type.ADD_BLACK) || t.equals(Action.Type.ADD_EMPTY) || t.equals(Action.Type.SELECT))) return false;
 		if (s.length()!=5 || s.charAt(2)!=':') return false;
 		String s0=s.substring(0,2),s1=s.substring(3);
 		int i0=Field.i(s0),j0=Field.j(s0);
@@ -280,44 +280,44 @@ public class SGFTree
 		{	XmlTree tree=(XmlTree)e.nextElement();
 			XmlTag tag=tree.getTag();
 			if (tag.name().equals("BoardSize"))
-			{	p.content().addaction(new Action("SZ",""+BoardSize));
+			{	p.content().addaction(new Action(Action.Type.SIZE,""+BoardSize));
 			}
 			else if (tag.name().equals("BlackPlayer"))
-			{	p.content().addaction(new Action("PB",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.BLACK_PLAYER_NAME,getText(tree)));
 			}
 			else if (tag.name().equals("BlackRank"))
-			{	p.content().addaction(new Action("BR",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.BLACK_PLAYER_RANK,getText(tree)));
 			}
 			else if (tag.name().equals("WhitePlayer"))
-			{	p.content().addaction(new Action("PW",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.WHITE_PLAYER_NAME,getText(tree)));
 			}
 			else if (tag.name().equals("WhiteRank"))
-			{	p.content().addaction(new Action("WR",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.WHITE_PLAYER_RANK,getText(tree)));
 			}
 			else if (tag.name().equals("Date"))
-			{	p.content().addaction(new Action("DT",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.DATE,getText(tree)));
 			}
 			else if (tag.name().equals("Time"))
-			{	p.content().addaction(new Action("TM",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.TIME,getText(tree)));
 			}
 			else if (tag.name().equals("Komi"))
-			{	p.content().addaction(new Action("KM",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.KOMI,getText(tree)));
 			}
 			else if (tag.name().equals("Result"))
-			{	p.content().addaction(new Action("RE",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.RESULT,getText(tree)));
 			}
 			else if (tag.name().equals("Handicap"))
-			{	p.content().addaction(new Action("HA",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.HANDICAP,getText(tree)));
 			}
 			else if (tag.name().equals("User"))
-			{	p.content().addaction(new Action("US",getText(tree)));
+			{	p.content().addaction(new Action(Action.Type.USER,getText(tree)));
 			}
 			else if (tag.name().equals("Copyright"))
-			{	p.content().addaction(new Action("CP",parseComment(tree)));
+			{	p.content().addaction(new Action(Action.Type.COPYRIGHT,parseComment(tree)));
 			}
 		}
 		if (!GameName.equals(""))
-			p.content().addaction(new Action("GN",GameName));
+			p.content().addaction(new Action(Action.Type.GAME_NAME,GameName));
 	}
 	
 	public static String getText (XmlTree tree)
@@ -382,16 +382,16 @@ public class SGFTree
 			{	if (p!=null) number=p.content().number();
 				Node n=new Node(number);
 				try
-				{	n.addaction(new Action("W",xmlToSgf(tree)));
+				{	n.addaction(new Action(Action.Type.WHITE,xmlToSgf(tree)));
 					n.number(n.number()+1);
 					n.main(main);
 				}
-				catch (XmlReaderException ey) { n.addaction(new Action("C","Pass")); }
+				catch (XmlReaderException ey) { n.addaction(new Action(Action.Type.COMMENT,"Pass")); }
 				if (tag.hasParam("name"))
-				{	n.addaction(new Action("N",tag.getValue("name")));
+				{	n.addaction(new Action(Action.Type.NAME,tag.getValue("name")));
 				}
 				if (tag.hasParam("timeleft"))
-				{	n.addaction(new Action("WL",tag.getValue("timeleft")));
+				{	n.addaction(new Action(Action.Type.WHITE_TIME,tag.getValue("timeleft")));
 				}
 				Tree<Node> newp=new Tree<Node>(n);
 				if (p==null) ret=newp;
@@ -402,16 +402,16 @@ public class SGFTree
 			{	if (p!=null) number=p.content().number();
 				Node n=new Node(number);
 				try
-				{	n.addaction(new Action("B",xmlToSgf(tree)));
+				{	n.addaction(new Action(Action.Type.BLACK,xmlToSgf(tree)));
 					n.number(n.number()+1);
 					n.main(main);
 				}
-				catch (XmlReaderException ey) { n.addaction(new Action("C","Pass")); }
+				catch (XmlReaderException ey) { n.addaction(new Action(Action.Type.COMMENT,"Pass")); }
 				if (tag.hasParam("name"))
-				{	n.addaction(new Action("N",tag.getValue("name")));
+				{	n.addaction(new Action(Action.Type.NAME,tag.getValue("name")));
 				}
 				if (tag.hasParam("timeleft"))
-				{	n.addaction(new Action("BL",tag.getValue("timeleft")));
+				{	n.addaction(new Action(Action.Type.BLACK_TIME,tag.getValue("timeleft")));
 				}
 				Tree<Node> newp=new Tree<Node>(n);
 				if (p==null) ret=newp;
@@ -426,7 +426,7 @@ public class SGFTree
 					ret=p;					
 				}
 				Node n=p.content();
-				n.addaction(new Action("C",parseComment(tree)));
+				n.addaction(new Action(Action.Type.COMMENT,parseComment(tree)));
 			}
 			else if (tag.name().equals("Variation"))
 			{	Tree<Node> parent=p.parent();
@@ -448,13 +448,13 @@ public class SGFTree
 	{	Node n=new Node(number);
 		XmlTag tag=tree.getTag();
 		if (tag.hasParam("name"))
-		{	n.addaction(new Action("N",tag.getValue("name")));
+		{	n.addaction(new Action(Action.Type.NAME,tag.getValue("name")));
 		}
 		if (tag.hasParam("blacktime"))
-		{	n.addaction(new Action("BL",tag.getValue("blacktime")));
+		{	n.addaction(new Action(Action.Type.BLACK_TIME,tag.getValue("blacktime")));
 		}
 		if (tag.hasParam("whitetime"))
-		{	n.addaction(new Action("WL",tag.getValue("whitetime")));
+		{	n.addaction(new Action(Action.Type.WHITE_TIME,tag.getValue("whitetime")));
 		}
 		Enumeration e=tree.getContent();
 		while (e.hasMoreElements())
@@ -462,26 +462,26 @@ public class SGFTree
 			tag=t.getTag();
 			if (tag.name().equals("Black"))
 			{	try
-				{	n.addaction(new Action("B",xmlToSgf(t)));
+				{	n.addaction(new Action(Action.Type.BLACK,xmlToSgf(t)));
 					n.number(n.number()+1);
 				}
 				catch (XmlReaderException ey) {}
 			}
 			else if (tag.name().equals("White"))
 			{	try
-				{	n.addaction(new Action("W",xmlToSgf(t)));
+				{	n.addaction(new Action(Action.Type.WHITE,xmlToSgf(t)));
 					n.number(n.number()+1);
 				}
 				catch (XmlReaderException ey) {}
 			}
 			else if (tag.name().equals("AddBlack"))
-			{	n.addaction(new Action("AB",xmlToSgf(t)));
+			{	n.addaction(new Action(Action.Type.ADD_BLACK,xmlToSgf(t)));
 			}
 			else if (tag.name().equals("AddWhite"))
-			{	n.addaction(new Action("AW",xmlToSgf(t)));
+			{	n.addaction(new Action(Action.Type.ADD_WHITE,xmlToSgf(t)));
 			}
 			else if (tag.name().equals("Delete"))
-			{	n.expandaction(new Action("AE",xmlToSgf(t)));
+			{	n.expandaction(new Action(Action.Type.ADD_EMPTY,xmlToSgf(t)));
 			}
 			else if (tag.name().equals("Mark"))
 			{	if (tag.hasParam("type"))
@@ -500,27 +500,27 @@ public class SGFTree
 				}
 				else if (tag.hasParam("label"))
 				{	String s=tag.getValue("label");
-					n.expandaction(new Action("LB",xmlToSgf(t)+":"+s));
+					n.expandaction(new Action(Action.Type.LABEL,xmlToSgf(t)+":"+s));
 				}
 				else if (tag.hasParam("territory"))
 				{	String s=tag.getValue("territory");
 					if (s.equals("white"))
-					{	n.expandaction(new Action("TW",xmlToSgf(t)));
+					{	n.expandaction(new Action(Action.Type.WHITE_TERRITORY,xmlToSgf(t)));
 					}
 					else if (s.equals("black"))
-					{	n.expandaction(new Action("TB",xmlToSgf(t)));
+					{	n.expandaction(new Action(Action.Type.BLACK_TERRITORY,xmlToSgf(t)));
 					}
 				}
 				else n.expandaction(new MarkAction(xmlToSgf(t)));
 			}
 			else if (tag.name().equals("BlackTimeLeft"))
-			{	n.addaction(new Action("BL",getText(t)));
+			{	n.addaction(new Action(Action.Type.BLACK_TIME,getText(t)));
 			}
 			else if (tag.name().equals("WhiteTimeLeft"))
-			{	n.addaction(new Action("WL",getText(t)));
+			{	n.addaction(new Action(Action.Type.WHITE_TIME,getText(t)));
 			}
 			else if (tag.name().equals("Comment"))
-			{	n.addaction(new Action("C",parseComment(t)));
+			{	n.addaction(new Action(Action.Type.COMMENT,parseComment(t)));
 			}
 			else if (tag.name().equals("SGF"))
 			{	if (!tag.hasParam("type"))
@@ -530,7 +530,7 @@ public class SGFTree
 					a=new MarkAction();
 				}
 				else {
-					a=new Action(tag.getValue("type"));
+					a=new Action(Action.Type.fromString(tag.getValue("type")));
 				}
 				Enumeration eh=t.getContent();
 				while (eh.hasMoreElements())
@@ -698,25 +698,25 @@ public class SGFTree
 	*/
 	void printtree (Tree<Node> p, XmlWriter xml, int size, boolean top)
 	{	if (top)
-		{	String s=p.content().getaction("GN");
+		{	String s=p.content().getaction(Action.Type.GAME_NAME);
 			if (s!=null && !s.equals(""))
 				xml.startTagNewLine("GoGame","name",s);
 			else
 				xml.startTagNewLine("GoGame");
 			xml.startTagNewLine("Information");
-			printInformation(xml,p,"AP","Application");
-			printInformation(xml,p,"SZ","BoardSize");
-			printInformation(xml,p,"PB","BlackPlayer");
-			printInformation(xml,p,"BR","BlackRank");
-			printInformation(xml,p,"PW","WhitePlayer");
-			printInformation(xml,p,"WR","WhiteRank");
-			printInformation(xml,p,"DT","Date");
-			printInformation(xml,p,"TM","Time");
-			printInformation(xml,p,"KM","Komi");
-			printInformation(xml,p,"RE","Result");
-			printInformation(xml,p,"HA","Handicap");
-			printInformation(xml,p,"US","User");
-			printInformationText(xml,p,"CP","Copyright");
+			printInformation(xml,p, Action.Type.APPLICATION,"Application");
+			printInformation(xml,p, Action.Type.SIZE,"BoardSize");
+			printInformation(xml,p, Action.Type.BLACK_PLAYER_NAME,"BlackPlayer");
+			printInformation(xml,p, Action.Type.BLACK_PLAYER_RANK,"BlackRank");
+			printInformation(xml,p, Action.Type.WHITE_PLAYER_NAME,"WhitePlayer");
+			printInformation(xml,p, Action.Type.WHITE_PLAYER_RANK,"WhiteRank");
+			printInformation(xml,p, Action.Type.DATE,"Date");
+			printInformation(xml,p, Action.Type.TIME,"Time");
+			printInformation(xml,p, Action.Type.KOMI,"Komi");
+			printInformation(xml,p, Action.Type.RESULT,"Result");
+			printInformation(xml,p, Action.Type.HANDICAP,"Handicap");
+			printInformation(xml,p, Action.Type.USER,"User");
+			printInformationText(xml,p, Action.Type.COPYRIGHT,"Copyright");
 			xml.endTagNewLine("Information");
 		}
 		else xml.startTagNewLine("Variation");
@@ -737,16 +737,17 @@ public class SGFTree
 		else xml.endTagNewLine("Variation");
 	}
 
-	public void printInformation (XmlWriter xml, Tree<Node> p,
-		String tag, String xmltag)
+	private void printInformation (XmlWriter xml, Tree<Node> p,
+		Action.Type tag, String xmltag)
 	{	String s=p.content().getaction(tag);
 		if (s!=null && !s.equals(""))
 			xml.printTagNewLine(xmltag,s);
 	}
 
-	public void printInformationText (XmlWriter xml, Tree<Node> p,
-		String tag, String xmltag)
-	{	String s=p.content().getaction(tag);
+	private void printInformationText (XmlWriter xml, Tree<Node> p,
+		Action.Type tag, String xmltag)
+	{
+		String s=p.content().getaction(tag);
 		if (s!=null && !s.equals(""))
 		{	xml.startTagNewLine(xmltag);
 			xml.printParagraphs(s,60);
@@ -767,7 +768,7 @@ public class SGFTree
 	
 	public int getSize ()
 	{	try
-		{	return Integer.parseInt(History.content().getaction("SZ"));
+		{	return Integer.parseInt(History.content().getaction(Action.Type.SIZE));
 		}
 		catch (Exception e)
 		{	return 19;

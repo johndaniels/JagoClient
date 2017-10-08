@@ -26,13 +26,13 @@ public class Field
 	int Territory; // For Territory counting
 	public static enum Marker
 	{
-	NONE(null),
-	CROSS("MA"),
-	SQUARE("SQ"),
-	TRIANGLE("TR"),
-	CIRCLE("CR");
-	final String value;
-	Marker(String value) { this.value = value; }
+		NONE(null),
+		CROSS(Action.Type.CROSS),
+		SQUARE(Action.Type.SQUARE),
+		TRIANGLE(Action.Type.TRIANGLE),
+		CIRCLE(Action.Type.CIRCLE);
+		final Action.Type value;
+		Marker(Action.Type value) { this.value = value; }
 	};
 	Marker marker; // emphasized field
 	int Number;

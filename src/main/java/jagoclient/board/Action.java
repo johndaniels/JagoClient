@@ -1,12 +1,13 @@
 package jagoclient.board;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableMap;
 import rene.util.parser.StringParser;
 import rene.util.xml.XmlWriter;
 
@@ -15,29 +16,92 @@ Has a type and arguments (as in SGF, e.g. B[ih] of type "B" and
 Methods include the printing on a PrintWriter.
 */
 public class Action
-{	String Type; // the type
+{
+	public enum Type {
+		FILE_FORMAT("FF"),
+		GAME_TYPE("GM"),
+		WHITE("W"),
+		BLACK("B"),
+		SIZE("SZ"),
+		COMMENT("C"),
+		BLACK_TIME("BL"),
+		WHITE_TIME("WL"),
+		NAME("N"),
+		GAME_NAME("GN"),
+		DATE("DT"),
+		BLACK_PLAYER_NAME("BP"),
+		BLACK_PLAYER_RANK("BR"),
+		WHITE_PLAYER_NAME("WP"),
+		WHITE_PLAYER_RANK("WR"),
+		RESULT("RE"),
+		TIME("TM"),
+		KOMI("KM"),
+		HANDICAP("HA"),
+		USER("US"),
+		COPYRIGHT("CP"),
+		ADD_WHITE("AW"),
+		ADD_BLACK("AB"),
+		ADD_EMPTY("AE"),
+		CROSS("MA"),
+		SQUARE("SQ"),
+		TRIANGLE("TR"),
+		CIRCLE("CR"),
+		LABEL("LB"),
+		BLACK_TERRITORY("TB"),
+		WHITE_TERRITORY("TW"),
+		APPLICATION("AP"),
+		MARK("M"),
+		SELECT("SL");
+
+		private String value;
+
+		private static Map<String, Type> stringToTypeMap = new HashMap<>();
+
+		static {
+			for (Type t : Type.values()) {
+				stringToTypeMap.put(t.value, t);
+			}
+		}
+
+		Type(String value) {
+			this.value = value;
+		}
+
+		@Override
+		public String toString() {
+			return value;
+		}
+
+		public static Type fromString(String s) {
+			return stringToTypeMap.get(s);
+		}
+	}
+	Type type; // the type
 	List<String> Arguments; // the list of argument strings
 	
 	/**
 	Initialize with type only
 	*/
-	public Action (String s)
-	{	Type=s;
+	public Action (Type s)
+	{
+		type =s;
 		Arguments=new ArrayList<String>();
 	}
 
 	/**
 	Initialize with type and one argument to that type tag.
 	*/
-	public Action (String s, String arg)
-	{	Type=s;
+	public Action (Type s, String arg)
+	{
+		type =s;
 		Arguments=new ArrayList<String>();
 		addargument(arg);
 	}
 	
 	public void addargument (String s)
 	// add an argument ot the list (at end)
-	{	Arguments.add(s);
+	{
+		Arguments.add(s);
 	}
 	
 	public void toggleargument (String s)
@@ -58,7 +122,7 @@ public class Action
 	{	if (Arguments.isEmpty() || (Arguments.size()==1 && Arguments.get(0).isEmpty()))
 			return;
 		o.println();
-		o.print(Type);
+		o.print(type);
 		for (String s : Arguments)
 		{	o.print("[");
 			StringParser p=new StringParser(s);
@@ -83,80 +147,80 @@ public class Action
 	Print the node content in XML form.
 	*/
 	public void print (XmlWriter xml, int size, int number)
-	{	if (Type.equals("C"))
+	{	if (type.equals("C"))
 		{	xml.startTagNewLine("Comment");
 			printTextArgument(xml);
 			xml.endTagNewLine("Comment");
 		}
-		else if (Type.equals("GN") 
-			|| Type.equals("AP")
-			|| Type.equals("FF")
-			|| Type.equals("GM")
-			|| Type.equals("N")
-			|| Type.equals("SZ")
-			|| Type.equals("PB")
-			|| Type.equals("BR")
-			|| Type.equals("PW")
-			|| Type.equals("WR")
-			|| Type.equals("HA")
-			|| Type.equals("KM")
-			|| Type.equals("RE")
-			|| Type.equals("DT")
-			|| Type.equals("TM")
-			|| Type.equals("US")
-			|| Type.equals("WL")
-			|| Type.equals("BL")
-			|| Type.equals("CP")
+		else if (type.equals("GN")
+			|| type.equals("AP")
+			|| type.equals("FF")
+			|| type.equals("GM")
+			|| type.equals("N")
+			|| type.equals("SZ")
+			|| type.equals("PB")
+			|| type.equals("BR")
+			|| type.equals("PW")
+			|| type.equals("WR")
+			|| type.equals("HA")
+			|| type.equals("KM")
+			|| type.equals("RE")
+			|| type.equals("DT")
+			|| type.equals("TM")
+			|| type.equals("US")
+			|| type.equals("WL")
+			|| type.equals("BL")
+			|| type.equals("CP")
 			)
 		{
 		}
-		else if (Type.equals("B"))
+		else if (type.equals("B"))
 		{	xml.startTagStart("Black");
 			xml.printArg("number",""+number);
 			xml.printArg("at",getXMLMove(size));
 			xml.finishTagNewLine();
 		}
-		else if (Type.equals("W"))
+		else if (type.equals("W"))
 		{	xml.startTagStart("White");
 			xml.printArg("number",""+number);
 			xml.printArg("at",getXMLMove(size));
 			xml.finishTagNewLine();
 		}
-		else if (Type.equals("AB"))
+		else if (type.equals("AB"))
 		{	printAllFields(xml,size,"AddBlack");
 		}
-		else if (Type.equals("AW"))
+		else if (type.equals("AW"))
 		{	printAllFields(xml,size,"AddWhite");
 		}
-		else if (Type.equals("AE"))
+		else if (type.equals("AE"))
 		{	printAllFields(xml,size,"Delete");
 		}
-		else if (Type.equals(Field.Marker.CROSS.value))
+		else if (type.equals(Field.Marker.CROSS.value))
 		{	printAllFields(xml,size,"Mark");
 		}
-		else if (Type.equals("M"))
+		else if (type.equals("M"))
 		{	printAllFields(xml,size,"Mark");
 		}
-		else if (Type.equals(Field.Marker.SQUARE.value))
+		else if (type.equals(Field.Marker.SQUARE.value))
 		{	printAllFields(xml,size,"Mark","type","square");
 		}
-		else if (Type.equals(Field.Marker.CIRCLE.value))
+		else if (type.equals(Field.Marker.CIRCLE.value))
 		{	printAllFields(xml,size,"Mark","type","circle");
 		}
-		else if (Type.equals(Field.Marker.TRIANGLE.value))
+		else if (type.equals(Field.Marker.TRIANGLE.value))
 		{	printAllFields(xml,size,"Mark","type","triangle");
 		}
-		else if (Type.equals("TB"))
+		else if (type.equals("TB"))
 		{	printAllFields(xml,size,"Mark","territory","black");
 		}
-		else if (Type.equals("TW"))
+		else if (type.equals("TW"))
 		{	printAllFields(xml,size,"Mark","territory","white");
 		}
-		else if (Type.equals("LB"))
+		else if (type.equals("LB"))
 		{	printAllSpecialFields(xml,size,"Mark","label");
 		}
 		else
-		{	xml.startTag("SGF","type",Type);
+		{	xml.startTag("SGF","type", type.toString());
 			for (String argument : Arguments)
 			{	xml.startTag("Arg");
 				StringParser p=new StringParser(argument);
@@ -178,16 +242,16 @@ public class Action
 	*/
 	public void printMove (XmlWriter xml, int size, int number, Node n)
 	{	String s="";
-		if (Type.equals("B")) s="Black";
-		else if (Type.equals("W")) s="White";
+		if (type.equals("B")) s="Black";
+		else if (type.equals("W")) s="White";
 		else return;
 		xml.startTagStart(s);
 		xml.printArg("number",""+number);
-		if (n.contains("N")) xml.printArg("name",n.getaction("N"));
-		if (s.equals("Black") && n.contains("BL"))
-			xml.printArg("timeleft",n.getaction("BL"));
-		if (s.equals("White") && n.contains("WL"))
-			xml.printArg("timeleft",n.getaction("WL"));
+		if (n.contains(Type.NAME)) xml.printArg("name",n.getaction(Type.NAME));
+		if (s.equals("Black") && n.contains(Type.BLACK_TIME))
+			xml.printArg("timeleft",n.getaction(Type.BLACK_TIME));
+		if (s.equals("White") && n.contains(Type.WHITE_TIME))
+			xml.printArg("timeleft",n.getaction(Type.WHITE_TIME));
 		xml.printArg("at",getXMLMove(size));
 		xml.finishTagNewLine();
 	}
@@ -196,26 +260,26 @@ public class Action
 	Test, if this action contains printed information
 	*/
 	public boolean isRelevant ()
-	{	if (Type.equals("GN") 
-			|| Type.equals("AP")
-			|| Type.equals("FF")
-			|| Type.equals("GM")
-			|| Type.equals("N")
-			|| Type.equals("SZ")
-			|| Type.equals("PB")
-			|| Type.equals("BR")
-			|| Type.equals("PW")
-			|| Type.equals("WR")
-			|| Type.equals("HA")
-			|| Type.equals("KM")
-			|| Type.equals("RE")
-			|| Type.equals("DT")
-			|| Type.equals("TM")
-			|| Type.equals("US")
-			|| Type.equals("CP")
-			|| Type.equals("BL")
-			|| Type.equals("WL")
-			|| Type.equals("C")
+	{	if (type.equals("GN")
+			|| type.equals("AP")
+			|| type.equals("FF")
+			|| type.equals("GM")
+			|| type.equals("N")
+			|| type.equals("SZ")
+			|| type.equals("PB")
+			|| type.equals("BR")
+			|| type.equals("PW")
+			|| type.equals("WR")
+			|| type.equals("HA")
+			|| type.equals("KM")
+			|| type.equals("RE")
+			|| type.equals("DT")
+			|| type.equals("TM")
+			|| type.equals("US")
+			|| type.equals("CP")
+			|| type.equals("BL")
+			|| type.equals("WL")
+			|| type.equals("C")
 			)
 		return false;
 		else return true;
@@ -280,10 +344,10 @@ public class Action
 	}
 
 	// modifiers
-	public void type (String s) { Type=s; }
+	public void type (Type s) { type =s; }
 
 	// access methods:
-	public String type () { return Type; }
+	public Type type () { return type; }
 	public List<String> arguments () { return Arguments; }
 	public String argument ()
 	{	if (arguments()==null) return "";

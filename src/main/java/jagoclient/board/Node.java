@@ -76,7 +76,7 @@ public class Node
 	}
 
 	/** find the list element containing the action of type s */
-	Action find (String s)
+	Action find (Action.Type s)
 	{	
 		for (Action a : Actions)
 		{
@@ -86,7 +86,7 @@ public class Node
 	}
 	
 	/** find the action and a specified tag */
-	public boolean contains (String s, String argument)
+	public boolean contains (Action.Type s, String argument)
 	{
 		Action a=find(s);
 		if (a==null) return false;
@@ -94,7 +94,7 @@ public class Node
 	}
 	
 	/** see if the list contains an action of type s */
-	public boolean contains (String s)
+	public boolean contains (Action.Type s)
 	{	return find(s)!=null;
 	}
 
@@ -108,7 +108,7 @@ public class Node
 	Remove it, if arg is "", else set its argument to arg.
 	Else add a new action in front (if it is true)
 	*/
-	public void setaction (String type, String arg, boolean front)
+	public void setaction (Action.Type type, String arg, boolean front)
 	{	
 		for (Action a : Actions)
 		{
@@ -128,12 +128,12 @@ public class Node
 	}
 
 	/** set the action of this type to this argument */
-	public void setaction (String type, String arg)
-	{	setaction(type,arg,false);
+	public void setaction (Action.Type type, String arg)
+	{	setaction(type, arg,false);
 	}
 
 	/** get the argument of this action (or "") */
-	public String getaction (String type)
+	public String getaction (Action.Type type)
 	{
 		for (Action a : Actions)
 		{
@@ -168,32 +168,32 @@ public class Node
 				ra=a;
 			}
 		}
-		if (count==0 && !contains("C"))
+		if (count==0 && !contains(Action.Type.COMMENT))
 		{	xml.finishTagNewLine("Node");
 			return;
 		}
 		int number=N-1;
 		if (count==1)
-		{	if (ra.type().equals("B") || ra.type().equals("W"))
+		{	if (ra.type().equals(Action.Type.BLACK) || ra.type().equals("W"))
 			{	ra.printMove(xml,size,number,this);
 				number++;
-				if (contains("C"))
+				if (contains(Action.Type.COMMENT))
 				{
-					Action a=find("C");
+					Action a=find(Action.Type.COMMENT);
 					a.print(xml,size,number);
 				}
 				return;
 			}
 		}
 		xml.startTagStart("Node");
-		if (contains("N")) xml.printArg("name",getaction("N"));
-		if (contains("BL")) xml.printArg("blacktime",getaction("BL"));
-		if (contains("WL")) xml.printArg("whitetime",getaction("WL"));
+		if (contains(Action.Type.NAME)) xml.printArg("name",getaction(Action.Type.NAME));
+		if (contains(Action.Type.BLACK_TIME)) xml.printArg("blacktime",getaction(Action.Type.BLACK_TIME));
+		if (contains(Action.Type.WHITE_TIME)) xml.printArg("whitetime",getaction(Action.Type.WHITE_TIME));
 		xml.startTagEndNewLine();
 		for (Action a : Actions)
 		{
 			a.print(xml,size,number);
-			if (a.type().equals("B") || a.type().equals("W")) number++;
+			if (a.type().equals(Action.Type.BLACK) || a.type().equals(Action.Type.WHITE)) number++;
 		}
 		xml.endTagNewLine("Node");
 	}
@@ -234,7 +234,7 @@ public class Node
 	/**
 	Copy an action from another node.
 	*/
-	public void copyAction (Node n, String action)
+	public void copyAction (Node n, Action.Type action)
 	{	if (n.contains(action))
 		{	expandaction(new Action(action,n.getaction(action)));
 		}

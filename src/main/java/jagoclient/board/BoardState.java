@@ -14,18 +14,18 @@ import java.util.Iterator;
 import java.util.Vector;
 
 public class BoardState {
-    int sendi = -1, sendj;
-    Position boardPosition;
+    private int sendi = -1, sendj;
+    private Position boardPosition;
     private int lasti = -1, lastj = 0; // last move (used to highlight the move)
     private int S;
-    public int Pw,Pb; // changes in prisoners in this node
-    int captured = 0, capturei, capturej;
-    int Range;
+    private int Pw,Pb; // changes in prisoners in this node
+    private int captured = 0, capturei, capturej;
+    private int Range;
     Tree<Node> Pos; // the current board position in this presentation
     private SGFTree T; // the game tree
     int number; // number of the next move
     private String TextMarker = "A";
-    String comment;
+    private String comment;
     private Field.Marker SpecialMarker = Field.Marker.SQUARE;
 
     public BoardState(int s) {
@@ -68,7 +68,7 @@ public class BoardState {
         Pos = T.top();
     }
 
-    public void setaction (Node n, Action a, int c)
+    private void setaction (Node n, Action a, int c)
     // interpret a set move action, update the last move marker,
     // c being the color of the move.
     {
@@ -200,7 +200,7 @@ public class BoardState {
         goforward();
     }
 
-    void goback ()
+    private void goback ()
     // go one move back
     {
         if (Pos.parent() == null) return;
@@ -209,7 +209,7 @@ public class BoardState {
         setcurrent(Pos.content());
     }
 
-    void goforward ()
+    private void goforward ()
     // go one move forward
     {
         if ( !Pos.haschildren()) return;
@@ -218,7 +218,7 @@ public class BoardState {
         setcurrent(Pos.content());
     }
 
-    public void setcurrent (Node n)
+    private void setcurrent (Node n)
     // update the last move marker applying all
     // set move actions in the node
     {
@@ -229,7 +229,7 @@ public class BoardState {
         boardPosition.update(i, j);
         for (Action a : n.actions())
         {
-            if (a.type().equals("B") || a.type().equals("W"))
+            if (a.type().equals(Action.Type.BLACK) || a.type().equals(Action.Type.WHITE))
             {
                 s = a.argument();
                 i = Field.i(s);
@@ -254,7 +254,7 @@ public class BoardState {
         }
     }
 
-    void tovarright ()
+    private void tovarright ()
     {
         if (Pos.parent() == null) return;
         if (Pos.parent().previouschild(Pos) == null) return;
@@ -309,30 +309,30 @@ public class BoardState {
         n.Pw = n.Pb = 0;
         for (Action a : n.actions())
         {
-            if (a.type().equals("B"))
+            if (a.type().equals(Action.Type.BLACK))
             {
                 setaction(n, a, 1);
             }
-            else if (a.type().equals("W"))
+            else if (a.type().equals(Action.Type.WHITE))
             {
                 setaction(n, a, -1);
             }
-            if (a.type().equals("AB"))
+            if (a.type().equals(Action.Type.ADD_BLACK))
             {
                 placeaction(n, a, 1);
             }
-            if (a.type().equals("AW"))
+            if (a.type().equals(Action.Type.ADD_WHITE))
             {
                 placeaction(n, a, -1);
             }
-            else if (a.type().equals("AE"))
+            else if (a.type().equals(Action.Type.ADD_EMPTY))
             {
                 emptyaction(n, a);
             }
         }
     }
 
-    public void placeaction (Node n, Action a, int c)
+    private void placeaction (Node n, Action a, int c)
     // interpret a set move action, update the last move marker,
     // c being the color of the move.
     {
@@ -350,7 +350,7 @@ public class BoardState {
         }
     }
 
-    public void emptyaction (Node n, Action a)
+    private void emptyaction (Node n, Action a)
     // interpret a remove stone action
     {
         int i, j, r = 1;
@@ -395,7 +395,7 @@ public class BoardState {
         captured = 0;
     }
 
-    void resettree ()
+    private void resettree ()
     {
         Pos = T.top();
         boardPosition = new Position(S);
@@ -404,14 +404,14 @@ public class BoardState {
         boardPosition.updateall();
     }
 
-    public void clearrange ()
+    private void clearrange ()
     {
         if (Range == -1) return;
         Range = -1;
         boardPosition.updateall();
     }
 
-    boolean valid (int i, int j)
+    private boolean valid (int i, int j)
     {
         return i >= 0 && i < S && j >= 0 && j < S;
     }
@@ -488,7 +488,7 @@ public class BoardState {
     {
         getinformation();
         goforward();
-        while (Pos.content().getaction("N").equals(""))
+        while (Pos.content().getaction(Action.Type.NAME).equals(""))
         {
             if ( !Pos.haschildren()) break;
             goforward();
@@ -500,7 +500,7 @@ public class BoardState {
     {
         getinformation();
         goback();
-        while (Pos.content().getaction("N").equals(""))
+        while (Pos.content().getaction(Action.Type.NAME).equals(""))
         {
             if (Pos.parent() == null) break;
             goback();
@@ -529,7 +529,7 @@ public class BoardState {
         clearsend();
         for (Action a : Pos.content().actions())
         {
-            if (a.type().equals("C"))
+            if (a.type() == Action.Type.COMMENT)
             {
                 if (comment.equals("")) {
                     Pos.content().actions().remove(a);
@@ -542,7 +542,7 @@ public class BoardState {
         String s = comment;
         if ( !s.equals(""))
         {
-            Pos.content().addaction(new Action("C", s));
+            Pos.content().addaction(new Action(Action.Type.COMMENT, s));
         }
     }
 
@@ -593,10 +593,10 @@ public class BoardState {
         Tree<Node> p = T.top();
         while (p.haschildren())
             p = p.firstchild();
-        Action a = new Action("B", Field.string(i, j));
+        Action a = new Action(Action.Type.BLACK, Field.string(i, j));
         Node n = new Node(p.content().number() + 1);
         n.addaction(a);
-        p.addchild(new Tree<Node>(n));
+        p.addchild(new Tree<>(n));
         n.main(p);
         if (Pos == p) forward();
     }
@@ -608,7 +608,7 @@ public class BoardState {
         Tree<Node> p = T.top();
         while (p.haschildren())
             p = p.firstchild();
-        Action a = new Action("W", Field.string(i, j));
+        Action a = new Action(Action.Type.WHITE, Field.string(i, j));
         Node n = new Node(p.content().number() + 1);
         n.addaction(a);
         p.addchild(new Tree<Node>(n));
@@ -623,7 +623,7 @@ public class BoardState {
         Tree<Node> p = T.top();
         while (p.haschildren())
             p = p.firstchild();
-        Action a = new Action("AB", Field.string(i, j));
+        Action a = new Action(Action.Type.ADD_BLACK, Field.string(i, j));
         Node n;
         if (p == T.top())
         {
@@ -649,7 +649,7 @@ public class BoardState {
         Tree<Node> p = T.top();
         while (p.haschildren())
             p = p.firstchild();
-        Action a = new Action("AW", Field.string(i, j));
+        Action a = new Action(Action.Type.ADD_WHITE, Field.string(i, j));
         Node n;
         if (p == T.top())
         {
@@ -694,7 +694,7 @@ public class BoardState {
         int i, j;
         int c = boardPosition.color(i0, j0);
         Node n = Pos.content();
-        if ((n.contains("B") || n.contains("W"))) {
+        if ((n.contains(Action.Type.BLACK) || n.contains(Action.Type.WHITE))) {
             n = newnode();
         }
         for (i = 0; i < S; i++)
@@ -702,7 +702,7 @@ public class BoardState {
             {
                 if (boardPosition.marked(i, j))
                 {
-                    a = new Action("AE", Field.string(i, j));
+                    a = new Action(Action.Type.ADD_EMPTY, Field.string(i, j));
                     n
                             .addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i,
                                     j)));
@@ -734,7 +734,7 @@ public class BoardState {
             return (a.type().equals("M") || a.type().equals("L")
                     || a.type().equals(Field.Marker.CROSS.value) || a.type().equals(Field.Marker.SQUARE.value)
                     || a.type().equals("SL") || a.type().equals(Field.Marker.CIRCLE.value)
-                    || a.type().equals(Field.Marker.TRIANGLE.value) || a.type().equals("LB"));
+                    || a.type().equals(Field.Marker.TRIANGLE.value) || a.type().equals(Action.Type.LABEL));
         });
         act(Pos.content());
     }
@@ -746,7 +746,7 @@ public class BoardState {
         getinformation();
         undonode();
         Pos.content().actions().removeIf((Action a) -> {
-            return (a.type().equals("AB") || a.type().equals("AW") || a.type().equals("AE"));
+            return (a.type().equals(Action.Type.ADD_BLACK) || a.type().equals(Action.Type.ADD_WHITE) || a.type().equals(Action.Type.ADD_EMPTY));
         });
         act(Pos.content());
     }
@@ -798,35 +798,35 @@ public class BoardState {
         synchronized (Pos)
         {
             Node n = Pos.content();
-            if ((n.contains("B") || n.contains("W"))) n = newnode();
+            if ((n.contains(Action.Type.BLACK) || n.contains(Action.Type.WHITE))) n = newnode();
             String field = Field.string(i, j);
-            if (n.contains("AB", field))
+            if (n.contains(Action.Type.ADD_BLACK, field))
             {
                 undonode();
-                n.toggleaction(new Action("AB", field));
+                n.toggleaction(new Action(Action.Type.ADD_BLACK, field));
                 act(Pos.content());
             }
-            else if (n.contains("AW", field))
+            else if (n.contains(Action.Type.ADD_WHITE, field))
             {
                 undonode();
-                n.toggleaction(new Action("AW", field));
+                n.toggleaction(new Action(Action.Type.ADD_WHITE, field));
                 act(Pos.content());
             }
-            else if (n.contains("B", field))
+            else if (n.contains(Action.Type.BLACK, field))
             {
                 undonode();
-                n.toggleaction(new Action("B", field));
+                n.toggleaction(new Action(Action.Type.BLACK, field));
                 act(Pos.content());
             }
-            else if (n.contains("W", field))
+            else if (n.contains(Action.Type.WHITE, field))
             {
                 undonode();
-                n.toggleaction(new Action("W", field));
+                n.toggleaction(new Action(Action.Type.WHITE, field));
                 act(Pos.content());
             }
             else
             {
-                Action a = new Action("AE", field);
+                Action a = new Action(Action.Type.ADD_EMPTY, field);
                 n.expandaction(a);
                 n.addchange(new Change(i, j, boardPosition.color(i, j)));
                 boardPosition.color(i, j, 0);
@@ -865,13 +865,13 @@ public class BoardState {
         int i, j;
         int c = boardPosition.color(i0, j0);
         Node n = Pos.content();
-        if (n.contains("B") || n.contains("W")) n = newnode();
+        if (n.contains(Action.Type.BLACK) || n.contains(Action.Type.WHITE)) n = newnode();
         for (i = 0; i < S; i++)
             for (j = 0; j < S; j++)
             {
                 if (boardPosition.marked(i, j))
                 {
-                    a = new Action("AE", Field.string(i, j));
+                    a = new Action(Action.Type.ADD_EMPTY, Field.string(i, j));
                     n
                             .addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i,
                                     j)));
@@ -895,7 +895,7 @@ public class BoardState {
     // Emphasize with the SpecialMarker
     {
         Node n = Pos.content();
-        String s = SpecialMarker.value;
+        Action.Type s = SpecialMarker.value;
         Action a = new Action(s, Field.string(i, j));
         n.toggleaction(a);
         boardPosition.update(i, j);
@@ -905,15 +905,15 @@ public class BoardState {
     {
         Action a;
         if (color > 0)
-            a = new Action("TB", Field.string(i, j));
-        else a = new Action("TW", Field.string(i, j));
+            a = new Action(Action.Type.BLACK_TERRITORY, Field.string(i, j));
+        else a = new Action(Action.Type.WHITE_TERRITORY, Field.string(i, j));
         Pos.content().expandaction(a);
         boardPosition.update(i, j);
     }
 
     public void textmark (int i, int j)
     {
-        Action a = new Action("LB", Field.string(i, j) + ":" + TextMarker);
+        Action a = new Action(Action.Type.LABEL, Field.string(i, j) + ":" + TextMarker);
         Pos.content().expandaction(a);
         boardPosition.update(i, j);
     }
@@ -952,15 +952,15 @@ public class BoardState {
         if (boardPosition.color(i, j) == 0) // empty?
         {
             Node n = Pos.content();
-            if ((n.contains("B") || n.contains("W"))) n = newnode();
+            if ((n.contains(Action.Type.BLACK) || n.contains(Action.Type.WHITE))) n = newnode();
             n.addchange(new Change(i, j, 0));
             if (c > 0)
             {
-                a = new Action("AB", Field.string(i, j));
+                a = new Action(Action.Type.ADD_BLACK, Field.string(i, j));
             }
             else
             {
-                a = new Action("AW", Field.string(i, j));
+                a = new Action(Action.Type.ADD_WHITE, Field.string(i, j));
             }
             n.expandaction(a); // note the move action
             boardPosition.color(i, j, c);
@@ -1072,10 +1072,10 @@ public class BoardState {
     // in SGF
     {
         getinformation();
-        T.top().content().setaction("AP", "Jago:" + Global.version(), true);
-        T.top().content().setaction("SZ", "" + S, true);
-        T.top().content().setaction("GM", "1", true);
-        T.top().content().setaction("FF", "4", true);
+        T.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
+        T.top().content().setaction(Action.Type.SIZE, "" + S, true);
+        T.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
+        T.top().content().setaction(Action.Type.FILE_FORMAT, "4", true);
             ((SGFTree)T).print(o);
     }
 
@@ -1095,16 +1095,16 @@ public class BoardState {
     // save the file in Jago's XML format
     {
         getinformation();
-        T.top().content().setaction("AP", "Jago:" + Global.version(), true);
-        T.top().content().setaction("SZ", "" + S, true);
-        T.top().content().setaction("GM", "1", true);
-        T.top().content().setaction("FF", "4", true);
+        T.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
+        T.top().content().setaction(Action.Type.SIZE, "" + S, true);
+        T.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
+        T.top().content().setaction(Action.Type.FILE_FORMAT, "4", true);
         XmlWriter xml = new XmlWriter(o);
         xml.printEncoding(encoding);
         xml.printXls("go.xsl");
         xml.printDoctype("Go", "go.dtd");
         xml.startTagNewLine("Go");
-        ((SGFTree)T).printXML(xml);
+        T.printXML(xml);
         xml.endTagNewLine("Go");
     }
 
@@ -1112,10 +1112,10 @@ public class BoardState {
     // save the file in Jago's XML format
     {
         getinformation();
-        T.top().content().setaction("AP", "Jago:" + Global.version(), true);
-        T.top().content().setaction("SZ", "" + S, true);
-        T.top().content().setaction("GM", "1", true);
-        T.top().content().setaction("FF","4", true);
+        T.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
+        T.top().content().setaction(Action.Type.SIZE, "" + S, true);
+        T.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
+        T.top().content().setaction(Action.Type.FILE_FORMAT,"4", true);
         XmlWriter xml = new XmlWriter(o);
         xml.printEncoding(encoding);
         xml.printXls("go.xsl");
@@ -1128,7 +1128,7 @@ public class BoardState {
         xml.endTagNewLine("Go");
     }
 
-    boolean ishand (int i)
+    private boolean ishand (int i)
     {
         if (S > 13)
         {
@@ -1145,7 +1145,7 @@ public class BoardState {
     // an ASCII image of the board.
     {
         int i, j;
-        o.println(T.top().content().getaction("GN"));
+        o.println(T.top().content().getaction(Action.Type.GAME_NAME));
         o.print("      ");
         for (i = 0; i < S; i++)
         {
@@ -1212,22 +1212,21 @@ public class BoardState {
         o.println();
     }
 
-    public void positionToNode (Node n)
+    private void positionToNode (Node n)
     // copy the current position to a node.
     {
-        n.setaction("AP", "Jago:" + Global.version(), true);
-        n.setaction("SZ", "" + S, true);
-        n.setaction("GM", "1", true);
-        n.setaction("FF", "4", true);
-        n.copyAction(T.top().content(), "GN");
-        n.copyAction(T.top().content(), "DT");
-        n.copyAction(T.top().content(), "PB");
-        n.copyAction(T.top().content(), "BR");
-        n.copyAction(T.top().content(), "PW");
-        n.copyAction(T.top().content(), "WR");
-        n.copyAction(T.top().content(), "PW");
-        n.copyAction(T.top().content(), "US");
-        n.copyAction(T.top().content(), "CP");
+        n.setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
+        n.setaction(Action.Type.SIZE, "" + S, true);
+        n.setaction(Action.Type.GAME_TYPE, "1", true);
+        n.setaction(Action.Type.FILE_FORMAT, "4", true);
+        n.copyAction(T.top().content(), Action.Type.GAME_NAME);
+        n.copyAction(T.top().content(), Action.Type.DATE);
+        n.copyAction(T.top().content(), Action.Type.BLACK_PLAYER_NAME);
+        n.copyAction(T.top().content(), Action.Type.BLACK_PLAYER_RANK);
+        n.copyAction(T.top().content(), Action.Type.WHITE_PLAYER_NAME);
+        n.copyAction(T.top().content(), Action.Type.WHITE_PLAYER_RANK);
+        n.copyAction(T.top().content(), Action.Type.USER);
+        n.copyAction(T.top().content(), Action.Type.COPYRIGHT);
         int i, j;
         for (i = 0; i < S; i++)
         {
@@ -1237,10 +1236,10 @@ public class BoardState {
                 switch (boardPosition.color(i, j))
                 {
                     case 1:
-                        n.expandaction(new Action("AB", field));
+                        n.expandaction(new Action(Action.Type.ADD_BLACK, field));
                         break;
                     case -1:
-                        n.expandaction(new Action("AW", field));
+                        n.expandaction(new Action(Action.Type.ADD_WHITE, field));
                         break;
                 }
                 if (boardPosition.marker(i, j) != Field.Marker.NONE)
@@ -1261,9 +1260,9 @@ public class BoardState {
                     }
                 }
                 else if (boardPosition.haslabel(i, j))
-                    n.expandaction(new Action("LB", field + ":" + boardPosition.label(i, j)));
+                    n.expandaction(new Action(Action.Type.LABEL, field + ":" + boardPosition.label(i, j)));
                 else if (boardPosition.letter(i, j) > 0)
-                    n.expandaction(new Action("LB", field + ":" + boardPosition.letter(i, j)));
+                    n.expandaction(new Action(Action.Type.LABEL, field + ":" + boardPosition.letter(i, j)));
             }
         }
     }
@@ -1277,7 +1276,7 @@ public class BoardState {
         getinformation();
         Tree<Node> pos = Pos;
         boolean found = true;
-        outer: while (!Pos.content().getaction("C").contains(s) || Pos == pos)
+        outer: while (!Pos.content().getaction(Action.Type.COMMENT).contains(s) || Pos == pos)
         {
             if ( !Pos.haschildren())
             {
@@ -1311,11 +1310,11 @@ public class BoardState {
                 Node n = new Node(++number);
                 if (boardPosition.color() > 0)
                 {
-                    a = new Action("B", Field.string(i, j));
+                    a = new Action(Action.Type.BLACK, Field.string(i, j));
                 }
                 else
                 {
-                    a = new Action("W", Field.string(i, j));
+                    a = new Action(Action.Type.WHITE, Field.string(i, j));
                 }
                 n.addaction(a); // note the move action
                 setaction(n, a, boardPosition.color()); // display the action
@@ -1330,11 +1329,11 @@ public class BoardState {
                 Node n = Pos.content();
                 if (boardPosition.color() > 0)
                 {
-                    a = new Action("B", Field.string(i, j));
+                    a = new Action(Action.Type.BLACK, Field.string(i, j));
                 }
                 else
                 {
-                    a = new Action("W", Field.string(i, j));
+                    a = new Action(Action.Type.WHITE, Field.string(i, j));
                 }
                 n.addaction(a); // note the move action
                 setaction(n, a, boardPosition.color()); // display the action
@@ -1354,7 +1353,7 @@ public class BoardState {
         {
             for (Action a : p.content().actions())
             {
-                if (a.type().equals("C"))
+                if (a.type().equals(Action.Type.COMMENT))
                 {
                     String larg = a.arguments().get(0);
                     if (larg.isEmpty())
@@ -1370,19 +1369,19 @@ public class BoardState {
                     break outer;
                 }
             }
-            p.content().addaction(new Action("C", s));
+            p.content().addaction(new Action(Action.Type.COMMENT, s));
             break;
         }
     }
 
-    public String twodigits (int n)
+    private String twodigits (int n)
     {
         if (n < 10)
             return "0" + n;
         else return "" + n;
     }
 
-    public String formtime (int t)
+    private String formtime (int t)
     {
         int s, m, h = t / 3600;
         if (h >= 1)
@@ -1400,7 +1399,7 @@ public class BoardState {
         }
     }
 
-    public String lookuptime (String type)
+    public String lookuptime (Action.Type type)
     {
         int t;
         if (Pos.parent() != null)
@@ -1426,7 +1425,7 @@ public class BoardState {
     void setname (String s)
     // set the name of the node
     {
-        Pos.content().setaction("N", s, true);
+        Pos.content().setaction(Action.Type.NAME, s, true);
     }
 
     public String extraInformation ()
@@ -1434,15 +1433,15 @@ public class BoardState {
     {
         StringBuffer b = new StringBuffer(Global.resourceString("_("));
         Node n = T.top().content();
-        if (n.contains("HA"))
+        if (n.contains(Action.Type.HANDICAP))
         {
             b.append(Global.resourceString("Ha_"));
-            b.append(n.getaction("HA"));
+            b.append(n.getaction(Action.Type.HANDICAP));
         }
-        if (n.contains("KM"))
+        if (n.contains(Action.Type.KOMI))
         {
             b.append(Global.resourceString("__Ko"));
-            b.append(n.getaction("KM"));
+            b.append(n.getaction(Action.Type.KOMI));
         }
         b.append(Global.resourceString("__B"));
         b.append("" + Pw);
@@ -1456,14 +1455,14 @@ public class BoardState {
                                 String whiterank, String komi, String handicap)
     // set various things like names, rank etc.
     {
-        T.top().content().setaction("PB", black, true);
-        T.top().content().setaction("BR", blackrank, true);
-        T.top().content().setaction("PW", white, true);
-        T.top().content().setaction("WR", whiterank, true);
-        T.top().content().setaction("KM", komi, true);
-        T.top().content().setaction("HA", handicap, true);
-        T.top().content().setaction("GN", white + "-" + black, true);
-        T.top().content().setaction("DT", new Date().toString());
+        T.top().content().setaction(Action.Type.BLACK_PLAYER_NAME, black, true);
+        T.top().content().setaction(Action.Type.BLACK_PLAYER_RANK, blackrank, true);
+        T.top().content().setaction(Action.Type.WHITE_PLAYER_NAME, white, true);
+        T.top().content().setaction(Action.Type.WHITE_PLAYER_RANK, whiterank, true);
+        T.top().content().setaction(Action.Type.KOMI, komi, true);
+        T.top().content().setaction(Action.Type.HANDICAP, handicap, true);
+        T.top().content().setaction(Action.Type.GAME_NAME, white + "-" + black, true);
+        T.top().content().setaction(Action.Type.DATE, new Date().toString());
     }
 
     public int siblings ()
@@ -1498,13 +1497,13 @@ public class BoardState {
     String getname ()
     // get node name
     {
-        return T.top().content().getaction("N");
+        return T.top().content().getaction(Action.Type.NAME);
     }
 
     public String getKomi ()
     // get Komi string
     {
-        return T.top().content().getaction("KM");
+        return T.top().content().getaction(Action.Type.KOMI);
     }
 
     boolean hasParent() {
