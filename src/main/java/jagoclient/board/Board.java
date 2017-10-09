@@ -547,7 +547,7 @@ public class Board extends Canvas implements MouseListener,
 				else deletemouse(i, j);
 				break;
 			case 8: // remove a group
-				removemouse(i, j);
+				//removemouse(i, j);
 				break;
 			case 9:
 				boardState.specialmark(i, j);
@@ -1530,19 +1530,12 @@ public class Board extends Canvas implements MouseListener,
 		showinformation();
 	}
 
-	void removemouse (int i, int j)
-	// remove a group at i,j
-	{
-		boardState.removegroup(i, j);
-		showinformation();
-	}
-
 	void setVariationStyle (boolean hide, boolean current)
 	{
-		boardState.undonode();
+		boardPosition.undonode(boardState.current().content());
 		VHide = hide;
 		VCurrent = current;
-		boardState.act(boardState.current().content());
+		boardPosition.act(boardState.current().content());
 		updateall();
 		copy();
 	}

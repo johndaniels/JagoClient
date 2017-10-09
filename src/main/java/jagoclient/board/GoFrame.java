@@ -1941,7 +1941,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	 */
 	public void doboardsize (int s)
 	{
-		boardState.setsize(s);
+		//boardState.setsize(s);
 	}
 
 	/** called by menu action, opens a SizeQuestion dialog */
@@ -2207,7 +2207,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	 */
 	public void remove (int i, int j)
 	{
-		boardState.remove(i, j);
+		//boardState.remove(i, j);
 	}
 
 	/**

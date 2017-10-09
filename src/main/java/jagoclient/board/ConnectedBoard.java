@@ -54,7 +54,7 @@ public class ConnectedBoard extends Board
 		if (CGF.wantsmove() && boardState.current().content().main())
 		{	CGF.moveset(i0,j0);
 		}
-		boardState.removegroup(i0,j0);
+		//boardState.removegroup(i0,j0);
 	}
 
 	/**

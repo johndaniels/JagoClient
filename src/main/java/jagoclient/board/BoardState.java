@@ -13,14 +13,15 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
 
+
+/**
+ * Stores all of the game state associated with an SGF, including
+ * variations, comments, etc.
+ */
 public class BoardState {
     private int sendi = -1, sendj;
     private Position boardPosition;
-    private int lasti = -1, lastj = 0; // last move (used to highlight the move)
     private int S;
-    private int Pw,Pb; // changes in prisoners in this node
-    private int captured = 0, capturei, capturej;
-    private int Range;
     Tree<Node> Pos; // the current board position in this presentation
     private SGFTree T; // the game tree
     int number; // number of the next move
@@ -53,7 +54,7 @@ public class BoardState {
         setsize(s);
     }
 
-    public void setsize (int s)
+    private void setsize (int s)
     // set the board size
     // clears the board !!!
     {
@@ -63,87 +64,8 @@ public class BoardState {
         number = 1;
         Node n = new Node(number);
         n.main(true);
-        lasti = lastj = -1;
         T = new SGFTree(n);
         Pos = T.top();
-    }
-
-    private void setaction (Node n, Action a, int c)
-    // interpret a set move action, update the last move marker,
-    // c being the color of the move.
-    {
-        String s = a.argument();
-        int i = Field.i(s);
-        int j = Field.j(s);
-        if ( !valid(i, j)) return;
-        n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
-        boardPosition.color(i, j, c);
-        boardPosition.number(i, j, n.number() - 1);
-        boardPosition.update(lasti, lastj);
-        lasti = i;
-        lastj = j;
-        boardPosition.update(i, j);
-        boardPosition.color( -c);
-        capture(i, j, n);
-    }
-
-    public void capture (int i, int j, Node n)
-    // capture neighboring groups without liberties
-    // capture own group on suicide
-    {
-        int c = -boardPosition.color(i, j);
-        captured = 0;
-        if (i > 0) capturegroup(i - 1, j, c, n);
-        if (j > 0) capturegroup(i, j - 1, c, n);
-        if (i < S - 1) capturegroup(i + 1, j, c, n);
-        if (j < S - 1) capturegroup(i, j + 1, c, n);
-        if (boardPosition.color(i, j) == -c)
-        {
-            capturegroup(i, j, -c, n);
-        }
-        if (captured == 1 && boardPosition.count(i, j) != 1) captured = 0;
-    }
-
-    /**
-     * Used by capture to determine the state of the groupt at (i,j)
-     * Remove it, if it has no liberties and note the removals
-     * as actions in the current node.
-     */
-    public void capturegroup (int i, int j, int c, Node n)
-    // Used by capture to determine the state of the groupt at (i,j)
-    // Remove it, if it has no liberties and note the removals
-    // as actions in the current node.
-    {
-        int ii, jj;
-        Action a;
-        if (boardPosition.color(i, j) != c) return;
-        if ( !boardPosition.markgrouptest(i, j, 0)) // liberties?
-        {
-            for (ii = 0; ii < S; ii++)
-                for (jj = 0; jj < S; jj++)
-                {
-                    if (boardPosition.marked(ii, jj))
-                    {
-                        n.addchange(new Change(ii, jj, boardPosition.color(ii, jj), boardPosition
-                                .number(ii, jj)));
-                        if (boardPosition.color(ii, jj) > 0)
-                        {
-                            Pb++;
-                            n.Pb++;
-                        }
-                        else
-                        {
-                            Pw++;
-                            n.Pw++;
-                        }
-                        boardPosition.color(ii, jj, 0);
-                        boardPosition.update(ii, jj); // redraw the field (offscreen)
-                        captured++;
-                        capturei = ii;
-                        capturej = jj;
-                    }
-                }
-        }
     }
 
     void gotovariation (int i, int j)
@@ -155,14 +77,14 @@ public class BoardState {
         {
             goback();
             Pos = newpos;
-            act(Pos.content());
-            setcurrent(Pos.content());
+            boardPosition.act(Pos.content());
+            boardPosition.setcurrent(Pos.content());
         }
         else if (newpos.parent() == Pos)
         {
             Pos = newpos;
-            act(Pos.content());
-            setcurrent(Pos.content());
+            boardPosition.act(Pos.content());
+            boardPosition.setcurrent(Pos.content());
         }
     }
 
@@ -187,7 +109,7 @@ public class BoardState {
         if (pos1 != Pos) return;
         if (Pos.parent() == null)
         {
-            undonode();
+            boardPosition.undonode(Pos.content());
             Pos.removeall();
             Pos.content().removeactions();
             return;
@@ -204,9 +126,9 @@ public class BoardState {
     // go one move back
     {
         if (Pos.parent() == null) return;
-        undonode();
+        boardPosition.undonode(Pos.content());
         Pos = Pos.parent();
-        setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos.content());
     }
 
     private void goforward ()
@@ -214,36 +136,8 @@ public class BoardState {
     {
         if ( !Pos.haschildren()) return;
         Pos = Pos.firstchild();
-        act(Pos.content());
-        setcurrent(Pos.content());
-    }
-
-    private void setcurrent (Node n)
-    // update the last move marker applying all
-    // set move actions in the node
-    {
-        String s;
-        int i = lasti, j = lastj;
-        lasti = -1;
-        lastj = -1;
-        boardPosition.update(i, j);
-        for (Action a : n.actions())
-        {
-            if (a.type().equals(Action.Type.BLACK) || a.type().equals(Action.Type.WHITE))
-            {
-                s = a.argument();
-                i = Field.i(s);
-                j = Field.j(s);
-                if (valid(i, j))
-                {
-                    lasti = i;
-                    lastj = j;
-                    boardPosition.update(lasti, lastj);
-                    boardPosition.color( -boardPosition.color(i, j));
-                }
-            }
-        }
-        number = n.number();
+        boardPosition.act(Pos.content());
+        boardPosition.setcurrent(Pos.content());
     }
 
     void gotoMove (int move)
@@ -261,7 +155,7 @@ public class BoardState {
         Tree<Node> newpos = nextchild(Pos);
         goback();
         Pos = newpos;
-        act(Pos.content());
+        boardPosition.act(Pos.content());
     }
 
     static Tree<Node> previouschild (Tree<Node> p)
@@ -274,107 +168,6 @@ public class BoardState {
     {
         if (p.parent() == null) return null;
         return p.parent().nextchild(p);
-    }
-
-    public void undonode ()
-    // Undo everything that has been changed in the node.
-    // (This will not correct the last move marker!)
-    {
-        Node n = Pos.content();
-        clearrange();
-        Iterator<Change> i = n.changes().descendingIterator();
-        while (i.hasNext())
-        {
-            Change c = i.next();
-            boardPosition.color(c.I, c.J, c.C);
-            boardPosition.number(c.I, c.J, c.N);
-            boardPosition.update(c.I, c.J);
-        }
-        n.clearchanges();
-        Pw -= n.Pw;
-        Pb -= n.Pb;
-    }
-
-    public void act (Node n)
-    // interpret all actions of a node
-    {
-        if (n.actions().isEmpty()) return;
-        String s;
-        int i, j;
-        for (Action a : n.actions())
-        {
-
-        }
-        n.clearchanges();
-        n.Pw = n.Pb = 0;
-        for (Action a : n.actions())
-        {
-            if (a.type().equals(Action.Type.BLACK))
-            {
-                setaction(n, a, 1);
-            }
-            else if (a.type().equals(Action.Type.WHITE))
-            {
-                setaction(n, a, -1);
-            }
-            if (a.type().equals(Action.Type.ADD_BLACK))
-            {
-                placeaction(n, a, 1);
-            }
-            if (a.type().equals(Action.Type.ADD_WHITE))
-            {
-                placeaction(n, a, -1);
-            }
-            else if (a.type().equals(Action.Type.ADD_EMPTY))
-            {
-                emptyaction(n, a);
-            }
-        }
-    }
-
-    private void placeaction (Node n, Action a, int c)
-    // interpret a set move action, update the last move marker,
-    // c being the color of the move.
-    {
-        int i, j;
-        for (String s : a.arguments())
-        {
-            i = Field.i(s);
-            j = Field.j(s);
-            if (valid(i, j))
-            {
-                n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
-                boardPosition.color(i, j, c);
-                boardPosition.update(i, j);
-            }
-        }
-    }
-
-    private void emptyaction (Node n, Action a)
-    // interpret a remove stone action
-    {
-        int i, j, r = 1;
-        for (String s : a.arguments())
-        {
-            i = Field.i(s);
-            j = Field.j(s);
-            if (valid(i, j))
-            {
-                n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
-                if (boardPosition.color(i, j) < 0)
-                {
-                    n.Pw++;
-                    Pw++;
-                }
-                else if (boardPosition.color(i, j) > 0)
-                {
-                    n.Pb++;
-                    Pb++;
-                }
-                boardPosition.color(i, j, 0);
-                boardPosition.update(i, j);
-            }
-        }
     }
 
     public void setpass ()
@@ -392,24 +185,15 @@ public class BoardState {
             goforward();
             boardPosition.color( -c);
         }
-        captured = 0;
     }
 
     private void resettree ()
     {
         Pos = T.top();
         boardPosition = new Position(S);
-        lasti = lastj = -1;
-        Pb = Pw = 0;
         boardPosition.updateall();
     }
 
-    private void clearrange ()
-    {
-        if (Range == -1) return;
-        Range = -1;
-        boardPosition.updateall();
-    }
 
     private boolean valid (int i, int j)
     {
@@ -430,7 +214,7 @@ public class BoardState {
         Tree<Node> newpos = Pos.parent().previouschild(Pos);
         goback();
         Pos = newpos;
-        act(Pos.content());
+        boardPosition.act(Pos.content());
     }
 
     void varright ()
@@ -442,7 +226,7 @@ public class BoardState {
         Tree<Node> newpos = Pos.parent().nextchild(Pos);
         goback();
         Pos = newpos;
-        act(Pos.content());
+        boardPosition.act(Pos.content());
     }
 
     void varmain ()
@@ -540,7 +324,7 @@ public class BoardState {
             }
         }
         String s = comment;
-        if ( !s.equals(""))
+        if ( s != null && !s.equals(""))
         {
             Pos.content().addaction(new Action(Action.Type.COMMENT, s));
         }
@@ -680,48 +464,9 @@ public class BoardState {
         Pos.addchild(new Tree<Node>(n));
         n.main(Pos);
         goforward();
-        setcurrent(Pos.content());
-        captured = 0;
+        boardPosition.setcurrent(Pos.content());
     }
 
-    public synchronized void remove (int i0, int j0)
-    // completely remove a group there
-    {
-        varmaindown();
-        if (boardPosition.color(i0, j0) == 0) return;
-        Action a;
-        boardPosition.markgroup(i0, j0);
-        int i, j;
-        int c = boardPosition.color(i0, j0);
-        Node n = Pos.content();
-        if ((n.contains(Action.Type.BLACK) || n.contains(Action.Type.WHITE))) {
-            n = newnode();
-        }
-        for (i = 0; i < S; i++)
-            for (j = 0; j < S; j++)
-            {
-                if (boardPosition.marked(i, j))
-                {
-                    a = new Action(Action.Type.ADD_EMPTY, Field.string(i, j));
-                    n
-                            .addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i,
-                                    j)));
-                    n.expandaction(a);
-                    if (boardPosition.color(i, j) > 0)
-                    {
-                        n.Pb++;
-                        Pb++;
-                    }
-                    else
-                    {
-                        n.Pw++;
-                        Pw++;
-                    }
-                    boardPosition.color(i, j, 0);
-                    boardPosition.update(i, j);
-                }
-            }
-    }
 
     // ************ change the current node *****************
 
@@ -729,14 +474,14 @@ public class BoardState {
     // clear all marks in the current node
     {
         getinformation();
-        undonode();
+        boardPosition.undonode(Pos.content());
         Pos.content().actions().removeIf((Action a) -> {
-            return (a.type().equals("M") || a.type().equals("L")
+            return (a.type().equals(Action.Type.MARK) || a.type().equals(Action.Type.LABEL)
                     || a.type().equals(Field.Marker.CROSS.value) || a.type().equals(Field.Marker.SQUARE.value)
-                    || a.type().equals("SL") || a.type().equals(Field.Marker.CIRCLE.value)
+                    || a.type().equals(Action.Type.SELECT) || a.type().equals(Field.Marker.CIRCLE.value)
                     || a.type().equals(Field.Marker.TRIANGLE.value) || a.type().equals(Action.Type.LABEL));
         });
-        act(Pos.content());
+        boardPosition.act(Pos.content());
     }
 
     public void clearremovals ()
@@ -744,11 +489,11 @@ public class BoardState {
     {
         if (!Pos.children().isEmpty()) return;
         getinformation();
-        undonode();
+        boardPosition.undonode(Pos.content());
         Pos.content().actions().removeIf((Action a) -> {
             return (a.type().equals(Action.Type.ADD_BLACK) || a.type().equals(Action.Type.ADD_WHITE) || a.type().equals(Action.Type.ADD_EMPTY));
         });
-        act(Pos.content());
+        boardPosition.act(Pos.content());
     }
 
     // *************** change the game tree ***********
@@ -762,7 +507,7 @@ public class BoardState {
         n.main(Pos);
         getinformation();
         Pos = Pos.lastchild();
-        setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos.content());
     }
 
     public void insertvariation ()
@@ -776,7 +521,7 @@ public class BoardState {
         Pos.addchild(new Tree<Node>(n));
         n.main(Pos);
         Pos = Pos.lastchild();
-        setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos.content());
         boardPosition.color( -c);
     }
 
@@ -802,27 +547,27 @@ public class BoardState {
             String field = Field.string(i, j);
             if (n.contains(Action.Type.ADD_BLACK, field))
             {
-                undonode();
+                boardPosition.undonode(Pos.content());
                 n.toggleaction(new Action(Action.Type.ADD_BLACK, field));
-                act(Pos.content());
+                boardPosition.act(Pos.content());
             }
             else if (n.contains(Action.Type.ADD_WHITE, field))
             {
-                undonode();
+                boardPosition.undonode(Pos.content());
                 n.toggleaction(new Action(Action.Type.ADD_WHITE, field));
-                act(Pos.content());
+                boardPosition.act(Pos.content());
             }
             else if (n.contains(Action.Type.BLACK, field))
             {
-                undonode();
+                boardPosition.undonode(Pos.content());
                 n.toggleaction(new Action(Action.Type.BLACK, field));
-                act(Pos.content());
+                boardPosition.act(Pos.content());
             }
             else if (n.contains(Action.Type.WHITE, field))
             {
-                undonode();
+                boardPosition.undonode(Pos.content());
                 n.toggleaction(new Action(Action.Type.WHITE, field));
-                act(Pos.content());
+                boardPosition.act(Pos.content());
             }
             else
             {
@@ -845,51 +590,16 @@ public class BoardState {
             {
                 if (a.type().equals("B") || a.type().equals("W"))
                 {
-                    undonode();
+                    boardPosition.undonode(Pos.content());
                     a.arguments().set(0, Field.string(i, j));
-                    act(Pos.content());
+                    boardPosition.act(Pos.content());
                     break;
                 }
             }
         }
     }
 
-    public void removegroup (int i0, int j0)
-    // completely remove a group (at end of game, before count)
-    // note all removals
-    {
-        if (Pos.haschildren()) return;
-        if (boardPosition.color(i0, j0) == 0) return;
-        Action a;
-        boardPosition.markgroup(i0, j0);
-        int i, j;
-        int c = boardPosition.color(i0, j0);
-        Node n = Pos.content();
-        if (n.contains(Action.Type.BLACK) || n.contains(Action.Type.WHITE)) n = newnode();
-        for (i = 0; i < S; i++)
-            for (j = 0; j < S; j++)
-            {
-                if (boardPosition.marked(i, j))
-                {
-                    a = new Action(Action.Type.ADD_EMPTY, Field.string(i, j));
-                    n
-                            .addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i,
-                                    j)));
-                    n.expandaction(a);
-                    if (boardPosition.color(i, j) > 0)
-                    {
-                        n.Pb++;
-                        Pb++;
-                    }
-                    else
-                    {
-                        n.Pw++;
-                        Pw++;
-                    }
-                    boardPosition.color(i, j, 0);
-                }
-            }
-    }
+
 
     public void specialmark (int i, int j)
     // Emphasize with the SpecialMarker
@@ -933,7 +643,7 @@ public class BoardState {
         Pos.addchild(newpos); // note the move
         n.main(Pos);
         Pos = newpos; // update current position pointerAction a;
-        setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos.content());
         return n;
     }
 
@@ -999,8 +709,8 @@ public class BoardState {
                 + Global.resourceString("Black__") + (sb + tb)
                 + Global.resourceString("__White__") + (sw + tw) + "\n"
                 + Global.resourceString("Japanese_count_") + "\n"
-                + Global.resourceString("Black__") + (Pw + tb)
-                + Global.resourceString("__White__") + (Pb + tw);
+                + Global.resourceString("Black__") + (boardPosition.Pw + tb)
+                + Global.resourceString("__White__") + (boardPosition.Pb + tw);
         return s;
     }
 
@@ -1033,8 +743,8 @@ public class BoardState {
                 + Global.resourceString("Black__") + (sb + tb)
                 + Global.resourceString("__White__") + (sw + tw) + "\n"
                 + Global.resourceString("Japanese_count_") + "\n"
-                + Global.resourceString("Black__") + (Pw + tb)
-                + Global.resourceString("__White__") + (Pb + tw);
+                + Global.resourceString("Black__") + (boardPosition.Pw + tb)
+                + Global.resourceString("__White__") + (boardPosition.Pb + tw);
     }
 
     public void load (BufferedReader in) throws IOException
@@ -1044,11 +754,9 @@ public class BoardState {
         synchronized (this)
         {
             if (v.size() == 0) return;
-            boardPosition.update(lasti, lastj);
-            lasti = lastj = -1;
             T = (SGFTree)v.elementAt(0);
             resettree();
-            act(Pos.content());
+            boardPosition.act(Pos.content());
         }
     }
 
@@ -1059,11 +767,9 @@ public class BoardState {
         synchronized (this)
         {
             if (v.size() == 0) return;
-            boardPosition.update(lasti, lastj);
-            lasti = lastj = -1;
             T = (SGFTree)v.elementAt(0);
             resettree();
-            act(Pos.content());
+            boardPosition.act(Pos.content());
         }
     }
 
@@ -1317,7 +1023,7 @@ public class BoardState {
                     a = new Action(Action.Type.WHITE, Field.string(i, j));
                 }
                 n.addaction(a); // note the move action
-                setaction(n, a, boardPosition.color()); // display the action
+                boardPosition.setaction(n, a, boardPosition.color()); // display the action
                 // !!! We alow for suicide moves
                 Tree<Node> newpos = new Tree<Node>(n);
                 Pos.addchild(newpos); // note the move
@@ -1336,7 +1042,7 @@ public class BoardState {
                     a = new Action(Action.Type.WHITE, Field.string(i, j));
                 }
                 n.addaction(a); // note the move action
-                setaction(n, a, boardPosition.color()); // display the action
+                boardPosition.setaction(n, a, boardPosition.color()); // display the action
                 // !!! We alow for suicide moves
             }
         }
@@ -1444,9 +1150,9 @@ public class BoardState {
             b.append(n.getaction(Action.Type.KOMI));
         }
         b.append(Global.resourceString("__B"));
-        b.append("" + Pw);
+        b.append("" + boardPosition.Pw);
         b.append(Global.resourceString("__W"));
-        b.append("" + Pb);
+        b.append("" + boardPosition.Pb);
         b.append(Global.resourceString("_)"));
         return b.toString();
     }

@@ -3,12 +3,15 @@ package jagoclient.board;
 import rene.util.list.Tree;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 
 /**
- * Store a complete game position. Used primarily to draw the
- * current state of the board.
+ * Store a complete game position. This represents the current
+ * state of the game board at a particular Node. the position
+ * can be mutated by applying or undoing nodes.
+ * Keeps track of score and other things
  * Contains methods for group determination and liberties.
 */
 public class Position
@@ -16,6 +19,12 @@ public class Position
 	int C; // next turn (1 is black, -1 is white)
 	Field[][] F; // the board
 	List<PositionUpdatedHandler> positionUpdatedHandlers = new ArrayList<>();
+	private int lasti = -1, lastj = 0; // last move (used to highlight the move)
+	int Pw,Pb; // total prisioners captured
+	private int captured = 0, capturei, capturej;
+	int number;
+
+
 
 	public interface PositionUpdatedHandler {
 		void positionUpdated(int i, int j);
@@ -204,6 +213,207 @@ public class Position
 				}
 			}
 		
+	}
+
+	void setcurrent (Node n)
+	// update the last move marker applying all
+	// set move actions in the node
+	{
+		String s;
+		for (Action a : n.actions())
+		{
+			if (a.type().equals(Action.Type.BLACK) || a.type().equals(Action.Type.WHITE))
+			{
+				s = a.argument();
+				int i = Field.i(s);
+				int j = Field.j(s);
+				if (valid(i, j))
+				{
+					lasti = i;
+					lastj = j;
+					update(lasti, lastj);
+					color( -color(i, j));
+				}
+			}
+		}
+		number = n.number();
+	}
+
+	void setaction (Node n, Action a, int c)
+	// interpret a set move action, update the last move marker,
+	// c being the color of the move.
+	{
+		String s = a.argument();
+		int i = Field.i(s);
+		int j = Field.j(s);
+		if ( !valid(i, j)) return;
+		n.addchange(new Change(i, j, color(i, j), number(i, j)));
+		color(i, j, c);
+		number(i, j, n.number() - 1);
+		update(lasti, lastj);
+		lasti = i;
+		lastj = j;
+		update(i, j);
+		color( -c);
+		capture(i, j, n);
+	}
+
+	public void capture (int i, int j, Node n)
+	// capture neighboring groups without liberties
+	// capture own group on suicide
+	{
+		int c = -color(i, j);
+		captured = 0;
+		if (i > 0) capturegroup(i - 1, j, c, n);
+		if (j > 0) capturegroup(i, j - 1, c, n);
+		if (i < S - 1) capturegroup(i + 1, j, c, n);
+		if (j < S - 1) capturegroup(i, j + 1, c, n);
+		if (color(i, j) == -c)
+		{
+			capturegroup(i, j, -c, n);
+		}
+		if (captured == 1 && count(i, j) != 1) captured = 0;
+	}
+
+	/**
+	 * Used by capture to determine the state of the groupt at (i,j)
+	 * Remove it, if it has no liberties and note the removals
+	 * as actions in the current node.
+	 */
+	public void capturegroup (int i, int j, int c, Node n)
+	// Used by capture to determine the state of the groupt at (i,j)
+	// Remove it, if it has no liberties and note the removals
+	// as actions in the current node.
+	{
+		int ii, jj;
+		Action a;
+		if (color(i, j) != c) return;
+		if ( !markgrouptest(i, j, 0)) // liberties?
+		{
+			for (ii = 0; ii < S; ii++)
+				for (jj = 0; jj < S; jj++)
+				{
+					if (marked(ii, jj))
+					{
+						n.addchange(new Change(ii, jj, color(ii, jj), number(ii, jj)));
+						if (color(ii, jj) > 0)
+						{
+							Pb++;
+							n.Pb++;
+						}
+						else
+						{
+							Pw++;
+							n.Pw++;
+						}
+						color(ii, jj, 0);
+						update(ii, jj); // redraw the field (offscreen)
+						captured++;
+						capturei = ii;
+						capturej = jj;
+					}
+				}
+		}
+	}
+
+	public void undonode (Node n)
+	// Undo everything that has been changed in the node.
+	// (This will not correct the last move marker!)
+	{
+		Iterator<Change> i = n.changes().descendingIterator();
+		while (i.hasNext())
+		{
+			Change c = i.next();
+			color(c.I, c.J, c.C);
+			number(c.I, c.J, c.N);
+			update(c.I, c.J);
+		}
+		n.clearchanges();
+		Pw -= n.Pw;
+		Pb -= n.Pb;
+	}
+
+	public void act (Node n)
+	// interpret all actions of a node
+	{
+		if (n.actions().isEmpty()) return;
+		String s;
+		int i, j;
+		n.clearchanges();
+		n.Pw = n.Pb = 0;
+		for (Action a : n.actions())
+		{
+			if (a.type().equals(Action.Type.BLACK))
+			{
+				setaction(n, a, 1);
+			}
+			else if (a.type().equals(Action.Type.WHITE))
+			{
+				setaction(n, a, -1);
+			}
+			if (a.type().equals(Action.Type.ADD_BLACK))
+			{
+				placeaction(n, a, 1);
+			}
+			if (a.type().equals(Action.Type.ADD_WHITE))
+			{
+				placeaction(n, a, -1);
+			}
+			else if (a.type().equals(Action.Type.ADD_EMPTY))
+			{
+				emptyaction(n, a);
+			}
+		}
+	}
+
+	private void placeaction (Node n, Action a, int c)
+	// interpret a set move action, update the last move marker,
+	// c being the color of the move.
+	{
+		int i, j;
+		for (String s : a.arguments())
+		{
+			i = Field.i(s);
+			j = Field.j(s);
+			if (valid(i, j))
+			{
+				n.addchange(new Change(i, j, color(i, j), number(i, j)));
+				color(i, j, c);
+				update(i, j);
+			}
+		}
+	}
+
+	private void emptyaction (Node n, Action a)
+	// interpret a remove stone action
+	{
+		int i, j, r = 1;
+		for (String s : a.arguments())
+		{
+			i = Field.i(s);
+			j = Field.j(s);
+			if (valid(i, j))
+			{
+				n.addchange(new Change(i, j, color(i, j), number(i, j)));
+				if (color(i, j) < 0)
+				{
+					n.Pw++;
+					Pw++;
+				}
+				else if (color(i, j) > 0)
+				{
+					n.Pb++;
+					Pb++;
+				}
+				color(i, j, 0);
+				update(i, j);
+			}
+		}
+	}
+
+	private boolean valid (int i, int j)
+	{
+		return i >= 0 && i < S && j >= 0 && j < S;
 	}
 
 	// Interface to determine field marks.
