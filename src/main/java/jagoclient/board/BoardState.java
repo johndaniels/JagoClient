@@ -73,19 +73,9 @@ public class BoardState {
     {
         Tree<Node> newpos = boardPosition.tree(i, j);
         getinformation();
-        if (newpos.parent() == Pos.parent())
-        {
-            goback();
-            Pos = newpos;
-            boardPosition.act(Pos.content());
-            boardPosition.setcurrent(Pos.content());
-        }
-        else if (newpos.parent() == Pos)
-        {
-            Pos = newpos;
-            boardPosition.act(Pos.content());
-            boardPosition.setcurrent(Pos.content());
-        }
+        Pos = newpos;
+        boardPosition.act(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
     public void variation (int i, int j)
@@ -128,7 +118,7 @@ public class BoardState {
         if (Pos.parent() == null) return;
         boardPosition.undonode(Pos.content());
         Pos = Pos.parent();
-        boardPosition.setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
     private void goforward ()
@@ -137,7 +127,7 @@ public class BoardState {
         if ( !Pos.haschildren()) return;
         Pos = Pos.firstchild();
         boardPosition.act(Pos.content());
-        boardPosition.setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
     void gotoMove (int move)
@@ -156,6 +146,8 @@ public class BoardState {
         goback();
         Pos = newpos;
         boardPosition.act(Pos.content());
+        boardPosition.setcurrent(Pos);
+
     }
 
     static Tree<Node> previouschild (Tree<Node> p)
@@ -215,6 +207,7 @@ public class BoardState {
         goback();
         Pos = newpos;
         boardPosition.act(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
     void varright ()
@@ -227,6 +220,7 @@ public class BoardState {
         goback();
         Pos = newpos;
         boardPosition.act(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
     void varmain ()
@@ -464,7 +458,7 @@ public class BoardState {
         Pos.addchild(new Tree<Node>(n));
         n.main(Pos);
         goforward();
-        boardPosition.setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
 
@@ -482,6 +476,7 @@ public class BoardState {
                     || a.type().equals(Field.Marker.TRIANGLE.value) || a.type().equals(Action.Type.LABEL));
         });
         boardPosition.act(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
     public void clearremovals ()
@@ -494,6 +489,7 @@ public class BoardState {
             return (a.type().equals(Action.Type.ADD_BLACK) || a.type().equals(Action.Type.ADD_WHITE) || a.type().equals(Action.Type.ADD_EMPTY));
         });
         boardPosition.act(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
     // *************** change the game tree ***********
@@ -507,7 +503,7 @@ public class BoardState {
         n.main(Pos);
         getinformation();
         Pos = Pos.lastchild();
-        boardPosition.setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos);
     }
 
     public void insertvariation ()
@@ -521,7 +517,7 @@ public class BoardState {
         Pos.addchild(new Tree<Node>(n));
         n.main(Pos);
         Pos = Pos.lastchild();
-        boardPosition.setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos);
         boardPosition.color( -c);
     }
 
@@ -550,24 +546,28 @@ public class BoardState {
                 boardPosition.undonode(Pos.content());
                 n.toggleaction(new Action(Action.Type.ADD_BLACK, field));
                 boardPosition.act(Pos.content());
+                boardPosition.setcurrent(Pos);
             }
             else if (n.contains(Action.Type.ADD_WHITE, field))
             {
                 boardPosition.undonode(Pos.content());
                 n.toggleaction(new Action(Action.Type.ADD_WHITE, field));
                 boardPosition.act(Pos.content());
+                boardPosition.setcurrent(Pos);
             }
             else if (n.contains(Action.Type.BLACK, field))
             {
                 boardPosition.undonode(Pos.content());
                 n.toggleaction(new Action(Action.Type.BLACK, field));
                 boardPosition.act(Pos.content());
+                boardPosition.setcurrent(Pos);
             }
             else if (n.contains(Action.Type.WHITE, field))
             {
                 boardPosition.undonode(Pos.content());
                 n.toggleaction(new Action(Action.Type.WHITE, field));
                 boardPosition.act(Pos.content());
+                boardPosition.setcurrent(Pos);
             }
             else
             {
@@ -593,6 +593,7 @@ public class BoardState {
                     boardPosition.undonode(Pos.content());
                     a.arguments().set(0, Field.string(i, j));
                     boardPosition.act(Pos.content());
+                    boardPosition.setcurrent(Pos);
                     break;
                 }
             }
@@ -614,9 +615,12 @@ public class BoardState {
     public void markterritory (int i, int j, int color)
     {
         Action a;
-        if (color > 0)
+        if (color > 0) {
             a = new Action(Action.Type.BLACK_TERRITORY, Field.string(i, j));
-        else a = new Action(Action.Type.WHITE_TERRITORY, Field.string(i, j));
+        }
+        else {
+            a = new Action(Action.Type.WHITE_TERRITORY, Field.string(i, j));
+        }
         Pos.content().expandaction(a);
         boardPosition.update(i, j);
     }
@@ -643,7 +647,7 @@ public class BoardState {
         Pos.addchild(newpos); // note the move
         n.main(Pos);
         Pos = newpos; // update current position pointerAction a;
-        boardPosition.setcurrent(Pos.content());
+        boardPosition.setcurrent(Pos);
         return n;
     }
 
@@ -757,6 +761,7 @@ public class BoardState {
             T = (SGFTree)v.elementAt(0);
             resettree();
             boardPosition.act(Pos.content());
+            boardPosition.setcurrent(Pos);
         }
     }
 
@@ -770,6 +775,7 @@ public class BoardState {
             T = (SGFTree)v.elementAt(0);
             resettree();
             boardPosition.act(Pos.content());
+            boardPosition.setcurrent(Pos);
         }
     }
 

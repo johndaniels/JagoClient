@@ -4,14 +4,16 @@ import rene.util.list.Tree;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 
 /**
- * Store a complete game position. This represents the current
- * state of the game board at a particular Node. the position
- * can be mutated by applying or undoing nodes.
- * Keeps track of score and other things
+ * Store a complete game position. This class contains all the information
+ * necessary to render the current state of the board, including stones,
+ * marks, and variations.
+ * Also keeps track of score and game information.
  * Contains methods for group determination and liberties.
 */
 public class Position
@@ -23,8 +25,10 @@ public class Position
 	int Pw,Pb; // total prisioners captured
 	private int captured = 0, capturei, capturej;
 	int number;
+	int let;
+	String currentComment;
 
-
+	List<Tree<Node>> nodes = new ArrayList<>(); // A list of the nodes that got us to this point.
 
 	public interface PositionUpdatedHandler {
 		void positionUpdated(int i, int j);
@@ -101,7 +105,7 @@ public class Position
 	Recursively mark all unmarked places with state c,
 	starting from (i,j).
 	*/
-	void markrek (int i, int j, int c)
+	private void markrek (int i, int j, int c)
 	{	if (F[i][j].mark() || F[i][j].color()!=c) return;
 		F[i][j].mark(true);
 		if (i>0) markrek(i-1,j,c);
@@ -113,7 +117,7 @@ public class Position
 	/**
 	Mark a group at (n,m)
 	*/
-	public void markgroup (int n, int m)
+	private void markgroup (int n, int m)
 	{	unmarkall();
 		// recursively do the marking
 		markrek(n,m,F[n][m].color());
@@ -145,14 +149,14 @@ public class Position
 	If yes, mark all elements of the group.
 	Else return false.
 	*/
-	public boolean markgrouptest (int n, int m, int ct)
+	private boolean markgrouptest (int n, int m, int ct)
 	{	unmarkall();
 		return markrektest(n,m,F[n][m].color(),ct);
 	}
 
 	/** cancel all markings
 	*/
-	public void unmarkall ()
+	private void unmarkall ()
 	{	int i,j;
 		for (i=0; i<S; i++)
 			for (j=0; j<S; j++)
@@ -215,10 +219,11 @@ public class Position
 		
 	}
 
-	void setcurrent (Node n)
+	void setcurrent (Tree<Node> treeNode)
 	// update the last move marker applying all
 	// set move actions in the node
 	{
+		Node n = treeNode.content();
 		String s;
 		for (Action a : n.actions())
 		{
@@ -235,6 +240,68 @@ public class Position
 					color( -color(i, j));
 				}
 			}
+			if (a.type().equals(Action.Type.COMMENT))
+			{
+				currentComment = a.argument();
+			}
+			else if (a.type().equals(Field.Marker.SQUARE.value) || a.type().equals(Action.Type.SELECT))
+			{
+				runForAllCoordinates(a, (i1, j1) -> marker(i1, j1, Field.Marker.SQUARE));
+			}
+			else if (a.type().equals(Field.Marker.CROSS.value) || a.type().equals(Action.Type.MARK)
+					|| a.type().equals(Action.Type.WHITE_TERRITORY) || a.type().equals(Action.Type.BLACK_TERRITORY))
+			{
+				runForAllCoordinates(a, (i1, j1) -> marker(i1, j1, Field.Marker.CROSS));
+			}
+			else if (a.type().equals(Field.Marker.TRIANGLE.value))
+			{
+				runForAllCoordinates(a, (i1, j1) -> marker(i1, j1, Field.Marker.TRIANGLE));
+			}
+			else if (a.type().equals(Field.Marker.CIRCLE.value))
+			{
+				runForAllCoordinates(a, (i1, j1) -> marker(i1, j1, Field.Marker.CIRCLE));
+			}
+			else if (a.type().equals(Action.Type.LABEL))
+			{
+				runForAllCoordinates(a, (i1, j1) -> {
+					letter(i1, j1, let);
+					let++;
+				});
+			}
+			else if (a.type().equals(Action.Type.LABEL))
+			{
+				for (String argString : a.arguments())
+				{
+					int i = Field.i(argString);
+					int j = Field.j(argString);
+					if (valid(i, j) && argString.length() >= 4 && argString.charAt(2) == ':')
+					{
+						setlabel(i, j, argString.substring(3));
+						update(i, j);
+					}
+				}
+			}
+		}
+
+		LinkedList<Tree<Node>> nodes = treeNode.children();
+		for (Tree<Node> p : nodes)
+		{
+			for (Action a : p.content().actions())
+			{
+				if (a.type().equals(Action.Type.WHITE) || a.type().equals(Action.Type.BLACK))
+				{
+					String argString = a.argument();
+					int i = Field.i(argString);
+					int j = Field.j(argString);
+					if (valid(i, j))
+					{
+						tree(i, j, p);
+						update(i, j);
+					}
+					break;
+				}
+			}
+
 		}
 		number = n.number();
 	}
@@ -280,7 +347,7 @@ public class Position
 	 * Remove it, if it has no liberties and note the removals
 	 * as actions in the current node.
 	 */
-	public void capturegroup (int i, int j, int c, Node n)
+	private void capturegroup (int i, int j, int c, Node n)
 	// Used by capture to determine the state of the groupt at (i,j)
 	// Remove it, if it has no liberties and note the removals
 	// as actions in the current node.
@@ -333,6 +400,25 @@ public class Position
 		Pb -= n.Pb;
 	}
 
+	private interface TwoIntFunc {
+		void run(int i, int k);
+	}
+
+	void runForAllCoordinates(Action action, TwoIntFunc func) {
+		for (String s : action.arguments()) {
+			runForCoordinates(s, func);
+		}
+	}
+
+	void runForCoordinates(String argument, TwoIntFunc func) {
+		int i = Field.i(argument);
+		int j = Field.j(argument);
+		if (valid(i, j)) {
+			func.run(i, j);
+			update(i, j);
+		}
+	}
+
 	public void act (Node n)
 	// interpret all actions of a node
 	{
@@ -341,26 +427,41 @@ public class Position
 		int i, j;
 		n.clearchanges();
 		n.Pw = n.Pb = 0;
-		for (Action a : n.actions())
-		{
-			if (a.type().equals(Action.Type.BLACK))
-			{
-				setaction(n, a, 1);
+
+		// delete all marks and variations
+		for (i = 0; i < S; i++) {
+			for (j = 0; j < S; j++) {
+				if (tree(i, j) != null) {
+					tree(i, j, null);
+					update(i, j);
+				}
+				if (marker(i, j) != Field.Marker.NONE) {
+					marker(i, j, Field.Marker.NONE);
+					update(i, j);
+				}
+				if (letter(i, j) != 0) {
+					letter(i, j, 0);
+					update(i, j);
+				}
+				if (haslabel(i, j)) {
+					clearlabel(i, j);
+					update(i, j);
+				}
 			}
-			else if (a.type().equals(Action.Type.WHITE))
-			{
+		}
+
+		for (Action a : n.actions()) {
+			if (a.type().equals(Action.Type.BLACK)) {
+				setaction(n, a, 1);
+			} else if (a.type().equals(Action.Type.WHITE)) {
 				setaction(n, a, -1);
 			}
-			if (a.type().equals(Action.Type.ADD_BLACK))
-			{
+			if (a.type().equals(Action.Type.ADD_BLACK)) {
 				placeaction(n, a, 1);
 			}
-			if (a.type().equals(Action.Type.ADD_WHITE))
-			{
+			if (a.type().equals(Action.Type.ADD_WHITE)) {
 				placeaction(n, a, -1);
-			}
-			else if (a.type().equals(Action.Type.ADD_EMPTY))
-			{
+			} else if (a.type().equals(Action.Type.ADD_EMPTY)) {
 				emptyaction(n, a);
 			}
 		}
