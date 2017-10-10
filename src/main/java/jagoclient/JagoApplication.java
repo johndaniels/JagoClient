@@ -90,17 +90,11 @@ public class JagoApplication {
         startFrame.setVisible(true);
         Global.loadmessagefilter(); // load message filters, if available
         JagoSound.play("high", "", true); // play a welcome sound
-        if ( !localgame.equals(""))
+        if ( !localgame.equals("")) {
             openlocal(localgame);
             // open a SGF file, if there was a parameter
-        else if (Global.getParameter("beauty", false))
-        // start a board painter with the last known
-        // board dimensions
-        {
-            Board.woodpaint = new Thread(new WoodPaint(startFrame));
-            Board.woodpaint.setPriority(Board.woodpaint.getPriority()-1);
-            Board.woodpaint.start();
         }
+
     }
 
     private void openlocal (String file)

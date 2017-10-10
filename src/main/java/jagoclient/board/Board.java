@@ -24,6 +24,8 @@ import java.io.BufferedReader;
 import java.util.LinkedList;
 import rene.util.list.Tree;
 
+import javax.swing.*;
+
 
 //******************* Board ***********************
 
@@ -40,7 +42,7 @@ import rene.util.list.Tree;
  * A BoardInterface is used to encorporate the board into an environment.
  */
 
-public class Board extends Canvas implements MouseListener,
+public class Board extends JPanel implements MouseListener,
 	MouseMotionListener, KeyListener, Position.PositionUpdatedHandler
 {
 	private int O, W, D, S, OT, OTU, OP; // pixel coordinates
@@ -67,7 +69,6 @@ public class Board extends Canvas implements MouseListener,
 	private Dimension Dim; // Note size to check for resizeing at paint
 	private Field.Marker SpecialMarker = Field.Marker.SQUARE;
 	private String TextMarker = "A";
-	int Pw, Pb; // Prisoners (white and black)
 	BufferedReader LaterLoad = null; // File to be loaded at repaint
 	private Image BlackStone, WhiteStone;
 	private int Range = -1; // Numbers display from this one
@@ -109,7 +110,6 @@ public class Board extends Canvas implements MouseListener,
 		Dim = new Dimension();
 		Dim.width = 0;
 		Dim.height = 0;
-		Pw = Pb = 0;
 		setfonts();
 		addMouseListener(this);
 		addMouseMotionListener(this);
@@ -170,7 +170,7 @@ public class Board extends Canvas implements MouseListener,
 
 	// ************** paint ************************
 
-	public synchronized void makeimages ()
+	private synchronized void makeimages ()
 	// create images and repaint, if ActiveImage is invalid.
 	// uses parameters from the BoardInterface for coordinate layout.
 	{
@@ -208,21 +208,19 @@ public class Board extends Canvas implements MouseListener,
 	}
 
 	@Override
-	synchronized public void paint (Graphics g)
+	public void paintComponent (Graphics g)
 	// repaint the board (generate images at first call)
 	{
+		super.paintComponent(g);
 		Dimension d = getSize();
 		// test if ActiveImage is valid.
 		if (Dim.width != d.width || Dim.height != d.height)
 		{
 			Dim = d;
 			makeimages();
-			repaint();
-			return;
 		}
-		else
-		{
-			if (ActiveImage != null) g.drawImage(ActiveImage, 0, 0, this);
+		if (ActiveImage != null) {
+			g.drawImage(ActiveImage, 0, 0, this);
 		}
 		if ( !Activated && GF.boardShowing())
 		{
@@ -235,47 +233,27 @@ public class Board extends Canvas implements MouseListener,
 		if (d.height > W) g.fillRect(0, W, d.width, d.height - W);
 	}
 
-	@Override
-	public void update (Graphics g)
-	{
-		paint(g);
-	}
-
-	// The following is for the thread, which tries to draw the
-	// board on program start, to save time.
-
-	public static Thread woodpaint = null;
-
-	// Now come the normal routine to draw a board.
-
-	private Thread EPThread = null;
 
 	/**
 	 * Try to paint the wooden board. If the size is correct, use the predraw
-	 * board. Otherwise generate an EmptyPaint thread to paint a board.
+	 * board.
 	 */
-	private synchronized boolean trywood (Graphics gr, Graphics grs, int w)
+	private boolean trywood (Graphics gr, Graphics grs, int w)
 	{
-		if (EmptyPaint.haveImage(w, w, new Color(170, 120, 70),
+		if (!EmptyPaint.haveImage(w, w, new Color(170, 120, 70),
 			OP + OP / 2, OP - OP / 2, D))
 		// use predrawn image
 		{
-			gr.drawImage(EmptyPaint.StaticImage, O + OTU - OP, O + OTU - OP,
+			new EmptyPaint(this, w, w, new Color(
+					170, 120, 70), true, OP + OP / 2, OP - OP / 2, D).run();
+
+		}
+		gr.drawImage(EmptyPaint.StaticImage, O + OTU - OP, O + OTU - OP,
 				this);
-			if (EmptyPaint.StaticShadowImage != null && grs != null)
-				grs.drawImage(EmptyPaint.StaticShadowImage, O + OTU - OP, O
+		if (EmptyPaint.StaticShadowImage != null && grs != null)
+			grs.drawImage(EmptyPaint.StaticShadowImage, O + OTU - OP, O
 					+ OTU - OP, this);
-			return true;
-		}
-		else
-		{
-			if (EPThread != null && EPThread.isAlive()) EPThread.interrupt();
-			EPThread = new Thread(new EmptyPaint(this, w, w, new Color(
-				170, 120, 70), true, OP + OP / 2, OP - OP / 2, D));
-			EPThread.setPriority(EPThread.getPriority()-1);
-			EPThread.start();
-		}
-		return false;
+		return true;
 	}
 
 	final double pixel = 0.8, shadow = 0.7;
@@ -349,137 +327,124 @@ public class Board extends Canvas implements MouseListener,
 		}
 	}
 
-	public synchronized void emptypaint ()
+	private synchronized void emptypaint ()
 	// Draw an empty board onto the graphics context g.
 	// Including lines, coordinates and markers.
 	{
-		if (woodpaint != null && woodpaint.isAlive()) woodpaint.interrupt();
-		synchronized (this)
-		{
-			if (Empty == null || EmptyShadow == null) return;
-			Graphics2D g = (Graphics2D)Empty.getGraphics(), gs = (Graphics2D)EmptyShadow
-				.getGraphics();
-			g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-				RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+		if (Empty == null || EmptyShadow == null) return;
+		Graphics2D g = (Graphics2D)Empty.getGraphics(), gs = (Graphics2D)EmptyShadow
+			.getGraphics();
+		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+			RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
 
-			g.setColor(Global.ControlBackground);
-			g.fillRect(0, 0, S * D + 2 * OP + 100, S * D + 2 * OP + 100);
-			if ( !trywood(g, gs, S * D + 2 * OP)) // beauty board not
-			// available
+		g.setColor(Global.ControlBackground);
+		g.fillRect(0, 0, S * D + 2 * OP + 100, S * D + 2 * OP + 100);
+		trywood(g, gs, S * D + 2 * OP);
+		stonespaint();
+		g.setColor(Color.black);
+		gs.setColor(Color.black);
+		int i, j, x, y1, y2;
+		// Draw lines
+		x = O + OTU + D / 2;
+		y1 = O + OTU + D / 2;
+		y2 = O + D / 2 + OTU + (S - 1) * D;
+		for (i = 0; i < S; i++)
+		{
+			g.drawLine(x, y1, x, y2);
+			g.drawLine(y1, x, y2, x);
+			gs.drawLine(x, y1, x, y2);
+			gs.drawLine(y1, x, y2, x);
+			x += D;
+		}
+		if (S == 19) // handicap markers
+		{
+			for (i = 0; i < 3; i++)
+				for (j = 0; j < 3; j++)
+				{
+					hand(g, 3 + i * 6, 3 + j * 6);
+					hand(gs, 3 + i * 6, 3 + j * 6);
+				}
+		}
+		else if (S >= 11) // handicap markers
+		{
+			if (S >= 15 && S % 2 == 1)
 			{
-				g.setColor(BoardColor);
-				g.fillRect(O + OTU - OP, O + OTU - OP, S * D + 2 * OP, S * D
-					+ 2 * OP);
-				gs.setColor(BoardColor);
-				gs.fillRect(O + OTU - OP, O + OTU - OP, S * D + 2 * OP, S * D
-					+ 2 * OP);
-			}
-			stonespaint();
-			g.setColor(Color.black);
-			gs.setColor(Color.black);
-			int i, j, x, y1, y2;
-			// Draw lines
-			x = O + OTU + D / 2;
-			y1 = O + OTU + D / 2;
-			y2 = O + D / 2 + OTU + (S - 1) * D;
-			for (i = 0; i < S; i++)
-			{
-				g.drawLine(x, y1, x, y2);
-				g.drawLine(y1, x, y2, x);
-				gs.drawLine(x, y1, x, y2);
-				gs.drawLine(y1, x, y2, x);
-				x += D;
-			}
-			if (S == 19) // handicap markers
-			{
+				int k = S / 2 - 3;
 				for (i = 0; i < 3; i++)
 					for (j = 0; j < 3; j++)
 					{
-						hand(g, 3 + i * 6, 3 + j * 6);
-						hand(gs, 3 + i * 6, 3 + j * 6);
+						hand(g, 3 + i * k, 3 + j * k);
+						hand(gs, 3 + i * k, 3 + j * k);
 					}
 			}
-			else if (S >= 11) // handicap markers
+			else
 			{
-				if (S >= 15 && S % 2 == 1)
-				{
-					int k = S / 2 - 3;
-					for (i = 0; i < 3; i++)
-						for (j = 0; j < 3; j++)
-						{
-							hand(g, 3 + i * k, 3 + j * k);
-							hand(gs, 3 + i * k, 3 + j * k);
-						}
-				}
-				else
-				{
-					hand(g, 3, 3);
-					hand(g, S - 4, 3);
-					hand(g, 3, S - 4);
-					hand(g, S - 4, S - 4);
-					hand(gs, 3, 3);
-					hand(gs, S - 4, 3);
-					hand(gs, 3, S - 4);
-					hand(gs, S - 4, S - 4);
-				}
+				hand(g, 3, 3);
+				hand(g, S - 4, 3);
+				hand(g, 3, S - 4);
+				hand(g, S - 4, S - 4);
+				hand(gs, 3, 3);
+				hand(gs, S - 4, 3);
+				hand(gs, 3, S - 4);
+				hand(gs, S - 4, S - 4);
 			}
-			// coordinates below and to the right
-			if (OT > 0)
+		}
+		// coordinates below and to the right
+		if (OT > 0)
+		{
+			g.setFont(font);
+			int y = O + OTU;
+			int h = fontmetrics.getAscent() / 2 - 1;
+			for (i = 0; i < S; i++)
 			{
-				g.setFont(font);
-				int y = O + OTU;
-				int h = fontmetrics.getAscent() / 2 - 1;
-				for (i = 0; i < S; i++)
-				{
-					String s = "" + (S - i);
-					int w = fontmetrics.stringWidth(s) / 2;
-					g.drawString(s, O + OTU + S * D + D / 2 + OP - w, y + D / 2
-						+ h);
-					y += D;
-				}
-				x = O + OTU;
-				char a[] = new char[1];
-				for (i = 0; i < S; i++)
-				{
-					j = i;
-					if (j > 7) j++;
-					if (j > 'Z' - 'A')
-						a[0] = (char)('a' + j - ('Z' - 'A') - 1);
-					else a[0] = (char)('A' + j);
-					String s = new String(a);
-					int w = fontmetrics.stringWidth(s) / 2;
-					g.drawString(s, x + D / 2 - w, O + OTU + S * D + D / 2 + OP
-						+ h);
-					x += D;
-				}
+				String s = "" + (S - i);
+				int w = fontmetrics.stringWidth(s) / 2;
+				g.drawString(s, O + OTU + S * D + D / 2 + OP - w, y + D / 2
+					+ h);
+				y += D;
 			}
-			// coordinates to the left and above
-			if (OTU > 0)
+			x = O + OTU;
+			char a[] = new char[1];
+			for (i = 0; i < S; i++)
 			{
-				g.setFont(font);
-				int y = O + OTU;
-				int h = fontmetrics.getAscent() / 2 - 1;
-				for (i = 0; i < S; i++)
-				{
-					String s = "" + (S - i);
-					int w = fontmetrics.stringWidth(s) / 2;
-					g.drawString(s, O + D / 2 - OP - w, y + D / 2 + h);
-					y += D;
-				}
-				x = O + OTU;
-				char a[] = new char[1];
-				for (i = 0; i < S; i++)
-				{
-					j = i;
-					if (j > 7) j++;
-					if (j > 'Z' - 'A')
-						a[0] = (char)('a' + j - ('Z' - 'A') - 1);
-					else a[0] = (char)('A' + j);
-					String s = new String(a);
-					int w = fontmetrics.stringWidth(s) / 2;
-					g.drawString(s, x + D / 2 - w, O + D / 2 - OP + h);
-					x += D;
-				}
+				j = i;
+				if (j > 7) j++;
+				if (j > 'Z' - 'A')
+					a[0] = (char)('a' + j - ('Z' - 'A') - 1);
+				else a[0] = (char)('A' + j);
+				String s = new String(a);
+				int w = fontmetrics.stringWidth(s) / 2;
+				g.drawString(s, x + D / 2 - w, O + OTU + S * D + D / 2 + OP
+					+ h);
+				x += D;
+			}
+		}
+		// coordinates to the left and above
+		if (OTU > 0)
+		{
+			g.setFont(font);
+			int y = O + OTU;
+			int h = fontmetrics.getAscent() / 2 - 1;
+			for (i = 0; i < S; i++)
+			{
+				String s = "" + (S - i);
+				int w = fontmetrics.stringWidth(s) / 2;
+				g.drawString(s, O + D / 2 - OP - w, y + D / 2 + h);
+				y += D;
+			}
+			x = O + OTU;
+			char a[] = new char[1];
+			for (i = 0; i < S; i++)
+			{
+				j = i;
+				if (j > 7) j++;
+				if (j > 'Z' - 'A')
+					a[0] = (char)('a' + j - ('Z' - 'A') - 1);
+				else a[0] = (char)('A' + j);
+				String s = new String(a);
+				int w = fontmetrics.stringWidth(s) / 2;
+				g.drawString(s, x + D / 2 - w, O + D / 2 - OP + h);
+				x += D;
 			}
 		}
 	}
@@ -802,12 +767,6 @@ public class Board extends Canvas implements MouseListener,
 
 	int captured = 0, capturei, capturej;
 
-
-
-
-
-
-
 	public void showinformation ()
 	// update the label to display the next move and who's turn it is
 	// and disable variation buttons
@@ -1065,42 +1024,41 @@ public class Board extends Canvas implements MouseListener,
 		Graphics g = ActiveImage.getGraphics();
 		int xi = O + OTU + i * D;
 		int xj = O + OTU + j * D;
-		synchronized (this)
-		{
-			g.drawImage(Empty, xi, xj, xi + D, xj + D, xi, xj, xi + D, xj + D, this);
 
-			if (boardPosition.color(i, j) != 0)
-			{
-				g.drawImage(EmptyShadow, xi - OP / 2, xj + OP / 2, xi + D
-					- OP / 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi
-					+ D - OP / 2, xj + D + OP / 2, this);
-			}
-			else
-			{
-				g.drawImage(Empty, xi - OP / 2, xj + OP / 2, xi + D - OP
-					/ 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi + D
-					- OP / 2, xj + D + OP / 2, this);
-			}
-			g.setClip(xi - OP / 2, xj + OP / 2, D, D);
-			update1(g, i - 1, j);
-			update1(g, i, j + 1);
-			update1(g, i - 1, j + 1);
-			g.setClip(xi, xj, D, D);
-			if (i < S - 1 && boardPosition.color(i + 1, j) != 0)
-			{
-				g.drawImage(EmptyShadow, xi + D - OP / 2, xj + OP / 2, xi
-					+ D, xj + D, xi + D - OP / 2, xj + OP / 2, xi + D, xj
-					+ D, this);
-			}
-			if (j > 0 && boardPosition.color(i, j - 1) != 0)
-			{
-				g.drawImage(EmptyShadow, xi, xj, xi + D - OP / 2, xj + OP
-					/ 2, xi, xj, xi + D - OP / 2, xj + OP / 2, this);
-			}
+		g.drawImage(Empty, xi, xj, xi + D, xj + D, xi, xj, xi + D, xj + D, this);
+
+		if (boardPosition.color(i, j) != 0)
+		{
+			g.drawImage(EmptyShadow, xi - OP / 2, xj + OP / 2, xi + D
+				- OP / 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi
+				+ D - OP / 2, xj + D + OP / 2, this);
+		}
+		else
+		{
+			g.drawImage(Empty, xi - OP / 2, xj + OP / 2, xi + D - OP
+				/ 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi + D
+				- OP / 2, xj + D + OP / 2, this);
+		}
+		g.setClip(xi - OP / 2, xj + OP / 2, D, D);
+		update1(g, i - 1, j);
+		update1(g, i, j + 1);
+		update1(g, i - 1, j + 1);
+		g.setClip(xi, xj, D, D);
+		if (i < S - 1 && boardPosition.color(i + 1, j) != 0)
+		{
+			g.drawImage(EmptyShadow, xi + D - OP / 2, xj + OP / 2, xi
+				+ D, xj + D, xi + D - OP / 2, xj + OP / 2, xi + D, xj
+				+ D, this);
+		}
+		if (j > 0 && boardPosition.color(i, j - 1) != 0)
+		{
+			g.drawImage(EmptyShadow, xi, xj, xi + D - OP / 2, xj + OP
+				/ 2, xi, xj, xi + D - OP / 2, xj + OP / 2, this);
 		}
 		g.setClip(xi, xj, D, D);
 		update1(g, i, j);
 		g.dispose();
+		repaint();
 	}
 
 	void update1 (Graphics g, int i, int j)
@@ -1386,16 +1344,6 @@ public class Board extends Canvas implements MouseListener,
 			return true;
 		else return false;
 	}
-
-
-
-	// ******** set board information **********
-
-
-
-	// ************ get board information ******
-
-
 
 	// ***************** several other things ******
 

@@ -174,7 +174,7 @@ public class Node
 		}
 		int number=N-1;
 		if (count==1)
-		{	if (ra.type().equals(Action.Type.BLACK) || ra.type().equals("W"))
+		{	if (ra.type().equals(Action.Type.BLACK) || ra.type().equals(Action.Type.WHITE))
 			{	ra.printMove(xml,size,number,this);
 				number++;
 				if (contains(Action.Type.COMMENT))

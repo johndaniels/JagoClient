@@ -16,10 +16,12 @@ public class WoodPaint implements Runnable
 	Frame F;
 	boolean Shadows;
 	public WoodPaint (Frame f)
-	{	F=f;
+	{
+		F=f;
 	}
 	public void run ()
-	{	EmptyPaint.createwood(F,
+	{
+		EmptyPaint.createwood(F,
 			Global.getParameter("sboardwidth",0),
 			Global.getParameter("sboardheight",0),
 			Global.getColor("boardcolor",170,120,70,Color.RED),

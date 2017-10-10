@@ -1364,8 +1364,8 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			}
 			else if (Global.resourceString("Prisoner_Count").equals(o))
 			{
-				String s = Global.resourceString("Black__") + B.Pw
-					+ Global.resourceString("__White__") + B.Pb + "\n"
+				String s = Global.resourceString("Black__") + boardState.getBoardPosition().Pw
+					+ Global.resourceString("__White__") + boardState.getBoardPosition().Pb + "\n"
 					+ Global.resourceString("Komi") + " " + boardState.getKomi();
 				new Message(this, s).setVisible(true);
 			}

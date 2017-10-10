@@ -24,12 +24,9 @@ public class EmptyPaint implements Runnable
 	EmptyPaint (Board b, int w, int h, Color c, boolean shadows, int ox, int oy, int d)
 	{	B=b; W=w; H=h; C=c; Shadows=shadows; Ox=ox; Oy=oy; D=d;
 	}
-	public void run ()
-	{	try
-		{	Thread.sleep(100);
+	public void run () {
 			createwood(B,W,H,C,Shadows,Ox,Oy,D);
-			if (!Thread.interrupted()) B.updateboard();
-		} catch (InterruptedException e) {}
+			B.updateboard();
 	}
 
 	public static Image StaticImage=null,StaticShadowImage=null;
