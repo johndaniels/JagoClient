@@ -90,7 +90,6 @@ public class BoardState {
             boardPosition.number(i, j, 1);
             number = 2;
             Pos.content().number(2);
-            boardPosition.update(i, j);
         }
     }
 
@@ -183,7 +182,6 @@ public class BoardState {
     {
         Pos = T.top();
         boardPosition = new Position(S);
-        boardPosition.updateall();
     }
 
 
@@ -360,7 +358,6 @@ public class BoardState {
         {
             int i = sendi;
             sendi = -1;
-            boardPosition.update(i, sendj);
         }
     }
 
@@ -575,7 +572,6 @@ public class BoardState {
                 n.expandaction(a);
                 n.addchange(new Change(i, j, boardPosition.color(i, j)));
                 boardPosition.color(i, j, 0);
-                boardPosition.update(i, j);
             }
         }
     }
@@ -609,7 +605,6 @@ public class BoardState {
         Action.Type s = SpecialMarker.value;
         Action a = new Action(s, Field.string(i, j));
         n.toggleaction(a);
-        boardPosition.update(i, j);
     }
 
     public void markterritory (int i, int j, int color)
@@ -622,14 +617,12 @@ public class BoardState {
             a = new Action(Action.Type.WHITE_TERRITORY, Field.string(i, j));
         }
         Pos.content().expandaction(a);
-        boardPosition.update(i, j);
     }
 
     public void textmark (int i, int j)
     {
         Action a = new Action(Action.Type.LABEL, Field.string(i, j) + ":" + TextMarker);
         Pos.content().expandaction(a);
-        boardPosition.update(i, j);
     }
 
     public void letter (int i, int j)
@@ -637,7 +630,6 @@ public class BoardState {
     {
         Action a = new LabelAction(Field.string(i, j));
         Pos.content().toggleaction(a);
-        boardPosition.update(i, j);
     }
 
     public Node newnode ()
@@ -678,7 +670,6 @@ public class BoardState {
             }
             n.expandaction(a); // note the move action
             boardPosition.color(i, j, c);
-            boardPosition.update(i, j);
         }
     }
 

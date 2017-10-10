@@ -43,7 +43,7 @@ import javax.swing.*;
  */
 
 public class Board extends JPanel implements MouseListener,
-	MouseMotionListener, KeyListener, Position.PositionUpdatedHandler
+	MouseMotionListener, KeyListener
 {
 	private int O, W, D, S, OT, OTU, OP; // pixel coordinates
 	// O=offset, W=total width, D=field width, S=board size (9,11,13,19)
@@ -103,7 +103,6 @@ public class Board extends JPanel implements MouseListener,
 		State = 1;
 		boardState = new BoardState(S);
 		boardPosition = boardState.getBoardPosition();
-		boardPosition.addPositionUpdatedHandler(this);
 		number = 1;
 		CurrentTree = 0;
 		Active = true;
@@ -871,7 +870,9 @@ public class Board extends JPanel implements MouseListener,
 		{
 			GF.setComment(sc);
 		}
-		if (Range >= 0 && !KeepRange) clearrange();
+		if (Range >= 0 && !KeepRange) {
+			clearrange();
+		}
 	}
 
 	public void update (int i, int j)
@@ -1269,9 +1270,11 @@ public class Board extends JPanel implements MouseListener,
 			ActiveImage.getGraphics().drawImage(Empty, 0, 0, this);
 		}
 		int i, j;
-		for (i = 0; i < S; i++)
-			for (j = 0; j < S; j++)
+		for (i = 0; i < S; i++) {
+			for (j = 0; j < S; j++) {
 				update(i, j);
+			}
+		}
 		showinformation();
 	}
 
@@ -1309,20 +1312,21 @@ public class Board extends JPanel implements MouseListener,
 		if (captured == 1 && capturei == i && capturej == j
 			&& GF.getParameter("preventko", true)) return;
 		boardState.set(i, j); // try to set a new move
+		updateall();
 	}
 
 	void setmouse (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
 		boardState.set(i, j, c);
-		showinformation();
+		updateall();
 	}
 
 	void setmousec (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
 		boardState.setc(i, j, c);
-		showinformation();
+		updateall();
 	}
 
 	void deletemouse (int i, int j)
@@ -1335,7 +1339,7 @@ public class Board extends JPanel implements MouseListener,
 	// delete a stone at i,j
 	{
 		boardState.delete(i, j);
-		showinformation();
+		updateall();
 	}
 
 	void setVariationStyle (boolean hide, boolean current)
@@ -1346,15 +1350,5 @@ public class Board extends JPanel implements MouseListener,
 		boardPosition.act(boardState.current().content());
 		updateall();
 		copy();
-	}
-
-	@Override
-	public void positionUpdated(int i, int j) {
-		update(i, j);
-	}
-
-	@Override
-	public void allPositionsUpdated() {
-		updateall();
 	}
 }

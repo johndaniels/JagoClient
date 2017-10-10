@@ -2,6 +2,8 @@ package jagoclient.board;
 
 import rene.util.list.Tree;
 
+import java.util.Objects;
+
 // ************** Field **************
 
 /**
@@ -45,6 +47,16 @@ public class Field
 		HaveLabel=false;
 		Number=0;
 		marker = Marker.NONE;
+	}
+
+	public Field(Field f) {
+		C = f.C;
+		T = f.T;
+		Letter = f.Letter;
+		HaveLabel = f.HaveLabel;
+		Number = f.Number;
+		marker = f.marker;
+		LabelLetter = f.LabelLetter;
 	}
 
 	/** return its state */
@@ -116,4 +128,24 @@ public class Field
 	boolean havelabel () { return HaveLabel; }
 	String label () { return LabelLetter; }
 	int number() { return Number; }
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Field field = (Field) o;
+		return C == field.C &&
+				Letter == field.Letter &&
+				HaveLabel == field.HaveLabel &&
+				Territory == field.Territory &&
+				Number == field.Number &&
+				Objects.equals(T, field.T) &&
+				Objects.equals(LabelLetter, field.LabelLetter) &&
+				marker == field.marker;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(C, T, Letter, LabelLetter, HaveLabel, Territory, marker, Number);
+	}
 }

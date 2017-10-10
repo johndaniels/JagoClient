@@ -20,7 +20,6 @@ public class Position
 {	int S; // size (9,11,13 or 19)
 	int C; // next turn (1 is black, -1 is white)
 	Field[][] F; // the board
-	List<PositionUpdatedHandler> positionUpdatedHandlers = new ArrayList<>();
 	private int lasti = -1, lastj = 0; // last move (used to highlight the move)
 	int Pw,Pb; // total prisioners captured
 	private int captured = 0, capturei, capturej;
@@ -29,11 +28,6 @@ public class Position
 	String currentComment;
 
 	List<Tree<Node>> nodes = new ArrayList<>(); // A list of the nodes that got us to this point.
-
-	public interface PositionUpdatedHandler {
-		void positionUpdated(int i, int j);
-		void allPositionsUpdated();
-	}
 	
 	/** 
 	Initialize F with an empty board, and set the next turn to black.
@@ -71,22 +65,6 @@ public class Position
 			    if (P.haslabel(i,j)) setlabel(i,j,P.label(i,j));
 			}
 		color(P.color());
-	}
-
-	public void addPositionUpdatedHandler(PositionUpdatedHandler handler) {
-		positionUpdatedHandlers.add(handler);
-	}
-
-	void update(int i, int j) {
-		for (PositionUpdatedHandler handler : positionUpdatedHandlers) {
-			handler.positionUpdated(i, j);
-		}
-	}
-
-	void updateall() {
-		for (PositionUpdatedHandler handler : positionUpdatedHandlers) {
-			handler.allPositionsUpdated();
-		}
 	}
 
 	// Interface routines to set or ask a field:
@@ -236,7 +214,6 @@ public class Position
 				{
 					lasti = i;
 					lastj = j;
-					update(lasti, lastj);
 					color( -color(i, j));
 				}
 			}
@@ -277,7 +254,6 @@ public class Position
 					if (valid(i, j) && argString.length() >= 4 && argString.charAt(2) == ':')
 					{
 						setlabel(i, j, argString.substring(3));
-						update(i, j);
 					}
 				}
 			}
@@ -296,7 +272,6 @@ public class Position
 					if (valid(i, j))
 					{
 						tree(i, j, p);
-						update(i, j);
 					}
 					break;
 				}
@@ -317,10 +292,8 @@ public class Position
 		n.addchange(new Change(i, j, color(i, j), number(i, j)));
 		color(i, j, c);
 		number(i, j, n.number() - 1);
-		update(lasti, lastj);
 		lasti = i;
 		lastj = j;
-		update(i, j);
 		color( -c);
 		capture(i, j, n);
 	}
@@ -374,7 +347,6 @@ public class Position
 							n.Pw++;
 						}
 						color(ii, jj, 0);
-						update(ii, jj); // redraw the field (offscreen)
 						captured++;
 						capturei = ii;
 						capturej = jj;
@@ -393,7 +365,6 @@ public class Position
 			Change c = i.next();
 			color(c.I, c.J, c.C);
 			number(c.I, c.J, c.N);
-			update(c.I, c.J);
 		}
 		n.clearchanges();
 		Pw -= n.Pw;
@@ -415,7 +386,6 @@ public class Position
 		int j = Field.j(argument);
 		if (valid(i, j)) {
 			func.run(i, j);
-			update(i, j);
 		}
 	}
 
@@ -433,19 +403,15 @@ public class Position
 			for (j = 0; j < S; j++) {
 				if (tree(i, j) != null) {
 					tree(i, j, null);
-					update(i, j);
 				}
 				if (marker(i, j) != Field.Marker.NONE) {
 					marker(i, j, Field.Marker.NONE);
-					update(i, j);
 				}
 				if (letter(i, j) != 0) {
 					letter(i, j, 0);
-					update(i, j);
 				}
 				if (haslabel(i, j)) {
 					clearlabel(i, j);
-					update(i, j);
 				}
 			}
 		}
@@ -480,7 +446,6 @@ public class Position
 			{
 				n.addchange(new Change(i, j, color(i, j), number(i, j)));
 				color(i, j, c);
-				update(i, j);
 			}
 		}
 	}
@@ -507,7 +472,6 @@ public class Position
 					Pb++;
 				}
 				color(i, j, 0);
-				update(i, j);
 			}
 		}
 	}
