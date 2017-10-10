@@ -30,7 +30,7 @@ public interface BoardInterface
 
 	// request setting of the next textmark A,B,C,... or 1,2,3,...
 
-	public void setState (int n, boolean flag);
+	public void stateChanged ();
 
 	// enable/disable navigation buttons
 	// 1=left, 2=right, 3=varup, 4=varmain, 5=down, 6=up, 7=main

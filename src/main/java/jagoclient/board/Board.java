@@ -843,21 +843,13 @@ public class Board extends JPanel implements MouseListener,
 			GF.setLabel(NodeName);
 			DisplayNodeName = true;
 		}
-		GF.setState(3, !n.main());
-		GF.setState(4, !n.main());
-		GF.setState(7, !n.main() || boardState.hasChildren());
+
 		if (State == 1 || State == 2)
 		{
 			if (boardPosition.color() == 1)
 				State = 1;
 			else State = 2;
 		}
-		GF.setState(1, boardState.current().parent() != null
-			&& boardState.current().parent().firstchild() != boardState.current());
-		GF.setState(2, boardState.current().parent() != null
-			&& boardState.current().parent().lastchild() != boardState.current());
-		GF.setState(5, boardState.hasChildren());
-		GF.setState(6, boardState.current().parent() != null);
 		if (State != 9)
 			GF.setState(State);
 		else GF.setMarkState(SpecialMarker);
@@ -1276,6 +1268,7 @@ public class Board extends JPanel implements MouseListener,
 			}
 		}
 		showinformation();
+		GF.stateChanged();
 	}
 
 	public void updateboard ()

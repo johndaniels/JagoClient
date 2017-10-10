@@ -1440,6 +1440,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		{
 			new Message(Global.frame(), ex.getMessage()).setVisible(true);
 		}
+		B.updateall();
 	}
 
 	public void center (FileDialog d)
@@ -1786,43 +1787,26 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 
 	/**
 	 * Called from board to enable and disable navigation buttons.
-	 * 
-	 * @param i
-	 *            the number of the button
-	 * @param f
-	 *            enable/disable the button
 	 */
-	public void setState (int i, boolean f)
+	@Override
+	public void stateChanged ()
 	{
-		switch (i)
-		{
-			case 1:
-				IB.setEnabled("variationback", f);
-				break;
-			case 2:
-				IB.setEnabled("variationforward", f);
-				break;
-			case 3:
-				IB.setEnabled("variationstart", f);
-				break;
-			case 4:
-				IB.setEnabled("main", f);
-				break;
-			case 5:
-				IB.setEnabled("fastforward", f);
-				IB.setEnabled("forward", f);
-				IB.setEnabled("allforward", f);
-				break;
-			case 6:
-				IB.setEnabled("fastback", f);
-				IB.setEnabled("back", f);
-				IB.setEnabled("allback", f);
-				break;
-			case 7:
-				IB.setEnabled("mainend", f);
-				IB.setEnabled("sendforward", !f);
-				break;
-		}
+		Node n = boardState.current().content();
+		IB.setEnabled("variationstart", !n.main());
+		IB.setEnabled("main", !n.main());
+		IB.setEnabled("mainend", !n.main() || boardState.hasChildren());
+		IB.setEnabled("sendforward", n.main() && !boardState.hasChildren());
+		IB.setEnabled("fastback", boardState.current().parent() != null);
+		IB.setEnabled("back", boardState.current().parent() != null);
+		IB.setEnabled("allback", boardState.current().parent() != null);
+		IB.setEnabled("fastforward", boardState.hasChildren());
+		IB.setEnabled("forward", boardState.hasChildren());
+		IB.setEnabled("allforward", boardState.hasChildren());
+
+		IB.setEnabled("variationback", boardState.current().parent() != null
+				&& boardState.current().parent().firstchild() != boardState.current());
+		IB.setEnabled("variationforward", boardState.current().parent() != null
+				&& boardState.current().parent().lastchild() != boardState.current());
 	}
 
 	/** tests, if a name is accepted as a SGF file name */
