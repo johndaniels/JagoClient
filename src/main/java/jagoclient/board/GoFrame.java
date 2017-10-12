@@ -377,40 +377,6 @@ class NodeNameEdit extends GetParameter<GoFrame>
 	}
 }
 
-
-/**
- * Let the user edit the board colors (stones, shines and board). Redraw the
- * board, when done with OK.
- */
-
-class BoardColorEdit extends ColorEdit
-{
-	GoFrame gf;
-
-	public BoardColorEdit (GoFrame gf, String s, int red, int green, int blue, Color c)
-	{
-		super(gf, s, red, green, blue, c, true);
-		this.gf = gf;
-	}
-
-	public BoardColorEdit (GoFrame gf, String s, Color c)
-	{
-		super(gf, s, c.getRed(), c.getGreen(), c.getBlue(), c, true);
-		this.gf = gf;
-	}
-
-	@Override
-	public void doAction (String o)
-	{
-		super.doAction(o);
-		if (Global.resourceString("OK").equals(o))
-		{
-			gf.updateall();
-		}
-	}
-}
-
-
 /**
  * Let the user edit the board fong Redraw the board, when done with OK.
  */
@@ -1046,64 +1012,14 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 					PrintWriter fo;
 					if (Global.getParameter("xml", false))
 					{
-						if (Global.isApplet())
-						{
-							fo = new PrintWriter(new OutputStreamWriter(
-								new FileOutputStream(fd.getDirectory() + fn),
-								"UTF8"));
-							boardState.saveXML(fo, "utf-8");
-						}
-						else
-						{
-							String Encoding = Global.getParameter("encoding",
-								System.getProperty("file.encoding")).toUpperCase();
-							if (Encoding.equals(""))
-							{
-								fo = new PrintWriter(new OutputStreamWriter(
-									new FileOutputStream(fd.getDirectory() + fn),
-									"UTF8"));
-								boardState.saveXML(fo, "utf-8");
-							}
-							else
-							{
-								String XMLEncoding = "";
-								if (Encoding.equals("CP1252")
-									|| Encoding.equals("ISO8859_1"))
-								{
-									Encoding = "ISO8859_1";
-									XMLEncoding = "iso-8859-1";
-								}
-								else
-								{
-									Encoding = "UTF8";
-									XMLEncoding = "utf-8";
-								}
-								FileOutputStream fos = new FileOutputStream(fd
-									.getDirectory()
-									+ fn);
-								try
-								{
-									fo = new PrintWriter(new OutputStreamWriter(
-										fos, Encoding));
-								}
-								catch (Exception e)
-								{
-									Encoding = "UTF8";
-									XMLEncoding = "utf-8";
-									fo = new PrintWriter(new OutputStreamWriter(
-										fos, Encoding));
-								}
-								boardState.saveXML(fo, XMLEncoding);
-							}
-						}
+						fo = new PrintWriter(new OutputStreamWriter(
+							new FileOutputStream(fd.getDirectory() + fn),
+							"UTF8"));
+						boardState.saveXML(fo, "utf-8");
 					}
 					else
 					{
-						if (Global.isApplet())
-							fo = new PrintWriter(new OutputStreamWriter(
-								new FileOutputStream(fd.getDirectory() + fn),
-								Global.getParameter("encoding", "ASCII")));
-						else fo = new PrintWriter(new OutputStreamWriter(
+						fo = new PrintWriter(new OutputStreamWriter(
 							new FileOutputStream(fd.getDirectory() + fn), Global
 								.getParameter("encoding", System
 									.getProperty("file.encoding"))));
@@ -1145,64 +1061,17 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 					PrintWriter fo;
 					if (Global.getParameter("xml", false))
 					{
-						if (Global.isApplet())
-						{
+
+						String Encoding = Global.getParameter("encoding",
+							System.getProperty("file.encoding")).toUpperCase();
 							fo = new PrintWriter(new OutputStreamWriter(
 								new FileOutputStream(fd.getDirectory() + fn),
 								"UTF8"));
-							boardState.saveXML(fo, "utf-8");
-						}
-						else
-						{
-							String Encoding = Global.getParameter("encoding",
-								System.getProperty("file.encoding")).toUpperCase();
-							if (Encoding.equals(""))
-							{
-								fo = new PrintWriter(new OutputStreamWriter(
-									new FileOutputStream(fd.getDirectory() + fn),
-									"UTF8"));
-								boardState.saveXMLPos(fo, "utf-8");
-							}
-							else
-							{
-								String XMLEncoding = "";
-								if (Encoding.equals("CP1252")
-									|| Encoding.equals("ISO8859_1"))
-								{
-									Encoding = "ISO8859_1";
-									XMLEncoding = "iso-8859-1";
-								}
-								else
-								{
-									Encoding = "UTF8";
-									XMLEncoding = "utf-8";
-								}
-								FileOutputStream fos = new FileOutputStream(fd
-									.getDirectory()
-									+ fn);
-								try
-								{
-									fo = new PrintWriter(new OutputStreamWriter(
-										fos, Encoding));
-								}
-								catch (Exception e)
-								{
-									Encoding = "UTF8";
-									XMLEncoding = "utf-8";
-									fo = new PrintWriter(new OutputStreamWriter(
-										fos, Encoding));
-								}
-								boardState.saveXMLPos(fo, XMLEncoding);
-							}
-						}
+							boardState.saveXMLPos(fo, "utf-8");
 					}
 					else
 					{
-						if (Global.isApplet())
-							fo = new PrintWriter(new OutputStreamWriter(
-								new FileOutputStream(fd.getDirectory() + fn),
-								Global.getParameter("encoding", "ASCII")));
-						else fo = new PrintWriter(new OutputStreamWriter(
+						fo = new PrintWriter(new OutputStreamWriter(
 							new FileOutputStream(fd.getDirectory() + fn), Global
 								.getParameter("encoding", System
 									.getProperty("file.encoding"))));
@@ -1468,21 +1337,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		else if (Global.resourceString("Use_SGF_Comments").equals(o))
 		{
 			Global.setParameter("sgfcomments", flag);
-		}
-		else if (Global.resourceString("On").equals(o))
-		{
-			Global.setParameter("coordinates", flag);
-			updateall();
-		}
-		else if (Global.resourceString("Upper_Left").equals(o))
-		{
-			Global.setParameter("upperleftcoordinates", flag);
-			updateall();
-		}
-		else if (Global.resourceString("Lower_Right").equals(o))
-		{
-			Global.setParameter("lowerrightcoordinates", flag);
-			updateall();
 		}
 		else if (Global.resourceString("Set_Black").equals(o))
 		{
