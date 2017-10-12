@@ -496,4 +496,8 @@ public class Position
 	// Interfact to variation trees
 	Tree<Node> tree (int i, int j) { return F[i][j].tree(); }
 	void tree (int i, int j, Tree<Node> t) { F[i][j].tree(t); }
+
+	public String getCurrentComment() {
+		return currentComment;
+	}
 }

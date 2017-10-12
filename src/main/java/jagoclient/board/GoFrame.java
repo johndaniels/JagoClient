@@ -565,7 +565,7 @@ class AskInsertQuestion extends Question
 // uses another menu structure.
 // Furthermore, it has methods to handle lots of user actions.
 public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilter, KeyListener,
-	BoardInterface, ClipboardOwner, IconBarListener
+	BoardInterface, ClipboardOwner, IconBarListener, UIState.StateChangedHandler
 {
 	public OutputLabel L, Lm; // For board informations
 	TextArea Comment; // For comments
@@ -588,6 +588,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	JPanel ButtonP;
 	String DefaultTitle = "";
 	NavigationPanel Navigation;
+	UIState uiState;
 
 	public GoFrame (String s)
 	// For children, who set up their own menus
@@ -743,8 +744,10 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		// Board
 		L = new OutputLabel(Global.resourceString("New_Game"));
 		Lm = new OutputLabel("--");
-		B = new Board(19, this);
-		boardState =  B.boardState;
+		uiState = new UIState(19);
+		uiState.addStateChangedHandler(this);
+		B = new Board(uiState);
+		boardState =  uiState.getBoardState();
 		MyPanel BP = new MyPanel(new BorderLayout());
 		BP.add("Center", B);
 		// Add the label
@@ -1669,11 +1672,9 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	 * This called from the board to set the menu checks according to the
 	 * current state.
 	 * 
-	 * @param i
 	 *            the number of the state the Board is in.
 	 */
-	@Override
-	public void setState (int i)
+	private void updateMenuChecks ()
 	{
 		Black.setState(false);
 		White.setState(false);
@@ -1687,57 +1688,40 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		Triangle.setState(false);
 		Square.setState(false);
 		TextMark.setState(false);
-		switch (i)
+		switch (uiState.getUiMode())
 		{
-			case 1:
+			case PLAY_BLACK:
 				Black.setState(true);
-				break;
-			case 2:
-				White.setState(true);
-				break;
-			case 3:
-				SetBlack.setState(true);
-				break;
-			case 4:
-				SetWhite.setState(true);
-				break;
-			case 5:
-				Mark.setState(true);
-				break;
-			case 6:
-				Letter.setState(true);
-				break;
-			case 7:
-				Hide.setState(true);
-				break;
-			case 10:
-				TextMark.setState(true);
-				break;
-		}
-		switch (i)
-		{
-			case 1:
 				IB.setState("black", true);
 				break;
-			case 2:
+			case PLAY_WHITE:
+				White.setState(true);
 				IB.setState("white", true);
 				break;
-			case 3:
+			case ADD_BLACK:
+				SetBlack.setState(true);
 				IB.setState("setblack", true);
 				break;
-			case 4:
+			case ADD_WHITE:
+				SetWhite.setState(true);
 				IB.setState("setwhite", true);
 				break;
-			case 5:
+			case MARK:
+				Mark.setState(true);
 				IB.setState("mark", true);
 				break;
-			case 6:
+			case LETTER:
+				Letter.setState(true);
 				IB.setState("letter", true);
 				break;
-			case 7:
+			case HIDE:
+				Hide.setState(true);
+				break;
+			case DELETE_STONE:
 				IB.setState("delete", true);
 				break;
-			case 10:
+			case TEXT_MARK:
+				TextMark.setState(true);
 				IB.setState("text", true);
 				break;
 		}
@@ -1791,7 +1775,8 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	@Override
 	public void stateChanged ()
 	{
-		Node n = boardState.current().content();
+		Node n = uiState.getBoardState().current().content();
+
 		IB.setEnabled("variationstart", !n.main());
 		IB.setEnabled("main", !n.main());
 		IB.setEnabled("mainend", !n.main() || boardState.hasChildren());
@@ -1807,6 +1792,49 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				&& boardState.current().parent().firstchild() != boardState.current());
 		IB.setEnabled("variationforward", boardState.current().parent() != null
 				&& boardState.current().parent().lastchild() != boardState.current());
+
+		int number = n.number();
+		String NodeName = n.getaction(Action.Type.NAME);
+		String ms = "";
+		String LText;
+		if (n.main())
+		{
+			if ( !uiState.getBoardState().hasChildren())
+				ms = "** ";
+			else ms = "* ";
+		}
+		LText = ms + uiState.getUiMode().getDescription();
+		switch (uiState.getUiMode())
+		{
+			case TEXT_MARK:
+				LText = ms + Global.resourceString("Text__") + uiState.getTextMarker();
+				break;
+			default:
+				if (uiState.getBoardPosition().color() > 0)
+				{
+					String s = uiState.getBoardState().lookuptime(Action.Type.BLACK_TIME);
+					if ( !s.equals(""))
+						LText += number + " (" + s + ")";
+					else LText += number;
+				}
+				else
+				{
+					String s = uiState.getBoardState().lookuptime(Action.Type.WHITE_TIME);
+					if ( !s.equals(""))
+						LText += number + " (" + s + ")";
+					else LText += number;
+				}
+		}
+		if (uiState.getBoardState().hasParent())
+		{
+			LText += " (" + uiState.getBoardState().siblings() + " " + Global.resourceString("Siblings") + ", ";
+		}
+		LText += uiState.getBoardState().children() + " " + Global.resourceString("Children") + ")";
+		setLabel(LText);
+		updateMenuChecks();
+
+		setComment(uiState.getBoardPosition().getCurrentComment());
+		setLabelM(uiState.getLabelM());
 	}
 
 	/** tests, if a name is accepted as a SGF file name */
@@ -2232,7 +2260,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	/**
 	 * Called from the board to set the Label below the board.
 	 */
-	public void setLabel (String s)
+	private void setLabel (String s)
 	{
 		L.setText(s);
 		if (Navigation != null) Navigation.repaint();

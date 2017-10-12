@@ -24,8 +24,6 @@ public interface BoardInterface
 	// Board sets two labels, which may be used in a frame
 	public void setLabelM (String s); // position of cursor
 
-	public void setLabel (String s); // next move prompt
-
 	public void advanceTextmark ();
 
 	// request setting of the next textmark A,B,C,... or 1,2,3,...

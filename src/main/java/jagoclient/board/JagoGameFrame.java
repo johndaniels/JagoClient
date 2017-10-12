@@ -133,7 +133,9 @@ public class JagoGameFrame extends GoFrame
 		Comment.setFont(Global.SansSerif);
 		L = new OutputLabel(Global.resourceString("New_Game"));
 		Lm = new OutputLabel("--");
-		B = new Board(19, this);
+		UIState uiState = new UIState(19);
+
+		B = new Board(uiState);
 		JPanel BP = new MyPanel(new BorderLayout());
 		BP.add("Center", B);
 		// Add the label
