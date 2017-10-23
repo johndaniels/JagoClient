@@ -20,7 +20,6 @@ import jagoclient.gui.OutputLabel;
 import jagoclient.gui.Panel3D;
 import jagoclient.gui.SimplePanel;
 import jagoclient.gui.TextFieldAction;
-import jagoclient.mail.MailDialog;
 
 import java.awt.BorderLayout;
 import java.awt.Checkbox;
@@ -590,8 +589,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		file.add(new MenuItemAction(this, Global.resourceString("Load_from_Clipboard")));
 		file.add(new MenuItemAction(this, Global.resourceString("Copy_to_Clipboard")));
 		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Mail")));
-		file.add(new MenuItemAction(this, Global.resourceString("Ascii_Mail")));
 		file.add(new MenuItemAction(this, Global.resourceString("Print")));
 		file.add(new MenuItemAction(this, Global.resourceString("Save_Bitmap")));
 		file.addSeparator();
@@ -704,7 +701,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		help.add(new MenuItemAction(this, Global.resourceString("Keyboard_Shortcuts")));
 		help.add(new MenuItemAction(this, Global.resourceString("About_Variations")));
 		help.add(new MenuItemAction(this, Global.resourceString("Playing_Games")));
-		help.add(new MenuItemAction(this, Global.resourceString("Mailing_Games")));
 		M.add(options);
 		M.setHelpMenu(help);
 		// Board
@@ -943,44 +939,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 				B.copy();
 				setTitle(DefaultTitle);
 			}
-			else if (Global.resourceString("Mail").equals(o)) // mail the game
-			{
-				ByteArrayOutputStream ba = new ByteArrayOutputStream(50000);
-				try
-				{
-					if (Global.getParameter("xml", false))
-					{
-						PrintWriter po = new PrintWriter(new OutputStreamWriter(ba,
-							"UTF8"), true);
-						boardState.saveXML(po, "utf-8");
-						po.close();
-					}
-					else
-					{
-						PrintWriter po = new PrintWriter(ba, true);
-						boardState.save(po);
-						po.close();
-					}
-				}
-				catch (Exception ex)
-				{}
-				new MailDialog(this, ba.toString());
-				return;
-			}
-			else if (Global.resourceString("Ascii_Mail").equals(o))
-			// ascii dump of the game
-			{
-				ByteArrayOutputStream ba = new ByteArrayOutputStream(10000);
-				PrintWriter po = new PrintWriter(ba, true);
-				try
-				{
-					boardState.asciisave(po);
-				}
-				catch (Exception ex)
-				{}
-				new MailDialog(this, ba.toString());
-				return;
-			}
 			else if (Global.resourceString("Print").equals(o)) // print the game
 			{
 				B.print(Global.frame());
@@ -1213,10 +1171,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			else if (Global.resourceString("About_Variations").equals(o))
 			{
 				new Help("variations").display();
-			}
-			else if (Global.resourceString("Mailing_Games").equals(o))
-			{
-				new Help("mail").display();
 			}
 			else if (Global.resourceString("Insert_Node").equals(o))
 			{
