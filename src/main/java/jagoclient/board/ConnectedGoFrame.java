@@ -60,27 +60,9 @@ public class ConnectedGoFrame extends GoFrame
 		// Menu
 		MenuBar M = new MenuBar();
 		setMenuBar(M);
-		Menu file = new MyMenu(Global.resourceString("File"));
+		Menu file = new GameFileMenu(B, boardState, this, false);
 		FileMenu = file;
 		M.add(file);
-		file.add(new MenuItemAction(this, Global.resourceString("Save")));
-		file.addSeparator();
-		file.add(UseXML = new CheckboxMenuItemAction(this, Global.resourceString("Use_XML")));
-		UseXML.setState(Global.getParameter("xml", false));
-		file.add(UseSGF = new CheckboxMenuItemAction(this, Global.resourceString("Use_SGF")));
-		UseSGF.setState( !Global.getParameter("xml", false));
-		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Copy_to_Clipboard")));
-		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Mail")));
-		file.add(new MenuItemAction(this, Global.resourceString("Ascii_Mail")));
-		file.add(new MenuItemAction(this, Global.resourceString("Print")));
-		file.add(new MenuItemAction(this, Global.resourceString("Save_Bitmap")));
-		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Refresh")));
-		file.addSeparator();
-		file.add(ShowButtons = new CheckboxMenuItemAction(this, Global.resourceString("Show_Buttons")));
-		ShowButtons.setState(Global.getParameter("showbuttonsconnected", true));
 		/*
 		 * if (canteach) { file.addSeparator(); Menu teaching=new
 		 * MyMenu(Global.resourceString("Teaching")); teaching.add(Teaching=new
@@ -163,8 +145,6 @@ public class ConnectedGoFrame extends GoFrame
 		options.add(MenuBWColor = new CheckboxMenuItemAction(this, Global.resourceString("Use_B_W_marks")));
 		MenuBWColor.setState(Global.getParameter("bwcolor", false));
 		BWColor = MenuBWColor.getState();
-		options.add(PureSGF = new CheckboxMenuItemAction(this, Global.resourceString("Save_pure_SGF")));
-		PureSGF.setState(Global.getParameter("puresgf", false));
 		options.add(CommentSGF = new CheckboxMenuItemAction(this, Global.resourceString("Use_SGF_Comments")));
 		CommentSGF.setState(Global.getParameter("sgfcomments", false));
 		options.addSeparator();

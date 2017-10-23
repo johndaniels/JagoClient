@@ -529,7 +529,7 @@ class AskInsertQuestion extends Question
 // board. For Partner of IGS games there is the ConnectedGoFrame child, which
 // uses another menu structure.
 // Furthermore, it has methods to handle lots of user actions.
-public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilter, KeyListener,
+public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	BoardInterface, ClipboardOwner, IconBarListener, UIState.StateChangedHandler
 {
 	public OutputLabel L, Lm; // For board informations
@@ -541,8 +541,8 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	CheckboxMenuItem SetBlack, SetWhite, Black, White, Mark, Letter, Hide,
 		Square, Cross, Circle, Triangle, TextMark;
 	CheckboxMenuItem Coordinates, UpperLeftCoordinates, LowerRightCoordinates;
-	CheckboxMenuItem PureSGF, CommentSGF, DoSound, BeepOnly,
-		MenuLastNumber, MenuTarget, UseXML, UseSGF;
+	CheckboxMenuItem CommentSGF, DoSound, BeepOnly,
+		MenuLastNumber, MenuTarget;
 	public boolean BWColor = false, LastNumber = false, ShowTarget = false;
 	CheckboxMenuItem MenuBWColor, ShowButtons;
 	CheckboxMenuItem VHide, VCurrent, VChild, VNumbers;
@@ -574,30 +574,13 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		// Menu
 		MenuBar M = new MenuBar();
 		setMenuBar(M);
-		Menu file = new MyMenu(Global.resourceString("File"));
+		uiState = new UIState(19);
+		uiState.addStateChangedHandler(this);
+		B = new Board(uiState);
+		boardState =  uiState.getBoardState();
+
+		Menu file = new GameFileMenu(B, boardState, this, true);
 		M.add(file);
-		file.add(new MenuItemAction(this, Global.resourceString("New")));
-		file.add(new MenuItemAction(this, Global.resourceString("Load")));
-		file.add(new MenuItemAction(this, Global.resourceString("Save")));
-		file.add(new MenuItemAction(this, Global.resourceString("Save_Position")));
-		file.addSeparator();
-		file.add(UseXML = new CheckboxMenuItemAction(this, Global.resourceString("Use_XML")));
-		UseXML.setState(Global.getParameter("xml", false));
-		file.add(UseSGF = new CheckboxMenuItemAction(this, Global.resourceString("Use_SGF")));
-		UseSGF.setState( !Global.getParameter("xml", false));
-		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Load_from_Clipboard")));
-		file.add(new MenuItemAction(this, Global.resourceString("Copy_to_Clipboard")));
-		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Print")));
-		file.add(new MenuItemAction(this, Global.resourceString("Save_Bitmap")));
-		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Board_size")));
-		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Add_Game")));
-		file.add(new MenuItemAction(this, Global.resourceString("Remove_Game")));
-		file.addSeparator();
-		file.add(new MenuItemAction(this, Global.resourceString("Close")));
 		Menu set = new MyMenu(Global.resourceString("Set"));
 		M.add(set);
 		set.add(Mark = new CheckboxMenuItemAction(this, Global.resourceString("Mark")));
@@ -660,8 +643,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		options.add(MenuBWColor = new CheckboxMenuItemAction(this, Global.resourceString("Use_B_W_marks")));
 		MenuBWColor.setState(Global.getParameter("bwcolor", false));
 		BWColor = MenuBWColor.getState();
-		options.add(PureSGF = new CheckboxMenuItemAction(this, Global.resourceString("Save_pure_SGF")));
-		PureSGF.setState(Global.getParameter("puresgf", false));
 		options.add(CommentSGF = new CheckboxMenuItemAction(this, Global.resourceString("Use_SGF_Comments")));
 		CommentSGF.setState(Global.getParameter("sgfcomments", false));
 		options.addSeparator();
@@ -701,15 +682,13 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		help.add(new MenuItemAction(this, Global.resourceString("Keyboard_Shortcuts")));
 		help.add(new MenuItemAction(this, Global.resourceString("About_Variations")));
 		help.add(new MenuItemAction(this, Global.resourceString("Playing_Games")));
+		help.add(new MenuItemAction(this, Global.resourceString("Mailing_Games")));
 		M.add(options);
 		M.setHelpMenu(help);
 		// Board
 		L = new OutputLabel(Global.resourceString("New_Game"));
 		Lm = new OutputLabel("--");
-		uiState = new UIState(19);
-		uiState.addStateChangedHandler(this);
-		B = new Board(uiState);
-		boardState =  uiState.getBoardState();
+
 		MyPanel BP = new MyPanel(new BorderLayout());
 		BP.add("Center", B);
 		// Add the label
@@ -934,223 +913,9 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			{
 				new Message(this, boardState.docount()).setVisible(true);
 			}
-			else if (Global.resourceString("New").equals(o))
-			{
-				B.copy();
-				setTitle(DefaultTitle);
-			}
 			else if (Global.resourceString("Print").equals(o)) // print the game
 			{
 				B.print(Global.frame());
-			}
-			else if (Global.resourceString("Save").equals(o)) // save the game
-			{ // File dialog handling
-				FileDialog fd = new FileDialog(this, Global.resourceString("Save"),
-					FileDialog.SAVE);
-				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
-				if (s != null && !s.equals(""))
-					fd.setFile(s
-						+ "."
-						+ Global.getParameter("extension", Global.getParameter(
-							"xml", false)?"xml":"sgf"));
-				else fd.setFile("*."
-					+ Global.getParameter("extension", Global.getParameter("xml",
-						false)?"xml":"sgf"));
-				fd.setFilenameFilter(this);
-				center(fd);
-				fd.setVisible(true);
-				String fn = fd.getFile();
-				if (fn == null) return;
-				setGameTitle(FileName.purefilename(fn));
-				Dir = fd.getDirectory();
-				try
-				// print out using the board class
-				{
-					PrintWriter fo;
-					if (Global.getParameter("xml", false))
-					{
-						fo = new PrintWriter(new OutputStreamWriter(
-							new FileOutputStream(fd.getDirectory() + fn),
-							"UTF8"));
-						boardState.saveXML(fo, "utf-8");
-					}
-					else
-					{
-						fo = new PrintWriter(new OutputStreamWriter(
-							new FileOutputStream(fd.getDirectory() + fn), Global
-								.getParameter("encoding", System
-									.getProperty("file.encoding"))));
-						boardState.save(fo);
-					}
-					fo.close();
-				}
-				catch (IOException ex)
-				{
-					new Message(this, Global.resourceString("Write_error_") + "\n"
-						+ ex.toString()).setVisible(true);
-					return;
-				}
-			}
-			else if (Global.resourceString("Save_Position").equals(o)) // save the
-			// position
-			{ // File dialog handling
-				FileDialog fd = new FileDialog(this, Global
-					.resourceString("Save Position"), FileDialog.SAVE);
-				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
-				if (s != null && !s.equals(""))
-					fd.setFile(s
-						+ "."
-						+ Global.getParameter("extension", Global.getParameter(
-							"xml", false)?"xml":"sgf"));
-				else fd.setFile("*."
-					+ Global.getParameter("extension", Global.getParameter("xml",
-						false)?"xml":"sgf"));
-				fd.setFilenameFilter(this);
-				center(fd);
-				fd.setVisible(true);
-				String fn = fd.getFile();
-				if (fn == null) return;
-				Dir = fd.getDirectory();
-				try
-				// print out using the board class
-				{
-					PrintWriter fo;
-					if (Global.getParameter("xml", false))
-					{
-
-						String Encoding = Global.getParameter("encoding",
-							System.getProperty("file.encoding")).toUpperCase();
-							fo = new PrintWriter(new OutputStreamWriter(
-								new FileOutputStream(fd.getDirectory() + fn),
-								"UTF8"));
-							boardState.saveXMLPos(fo, "utf-8");
-					}
-					else
-					{
-						fo = new PrintWriter(new OutputStreamWriter(
-							new FileOutputStream(fd.getDirectory() + fn), Global
-								.getParameter("encoding", System
-									.getProperty("file.encoding"))));
-						boardState.savePos(fo);
-					}
-					fo.close();
-				}
-				catch (IOException ex)
-				{
-					new Message(this, Global.resourceString("Write_error_") + "\n"
-						+ ex.toString()).setVisible(true);
-					return;
-				}
-			}
-			else if (Global.resourceString("Save_Bitmap").equals(o)) // save the
-			// game
-			{ // File dialog handling
-				FileDialog fd = new FileDialog(this, Global
-					.resourceString("Save_Bitmap"), FileDialog.SAVE);
-				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
-				if (s != null && !s.equals(""))
-					fd.setFile(s + "." + Global.getParameter("extension", "bmp"));
-				else fd.setFile("*." + Global.getParameter("extension", "bmp"));
-				fd.setFilenameFilter(this);
-				center(fd);
-				fd.setVisible(true);
-				String fn = fd.getFile();
-				if (fn == null) return;
-				Dir = fd.getDirectory();
-				try
-				// print out using the board class
-				{
-					BMPFile F = new BMPFile();
-					Dimension d = B.getBoardImageSize();
-					F.saveBitmap(fd.getDirectory() + fn, B.getBoardImage(),
-						d.width, d.height);
-				}
-				catch (Exception ex)
-				{
-					new Message(this, Global.resourceString("Write_error_") + "\n"
-						+ ex.toString()).setVisible(true);
-					return;
-				}
-			}
-			else if (Global.resourceString("Load").equals(o)) // load a game
-			{ // File dialog handling
-				FileDialog fd = new FileDialog(this, Global
-					.resourceString("Load_Game"), FileDialog.LOAD);
-				if ( !Dir.equals("")) fd.setDirectory(Dir);
-				fd.setFilenameFilter(this);
-				fd.setFile("*."
-					+ Global.getParameter("extension", Global.getParameter("xml",
-						false)?"xml":"sgf"));
-				center(fd);
-				fd.setVisible(true);
-				String fn = fd.getFile();
-				if (fn == null) return;
-				Dir = fd.getDirectory();
-				try
-				// print out using the board class
-				{
-					if (Global.getParameter("xml", false))
-					{
-						InputStream in = new FileInputStream(fd.getDirectory() + fn);
-						try
-						{
-							boardState.loadXml(new XmlReader(in));
-						}
-						catch (XmlReaderException e)
-						{
-							new Message(this, "Error in file!\n" + e.getText()).setVisible(true);
-						}
-						in.close();
-					}
-					else
-					{
-						BufferedReader fi;
-						if (Global.isApplet())
-							fi = new BufferedReader(new InputStreamReader(
-								new FileInputStream(fd.getDirectory() + fn), Global
-									.getParameter("encoding", "")));
-						else fi = new BufferedReader(new InputStreamReader(
-							new FileInputStream(fd.getDirectory() + fn), Global
-								.getParameter("encoding", System
-									.getProperty("file.encoding"))));
-						try
-						{
-							boardState.load(fi);
-						}
-						catch (IOException e)
-						{
-							new Message(this, "Error in file!").setVisible(true);
-						}
-						fi.close();
-					}
-				}
-				catch (IOException ex)
-				{
-					new Message(this, Global.resourceString("Read_error_") + "\n"
-						+ ex.toString()).setVisible(true);
-					return;
-				}
-				String s = boardState.firstnode().getaction(Action.Type.GAME_NAME);
-				if (s != null && !s.equals(""))
-					setTitle(s);
-				else
-				{
-					boardState.firstnode().setaction(Action.Type.GAME_NAME, FileName.purefilename(fn));
-					setTitle(FileName.purefilename(fn));
-				}
-				if (fn.toLowerCase().indexOf("kogo") >= 0)
-					B.setVariationStyle(false, false);
-			}
-			else if (Global.resourceString("Load_from_Clipboard").equals(o))
-			{
-				loadClipboard();
-			}
-			else if (Global.resourceString("Copy_to_Clipboard").equals(o))
-			{
-				saveClipboard();
 			}
 			else if (Global.resourceString("Board_Window").equals(o))
 			{
@@ -1284,15 +1049,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	@Override
 	public void itemAction (String o, boolean flag)
 	{
-		if (Global.resourceString("Save_pure_SGF").equals(o))
-		{
-			Global.setParameter("puresgf", flag);
-		}
-		else if (Global.resourceString("Use_SGF_Comments").equals(o))
-		{
-			Global.setParameter("sgfcomments", flag);
-		}
-		else if (Global.resourceString("Set_Black").equals(o))
+		if (Global.resourceString("Set_Black").equals(o))
 		{
 			B.setblack();
 		}
@@ -1386,31 +1143,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 		{
 			ShowTarget = flag;
 			Global.setParameter("showtarget", ShowTarget);
-		}
-		else if (Global.resourceString("Show_Buttons").equals(o))
-		{
-			if (flag)
-				add("South", ButtonP);
-			else remove(ButtonP);
-			if (this instanceof ConnectedGoFrame)
-				Global.setParameter("showbuttonsconnected", flag);
-			else Global.setParameter("showbuttons", flag);
-			setVisible(true);
-			validate();
-			doLayout();
-			setVisible(true);
-		}
-		else if (Global.resourceString("Use_XML").equals(o))
-		{
-			UseXML.setState(true);
-			UseSGF.setState(false);
-			Global.setParameter("xml", true);
-		}
-		else if (Global.resourceString("Use_SGF").equals(o))
-		{
-			UseSGF.setState(true);
-			UseXML.setState(false);
-			Global.setParameter("xml", false);
 		}
 		else if (Global.resourceString("Hide").equals(o))
 		{
@@ -1643,14 +1375,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 
 		setComment(uiState.getBoardPosition().getCurrentComment());
 		setLabelM(uiState.getLabelM());
-	}
-
-	/** tests, if a name is accepted as a SGF file name */
-	public boolean accept (File dir, String name)
-	{
-		if (name.endsWith("." + Global.getParameter("extension", "sgf")))
-			return true;
-		else return false;
 	}
 
 	/**
@@ -1893,7 +1617,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 	}
 
 	/** Actually do the loading, when the board is ready. */
-	public void doloadXml (Reader file)
+	private void doloadXml (Reader file)
 	{
 		validate();
 		try
@@ -1910,54 +1634,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, FilenameFilte
 			w.center(this);
 			w.setVisible(true);
 		}
-	}
-
-	public void loadClipboard ()
-	{
-		try
-		{
-			Clipboard clip = getToolkit().getSystemClipboard();
-			Transferable t = clip.getContents(this);
-			String S = (String)t.getTransferData(DataFlavor.stringFlavor);
-			LaterFilename = "Clipboard Content";
-			if (XmlReader.testXml(S))
-				doloadXml(new StringReader(S));
-			else doload(new StringReader(S));
-		}
-		catch (Exception e)
-		{}
-	}
-
-	public void saveClipboard ()
-	{
-		try
-		{
-			ByteArrayOutputStream ba = new ByteArrayOutputStream(50000);
-			try
-			{
-				if (Global.getParameter("xml", false))
-				{
-					PrintWriter po = new PrintWriter(new OutputStreamWriter(ba,
-						"UTF8"), true);
-					boardState.saveXML(po, "utf-8");
-					po.close();
-				}
-				else
-				{
-					PrintWriter po = new PrintWriter(ba, true);
-					boardState.save(po);
-					po.close();
-				}
-			}
-			catch (Exception ex)
-			{}
-			String S = ba.toString();
-			Clipboard clip = getToolkit().getSystemClipboard();
-			StringSelection sel = new StringSelection(S);
-			clip.setContents(sel, this);
-		}
-		catch (Exception e)
-		{}
 	}
 
 	public void lostOwnership (Clipboard b, Transferable s)

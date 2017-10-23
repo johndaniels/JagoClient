@@ -107,8 +107,6 @@ public class JagoGameFrame extends GoFrame
 		options.add(MenuBWColor = new CheckboxMenuItemAction(this, Global.resourceString("Use_B_W_marks")));
 		MenuBWColor.setState(Global.getParameter("bwcolor", false));
 		BWColor = MenuBWColor.getState();
-		options.add(PureSGF = new CheckboxMenuItemAction(this, Global.resourceString("Save_pure_SGF")));
-		PureSGF.setState(Global.getParameter("puresgf", false));
 		options.add(CommentSGF = new CheckboxMenuItemAction(this, Global.resourceString("Use_SGF_Comments")));
 		CommentSGF.setState(Global.getParameter("sgfcomments", false));
 		options.addSeparator();
