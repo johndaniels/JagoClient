@@ -842,51 +842,63 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 			else if ("<".equals(o))
 			{
 				boardState.back();
+				uiState.stateChanged();
 			}
 			else if (">".equals(o))
 			{
 				boardState.forward();
+				uiState.stateChanged();
 			}
 			else if (">>".equals(o))
 			{
 				boardState.fastforward();
+				uiState.stateChanged();
 			}
 			else if ("<<".equals(o))
 			{
 				boardState.fastback();
+				uiState.stateChanged();
 			}
 			else if ("I<<".equals(o))
 			{
 				boardState.allback();
+				uiState.stateChanged();
 			}
 			else if (">>I".equals(o))
 			{
 				boardState.allforward();
+				uiState.stateChanged();
 			}
 			else if ("<rankValue".equals(o))
 			{
 				boardState.varleft();
+				uiState.stateChanged();
 			}
 			else if ("rankValue>".equals(o))
 			{
 				boardState.varright();
+				uiState.stateChanged();
 			}
 			else if ("rankValue".equals(o))
 			{
 				boardState.varup();
+				uiState.stateChanged();
 			}
 			else if ("**".equals(o))
 			{
 				boardState.varmaindown();
+				uiState.stateChanged();
 			}
 			else if ("*".equals(o))
 			{
 				boardState.varmain();
+				uiState.stateChanged();
 			}
 			else if (Global.resourceString("Pass").equals(o))
 			{
 				boardState.pass();
 				notepass();
+				uiState.stateChanged();
 			}
 			else if (Global.resourceString("Resume_playing").equals(o))
 			{
@@ -895,10 +907,12 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 			else if (Global.resourceString("Clear_all_marks").equals(o))
 			{
 				boardState.clearmarks();
+				uiState.stateChanged();
 			}
 			else if (Global.resourceString("Undo_Adding_Removing").equals(o))
 			{
 				boardState.clearremovals();
+				uiState.stateChanged();
 			}
 			else if (Global.resourceString("Remove_groups").equals(o))
 			{
@@ -1001,18 +1015,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 			{
 				boardState.gotoprevious();
 			}
-			else if (Global.resourceString("Next_Game").equals(o))
-			{
-			}
-			else if (Global.resourceString("Previous_Game").equals(o))
-			{
-			}
-			else if (Global.resourceString("Add_Game").equals(o))
-			{
-			}
-			else if (Global.resourceString("Remove_Game").equals(o))
-			{
-			}
 			else if (Global.resourceString("Set_Encoding").equals(o))
 			{
 				new GetEncoding(this).setVisible(true);
@@ -1031,7 +1033,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 		{
 			new Message(Global.frame(), ex.getMessage()).setVisible(true);
 		}
-		B.updateall();
 	}
 
 	public void center (FileDialog d)

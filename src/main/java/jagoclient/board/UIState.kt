@@ -12,6 +12,13 @@ class UIState (val size: Int) {
         stateChangedHandlers.add(stateChangedHandler);
     }
 
+    /**
+     * Indicate that some part of the state has changed. In general
+     * handlers should update their local state to match the current
+     * state of the UI. The expectation is that all listeners will
+     * recheck all of their state against the canonical state, similar
+     * to how React works.
+     */
     fun stateChanged() {
         for (stateChangedHandler in stateChangedHandlers) {
             stateChangedHandler.stateChanged();

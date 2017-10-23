@@ -93,6 +93,7 @@ public class Board extends JPanel implements MouseListener,
 		EmptyShadow = null;
 		showlast = true;
 		this.uiState = uiState;
+		this.uiState.addStateChangedHandler(this::updateall);
 		number = 1;
 		CurrentTree = 0;
 		Active = true;
@@ -575,7 +576,6 @@ public class Board extends JPanel implements MouseListener,
 			jTarget = j;
 		}
 		uiState.setLabelM(Field.coordinate(i, j, S));
-		uiState.stateChanged();
 	}
 
 	public void drawTarget (int i, int j)
@@ -1203,21 +1203,21 @@ public class Board extends JPanel implements MouseListener,
 		if (uiState.getBoardState().hasChildren()) return;
 		if (captured == 1 && capturei == i && capturej == j) return;
 		uiState.getBoardState().set(i, j); // try to set a new move
-		updateall();
+		uiState.stateChanged();
 	}
 
 	void setmouse (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
 		uiState.getBoardState().set(i, j, c);
-		updateall();
+		uiState.stateChanged();
 	}
 
 	void setmousec (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
 		uiState.getBoardState().setc(i, j, c);
-		updateall();
+		uiState.stateChanged();
 	}
 
 	void deletemouse (int i, int j)
@@ -1230,7 +1230,7 @@ public class Board extends JPanel implements MouseListener,
 	// delete a stone at i,j
 	{
 		uiState.getBoardState().delete(i, j);
-		updateall();
+		uiState.stateChanged();
 	}
 
 	void setVariationStyle (boolean hide, boolean current)
@@ -1239,7 +1239,7 @@ public class Board extends JPanel implements MouseListener,
 		VHide = hide;
 		VCurrent = current;
 		uiState.getBoardPosition().act(uiState.getBoardState().current().content());
-		updateall();
+		uiState.stateChanged();
 		copy();
 	}
 }
