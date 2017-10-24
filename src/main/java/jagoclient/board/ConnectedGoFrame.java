@@ -209,8 +209,8 @@ public class ConnectedGoFrame extends GoFrame
 			CommentPanel.setLayout(new BorderLayout());
 			CommentPanel.add("Center", Comment);
 		}
-		UIState uiState = new UIState(19);
-		B = new ConnectedBoard(this, uiState);
+		GameViewerState gameViewerState = new GameViewerState(19);
+		B = new ConnectedBoard(this, gameViewerState);
 		JPanel BP = new MyPanel(new BorderLayout());
 		BP.add("Center", B);
 		// Add the label

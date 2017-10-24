@@ -307,8 +307,6 @@ public class IgsStream
 		return true;
 	}
 
-
-
 	public void out (String s)
 	{
 		if (s.startsWith("observe") || s.startsWith("moves")

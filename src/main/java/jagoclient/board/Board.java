@@ -27,14 +27,14 @@ import javax.swing.*;
 
 /**
  * This is the main file for presenting a Go board.
- * <uiState.getBoardPosition()>
+ * <gameViewerState.getBoardPosition()>
  * Handles the complete display and storage of a Go board. The display is kept
  * on an offscreen image. Stores a Go game in a node list (with variants).
  * Handles the display of the current node.
- * <uiState.getBoardPosition()>
+ * <gameViewerState.getBoardPosition()>
  * This class handles mouse input to set the next move. It also has methods to
  * move in the node tree from external sources.
- * <uiState.getBoardPosition()>
+ * <gameViewerState.getBoardPosition()>
  * A BoardInterface is used to encorporate the board into an environment.
  */
 
@@ -54,7 +54,7 @@ public class Board extends JPanel implements MouseListener,
 	// see GoFrame.setState(int)
 	private Font font; // Font for board letters and coordinates
 	private FontMetrics fontmetrics; // metrics of this font
-	jagoclient.board.UIState uiState;
+	jagoclient.board.GameViewerState gameViewerState;
 	private boolean Active;
 	private int MainColor = 1;
 	public int MyColor = 0;
@@ -84,16 +84,16 @@ public class Board extends JPanel implements MouseListener,
 
 	// ******************** initialize board *******************
 
-	public Board (jagoclient.board.UIState uiState)
+	public Board (jagoclient.board.GameViewerState gameViewerState)
 	{
-		S = uiState.getSize();
+		S = gameViewerState.getSize();
 		D = 16;
 		W = S * D;
 		Empty = null;
 		EmptyShadow = null;
 		showlast = true;
-		this.uiState = uiState;
-		this.uiState.addStateChangedHandler(this::updateall);
+		this.gameViewerState = gameViewerState;
+		this.gameViewerState.addStateChangedHandler(this::updateall);
 		number = 1;
 		CurrentTree = 0;
 		Active = true;
@@ -473,7 +473,7 @@ public class Board extends JPanel implements MouseListener,
 		y -= O + OTU;
 		int i = x / D, j = y / D; // determine position
 		if (x < 0 || y < 0 || i < 0 || j < 0 || i >= S || j >= S) return;
-		switch (uiState.getUiMode())
+		switch (gameViewerState.getUiMode())
 		{
 			case ADD_BLACK: // set a black stone
 				if (e.isShiftDown() && e.isControlDown())
@@ -488,7 +488,7 @@ public class Board extends JPanel implements MouseListener,
 			case MARK:
 				break;
 			case LETTER:
-				uiState.getBoardState().letter(i, j);
+				gameViewerState.getBoardState().letter(i, j);
 				break;
 			case DELETE_STONE: // delete a stone
 				if (e.isShiftDown() && e.isControlDown())
@@ -499,10 +499,10 @@ public class Board extends JPanel implements MouseListener,
 				//removemouse(i, j);
 				break;
 			case SPECIAL_MARK:
-				uiState.getBoardState().specialmark(i, j);
+				gameViewerState.getBoardState().specialmark(i, j);
 				break;
 			case TEXT_MARK:
-				uiState.getBoardState().textmark(i, j);
+				gameViewerState.getBoardState().textmark(i, j);
 				break;
 			case PLAY_BLACK:
 			case PLAY_WHITE: // normal move mode
@@ -510,28 +510,28 @@ public class Board extends JPanel implements MouseListener,
 				{
 					if (e.isControlDown())
 					{
-						uiState.getBoardState().changemove(i, j);
+						gameViewerState.getBoardState().changemove(i, j);
 					}
 					else {
-						uiState.getBoardState().variation(i, j);
+						gameViewerState.getBoardState().variation(i, j);
 					}
 				}
 				else if (e.isControlDown())
 				// goto variation
 				{
-					if (uiState.getBoardPosition().tree(i, j) != null)
+					if (gameViewerState.getBoardPosition().tree(i, j) != null)
 					{
-						uiState.getBoardState().gotovariation(i, j);
+						gameViewerState.getBoardState().gotovariation(i, j);
 					}
 				}
 				else if (e.isMetaDown()) // right click
 				{
-					if (uiState.getBoardPosition().tree(i, j) != null)
+					if (gameViewerState.getBoardPosition().tree(i, j) != null)
 					{
-						uiState.getBoardState().gotovariation(i, j);
+						gameViewerState.getBoardState().gotovariation(i, j);
 					}
 					else {
-						uiState.getBoardState().variation(i, j);
+						gameViewerState.getBoardState().variation(i, j);
 					}
 				}
 				else
@@ -543,7 +543,7 @@ public class Board extends JPanel implements MouseListener,
 		}
 		showinformation();
 		copy(); // show position
-		uiState.stateChanged();
+		gameViewerState.stateChanged();
 	}
 
 	// target rectangle things
@@ -556,7 +556,7 @@ public class Board extends JPanel implements MouseListener,
 		if ( !Active) return;
 		if (DisplayNodeName)
 		{
-			uiState.setLabelM(LText);
+			gameViewerState.setLabelM(LText);
 			DisplayNodeName = false;
 		}
 		int x = e.getX(), y = e.getY();
@@ -575,7 +575,7 @@ public class Board extends JPanel implements MouseListener,
 			iTarget = i;
 			jTarget = j;
 		}
-		uiState.setLabelM(Field.coordinate(i, j, S));
+		gameViewerState.setLabelM(Field.coordinate(i, j, S));
 	}
 
 	public void drawTarget (int i, int j)
@@ -606,22 +606,22 @@ public class Board extends JPanel implements MouseListener,
 		drawTarget(i, j);
 		iTarget = i;
 		jTarget = j;
-		uiState.setLabelM(Field.coordinate(i, j, S));
-		uiState.stateChanged();
+		gameViewerState.setLabelM(Field.coordinate(i, j, S));
+		gameViewerState.stateChanged();
 	}
 
 	public void mouseExited (MouseEvent e)
 	// stop showing coordinates
 	{
 		if ( !Active) return;
-		uiState.setLabelM("--");
+		gameViewerState.setLabelM("--");
 		if ( !NodeName.equals(""))
 		{
 			DisplayNodeName = true;
 		}
 		iTarget = jTarget = -1;
 		copy();
-		uiState.stateChanged();
+		gameViewerState.stateChanged();
 	}
 
 	// *************** keyboard events ********************
@@ -633,32 +633,32 @@ public class Board extends JPanel implements MouseListener,
 			switch (e.getKeyCode())
 			{
 				case KeyEvent.VK_DOWN:
-					uiState.getBoardState().forward();
+					gameViewerState.getBoardState().forward();
 					break;
 				case KeyEvent.VK_UP:
-					uiState.getBoardState().back();
+					gameViewerState.getBoardState().back();
 					break;
 				case KeyEvent.VK_LEFT:
-					uiState.getBoardState().varleft();
+					gameViewerState.getBoardState().varleft();
 					break;
 				case KeyEvent.VK_RIGHT:
-					uiState.getBoardState().varright();
+					gameViewerState.getBoardState().varright();
 					break;
 				case KeyEvent.VK_PAGE_DOWN:
-					uiState.getBoardState().fastforward();
+					gameViewerState.getBoardState().fastforward();
 					break;
 				case KeyEvent.VK_PAGE_UP:
-					uiState.getBoardState().fastback();
+					gameViewerState.getBoardState().fastback();
 					break;
 				case KeyEvent.VK_BACK_SPACE:
 				case KeyEvent.VK_DELETE:
 					undo();
 					break;
 				case KeyEvent.VK_HOME:
-					uiState.getBoardState().varmain();
+					gameViewerState.getBoardState().varmain();
 					break;
 				case KeyEvent.VK_END:
-					uiState.getBoardState().varmaindown();
+					gameViewerState.getBoardState().varmaindown();
 					break;
 			}
 		}
@@ -667,14 +667,14 @@ public class Board extends JPanel implements MouseListener,
 			switch (e.getKeyChar())
 			{
 				case '*':
-					uiState.getBoardState().varmain();
+					gameViewerState.getBoardState().varmain();
 					break;
 				case '/':
-					uiState.getBoardState().varmaindown();
+					gameViewerState.getBoardState().varmaindown();
 					break;
 				case 'v':
 				case 'V':
-					uiState.getBoardState().varup();
+					gameViewerState.getBoardState().varup();
 					break;
 				case 'm':
 				case 'M':
@@ -717,10 +717,10 @@ public class Board extends JPanel implements MouseListener,
 					black();
 					break;
 				case '+':
-					uiState.getBoardState().gotonext();
+					gameViewerState.getBoardState().gotonext();
 					break;
 				case '-':
-					uiState.getBoardState().gotoprevious();
+					gameViewerState.getBoardState().gotoprevious();
 					break;
 				// Bug (VK_DELETE not reported as ActionEvent)
 				case KeyEvent.VK_BACK_SPACE:
@@ -747,13 +747,13 @@ public class Board extends JPanel implements MouseListener,
 	// update the navigation buttons
 	// update the comment
 	{
-		if (uiState.getUiMode() == UIState.UIMode.PLAY_BLACK || uiState.getUiMode() == UIState.UIMode.PLAY_WHITE)
+		if (gameViewerState.getUiMode() == GameViewerState.UIMode.PLAY_BLACK || gameViewerState.getUiMode() == GameViewerState.UIMode.PLAY_WHITE)
 		{
-			if (uiState.getBoardPosition().color() == 1) {
-				uiState.setUiMode(UIState.UIMode.PLAY_BLACK);
+			if (gameViewerState.getBoardPosition().color() == 1) {
+				gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_BLACK);
 			}
 			else {
-				uiState.setUiMode(UIState.UIMode.PLAY_WHITE);
+				gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_WHITE);
 			}
 		}
 		int i, j;
@@ -769,7 +769,7 @@ public class Board extends JPanel implements MouseListener,
 
 	public void update (int i, int j)
 	// update the field (i,j) in the offscreen image Active
-	// in dependance of the board position uiState.getBoardPosition().
+	// in dependance of the board position gameViewerState.getBoardPosition().
 	// display the last move mark, if applicable.
 	{
 		if (ActiveImage == null) return;
@@ -780,7 +780,7 @@ public class Board extends JPanel implements MouseListener,
 
 		g.drawImage(Empty, xi, xj, xi + D, xj + D, xi, xj, xi + D, xj + D, this);
 
-		if (uiState.getBoardPosition().color(i, j) != 0)
+		if (gameViewerState.getBoardPosition().color(i, j) != 0)
 		{
 			g.drawImage(EmptyShadow, xi - OP / 2, xj + OP / 2, xi + D
 				- OP / 2, xj + D + OP / 2, xi - OP / 2, xj + OP / 2, xi
@@ -797,13 +797,13 @@ public class Board extends JPanel implements MouseListener,
 		update1(g, i, j + 1);
 		update1(g, i - 1, j + 1);
 		g.setClip(xi, xj, D, D);
-		if (i < S - 1 && uiState.getBoardPosition().color(i + 1, j) != 0)
+		if (i < S - 1 && gameViewerState.getBoardPosition().color(i + 1, j) != 0)
 		{
 			g.drawImage(EmptyShadow, xi + D - OP / 2, xj + OP / 2, xi
 				+ D, xj + D, xi + D - OP / 2, xj + OP / 2, xi + D, xj
 				+ D, this);
 		}
-		if (j > 0 && uiState.getBoardPosition().color(i, j - 1) != 0)
+		if (j > 0 && gameViewerState.getBoardPosition().color(i, j - 1) != 0)
 		{
 			g.drawImage(EmptyShadow, xi, xj, xi + D - OP / 2, xj + OP
 				/ 2, xi, xj, xi + D - OP / 2, xj + OP / 2, this);
@@ -821,7 +821,7 @@ public class Board extends JPanel implements MouseListener,
 		int n;
 		int xi = O + OTU + i * D;
 		int xj = O + OTU + j * D;
-		if (uiState.getBoardPosition().color(i, j) > 0)
+		if (gameViewerState.getBoardPosition().color(i, j) > 0)
 		{
 			if (BlackStone != null)
 			{
@@ -835,7 +835,7 @@ public class Board extends JPanel implements MouseListener,
 				g.drawArc(xi + D / 2, xj + D / 4, D / 4, D / 4, 40, 50);
 			}
 		}
-		else if (uiState.getBoardPosition().color(i, j) < 0)
+		else if (gameViewerState.getBoardPosition().color(i, j) < 0)
 		{
 			if (WhiteStone != null)
 			{
@@ -849,11 +849,11 @@ public class Board extends JPanel implements MouseListener,
 				g.drawArc(xi + D / 2, xj + D / 4, D / 4, D / 4, 40, 50);
 			}
 		}
-		if (uiState.getBoardPosition().marker(i, j) != Field.Marker.NONE)
+		if (gameViewerState.getBoardPosition().marker(i, j) != Field.Marker.NONE)
 		{
-			g.setColor(markerColor(uiState.getBoardPosition().color(i, j)));
+			g.setColor(markerColor(gameViewerState.getBoardPosition().color(i, j)));
 			int h = D / 4;
-			switch (uiState.getBoardPosition().marker(i, j))
+			switch (gameViewerState.getBoardPosition().marker(i, j))
 			{
 			case CIRCLE:
 				g.drawOval(xi + D/2 - h, xj + D/2 - h, 2*h, 2*h);
@@ -871,26 +871,26 @@ public class Board extends JPanel implements MouseListener,
 				g.drawRect(xi + D/2 - h, xj + D/2 - h, 2*h, 2*h);
 			}
 		}
-		if (uiState.getBoardPosition().letter(i, j) != 0)
+		if (gameViewerState.getBoardPosition().letter(i, j) != 0)
 		{
-			g.setColor(labelColor(uiState.getBoardPosition().color(i, j)));
-			c[0] = (char)('a' + uiState.getBoardPosition().letter(i, j) - 1);
+			g.setColor(labelColor(gameViewerState.getBoardPosition().color(i, j)));
+			c[0] = (char)('a' + gameViewerState.getBoardPosition().letter(i, j) - 1);
 			String hs = new String(c);
 			int w = fontmetrics.stringWidth(hs) / 2;
 			int h = fontmetrics.getAscent() / 2 - 1;
 			g.setFont(font);
 			g.drawString(hs, xi + D / 2 - w, xj + D / 2 + h);
 		}
-		else if (uiState.getBoardPosition().haslabel(i, j))
+		else if (gameViewerState.getBoardPosition().haslabel(i, j))
 		{
-			g.setColor(labelColor(uiState.getBoardPosition().color(i, j)));
-			String hs = uiState.getBoardPosition().label(i, j);
+			g.setColor(labelColor(gameViewerState.getBoardPosition().color(i, j)));
+			String hs = gameViewerState.getBoardPosition().label(i, j);
 			int w = fontmetrics.stringWidth(hs) / 2;
 			int h = fontmetrics.getAscent() / 2 - 1;
 			g.setFont(font);
 			g.drawString(hs, xi + D / 2 - w, xj + D / 2 + h);
 		}
-		else if (uiState.getBoardPosition().tree(i, j) != null && !VHide)
+		else if (gameViewerState.getBoardPosition().tree(i, j) != null && !VHide)
 		{
 			g.setColor(Color.green);
 			g.drawLine(xi + D / 2 - D / 6, xj + D / 2, xi + D / 2 + D / 6, xj
@@ -906,12 +906,12 @@ public class Board extends JPanel implements MouseListener,
 		}*/
 		if (lasti == i && lastj == j && showlast)
 		{
-			if (Range >= 0 && uiState.getBoardPosition().number(i, j) > Range)
+			if (Range >= 0 && gameViewerState.getBoardPosition().number(i, j) > Range)
 			{
-				if (uiState.getBoardPosition().color(i, j) > 0)
+				if (gameViewerState.getBoardPosition().color(i, j) > 0)
 					g.setColor(Color.white);
 				else g.setColor(Color.black);
-				String hs = "" + uiState.getBoardPosition().number(i, j) % 100;
+				String hs = "" + gameViewerState.getBoardPosition().number(i, j) % 100;
 				int w = fontmetrics.stringWidth(hs) / 2;
 				int h = fontmetrics.getAscent() / 2 - 1;
 				g.setFont(font);
@@ -926,12 +926,12 @@ public class Board extends JPanel implements MouseListener,
 					/ 2 + D / 6);
 			}
 		}
-		else if (uiState.getBoardPosition().color(i, j) != 0 && Range >= 0 && uiState.getBoardPosition().number(i, j) > Range)
+		else if (gameViewerState.getBoardPosition().color(i, j) != 0 && Range >= 0 && gameViewerState.getBoardPosition().number(i, j) > Range)
 		{
-			if (uiState.getBoardPosition().color(i, j) > 0)
+			if (gameViewerState.getBoardPosition().color(i, j) > 0)
 				g.setColor(Color.white);
 			else g.setColor(Color.black);
-			String hs = "" + uiState.getBoardPosition().number(i, j) % 100;
+			String hs = "" + gameViewerState.getBoardPosition().number(i, j) % 100;
 			int w = fontmetrics.stringWidth(hs) / 2;
 			int h = fontmetrics.getAscent() / 2 - 1;
 			g.setFont(font);
@@ -954,21 +954,21 @@ public class Board extends JPanel implements MouseListener,
 	public void undo ()
 	// take back the last move, ask if necessary
 	{ // System.out.println("undo");
-		if (uiState.getBoardState().hasChildren() || uiState.getBoardState().hasParent()
-			&& uiState.getBoardState().current().parent().lastchild() != uiState.getBoardState().current().parent().firstchild()
-			&& uiState.getBoardState().current() == uiState.getBoardState().current().parent().firstchild())
+		if (gameViewerState.getBoardState().hasChildren() || gameViewerState.getBoardState().hasParent()
+			&& gameViewerState.getBoardState().current().parent().lastchild() != gameViewerState.getBoardState().current().parent().firstchild()
+			&& gameViewerState.getBoardState().current() == gameViewerState.getBoardState().current().parent().firstchild())
 		{
-			uiState.getBoardState().doundo(uiState.getBoardState().current());
+			gameViewerState.getBoardState().doundo(gameViewerState.getBoardState().current());
 		}
 		else {
-			uiState.getBoardState().doundo(uiState.getBoardState().current());
+			gameViewerState.getBoardState().doundo(gameViewerState.getBoardState().current());
 		}
 	}
 
 	public void resume ()
 	// Resume playing after marking
 	{
-		uiState.setUiMode(UIState.UIMode.PLAY_BLACK);
+		gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_BLACK);
 		showinformation();
 	}
 
@@ -1020,44 +1020,44 @@ public class Board extends JPanel implements MouseListener,
 	public void setblack ()
 	// set black mode
 	{
-		uiState.setUiMode(UIState.UIMode.ADD_BLACK);
+		gameViewerState.setUiMode(GameViewerState.UIMode.ADD_BLACK);
 		showinformation();
 	}
 
 	public void setwhite ()
 	// set white mode
 	{
-		uiState.setUiMode(UIState.UIMode.ADD_WHITE);
+		gameViewerState.setUiMode(GameViewerState.UIMode.ADD_WHITE);
 		showinformation();
 	}
 
 	public void black ()
 	// black to play
 	{
-		uiState.setUiMode(UIState.UIMode.PLAY_BLACK);
-		uiState.getBoardPosition().color(1);
+		gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_BLACK);
+		gameViewerState.getBoardPosition().color(1);
 		showinformation();
 	}
 
 	public void white ()
 	// white to play
 	{
-		uiState.setUiMode(UIState.UIMode.PLAY_WHITE);
-		uiState.getBoardPosition().color( -1);
+		gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_WHITE);
+		gameViewerState.getBoardPosition().color( -1);
 		showinformation();
 	}
 
 	public void mark ()
 	// marking
 	{
-		uiState.setUiMode(UIState.UIMode.MARK);
+		gameViewerState.setUiMode(GameViewerState.UIMode.MARK);
 		showinformation();
 	}
 
 	void specialmark (Field.Marker i)
 	// marking
 	{
-		uiState.setUiMode(UIState.UIMode.SPECIAL_MARK);
+		gameViewerState.setUiMode(GameViewerState.UIMode.SPECIAL_MARK);
 		SpecialMarker = i;
 		showinformation();
 	}
@@ -1065,7 +1065,7 @@ public class Board extends JPanel implements MouseListener,
 	void textmark (String s)
 	// marking
 	{
-		uiState.setUiMode(UIState.UIMode.TEXT_MARK);
+		gameViewerState.setUiMode(GameViewerState.UIMode.TEXT_MARK);
 		TextMarker = s;
 		showinformation();
 	}
@@ -1073,27 +1073,27 @@ public class Board extends JPanel implements MouseListener,
 	public void letter ()
 	// letter
 	{
-		uiState.setUiMode(UIState.UIMode.LETTER);
+		gameViewerState.setUiMode(GameViewerState.UIMode.LETTER);
 		showinformation();
 	}
 
 	void deletestones ()
 	// hide stones
 	{
-		uiState.setUiMode(UIState.UIMode.DELETE_STONE);
+		gameViewerState.setUiMode(GameViewerState.UIMode.DELETE_STONE);
 		showinformation();
 	}
 
 	public boolean score ()
 	// board state is removing groups
 	{
-		if (uiState.getBoardState().hasChildren()) {
+		if (gameViewerState.getBoardState().hasChildren()) {
 			return false;
 		}
-		uiState.setUiMode(UIState.UIMode.REMOVE_GROUP);
+		gameViewerState.setUiMode(GameViewerState.UIMode.REMOVE_GROUP);
 		Removing = true;
 		showinformation();
-		if (uiState.getBoardState().current().content().main())
+		if (gameViewerState.getBoardState().current().content().main())
 			return true;
 		else return false;
 	}
@@ -1103,14 +1103,14 @@ public class Board extends JPanel implements MouseListener,
 	public void print (Frame f)
 	// print the board
 	{
-		Position p = new Position(uiState.getBoardPosition());
+		Position p = new Position(gameViewerState.getBoardPosition());
 		new Thread(new PrintBoard(p, Range, f)).start();
 	}
 
 	public void lastrange (int n)
 	// set the range for stone numbers
 	{
-		int l = uiState.getBoardState().current().content().number() - 2;
+		int l = gameViewerState.getBoardState().current().content().number() - 2;
 		Range = l / n * n;
 		if (Range < 0) Range = 0;
 		KeepRange = true;
@@ -1125,30 +1125,30 @@ public class Board extends JPanel implements MouseListener,
 		int h = S < 13?3:4;
 		if (n > 5)
 		{
-			uiState.getBoardState().setblack(h - 1, S / 2);
-			uiState.getBoardState().setblack(S - h, S / 2);
+			gameViewerState.getBoardState().setblack(h - 1, S / 2);
+			gameViewerState.getBoardState().setblack(S - h, S / 2);
 		}
 		if (n > 7)
 		{
-			uiState.getBoardState().setblack(S / 2, h - 1);
-			uiState.getBoardState().setblack(S / 2, S - h);
+			gameViewerState.getBoardState().setblack(S / 2, h - 1);
+			gameViewerState.getBoardState().setblack(S / 2, S - h);
 		}
 		switch (n)
 		{
 			case 9:
 			case 7:
 			case 5:
-				uiState.getBoardState().setblack(S / 2, S / 2);
+				gameViewerState.getBoardState().setblack(S / 2, S / 2);
 			case 8:
 			case 6:
 			case 4:
-				uiState.getBoardState().setblack(S - h, S - h);
+				gameViewerState.getBoardState().setblack(S - h, S - h);
 			case 3:
-				uiState.getBoardState().setblack(h - 1, h - 1);
+				gameViewerState.getBoardState().setblack(h - 1, h - 1);
 			case 2:
-				uiState.getBoardState().setblack(h - 1, S - h);
+				gameViewerState.getBoardState().setblack(h - 1, S - h);
 			case 1:
-				uiState.getBoardState().setblack(S - h, h - 1);
+				gameViewerState.getBoardState().setblack(S - h, h - 1);
 		}
 		MainColor = -1;
 	}
@@ -1200,24 +1200,24 @@ public class Board extends JPanel implements MouseListener,
 	void movemouse (int i, int j)
 	// set a move at i,j
 	{
-		if (uiState.getBoardState().hasChildren()) return;
+		if (gameViewerState.getBoardState().hasChildren()) return;
 		if (captured == 1 && capturei == i && capturej == j) return;
-		uiState.getBoardState().set(i, j); // try to set a new move
-		uiState.stateChanged();
+		gameViewerState.getBoardState().set(i, j); // try to set a new move
+		gameViewerState.stateChanged();
 	}
 
 	void setmouse (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
-		uiState.getBoardState().set(i, j, c);
-		uiState.stateChanged();
+		gameViewerState.getBoardState().set(i, j, c);
+		gameViewerState.stateChanged();
 	}
 
 	void setmousec (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
-		uiState.getBoardState().setc(i, j, c);
-		uiState.stateChanged();
+		gameViewerState.getBoardState().setc(i, j, c);
+		gameViewerState.stateChanged();
 	}
 
 	void deletemouse (int i, int j)
@@ -1229,17 +1229,17 @@ public class Board extends JPanel implements MouseListener,
 	void deletemousec (int i, int j)
 	// delete a stone at i,j
 	{
-		uiState.getBoardState().delete(i, j);
-		uiState.stateChanged();
+		gameViewerState.getBoardState().delete(i, j);
+		gameViewerState.stateChanged();
 	}
 
 	void setVariationStyle (boolean hide, boolean current)
 	{
-		uiState.getBoardPosition().undonode(uiState.getBoardState().current().content());
+		gameViewerState.getBoardPosition().undonode(gameViewerState.getBoardState().current().content());
 		VHide = hide;
 		VCurrent = current;
-		uiState.getBoardPosition().act(uiState.getBoardState().current().content());
-		uiState.stateChanged();
+		gameViewerState.getBoardPosition().act(gameViewerState.getBoardState().current().content());
+		gameViewerState.stateChanged();
 		copy();
 	}
 }

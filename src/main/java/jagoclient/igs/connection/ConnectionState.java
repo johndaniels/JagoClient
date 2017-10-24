@@ -1,5 +1,6 @@
 package jagoclient.igs.connection;
 
+import jagoclient.board.BoardState;
 import jagoclient.board.Position;
 import jagoclient.igs.IgsConnection;
 import jagoclient.igs.IgsStream;
@@ -25,7 +26,7 @@ public class ConnectionState {
     List<GameInfo> gameInfos = new ArrayList<>();
     List<UsersChangedHandler> usersChangedHandlers = new ArrayList<>();
     List<GameInfoChangedHandler> gameInfoChangedHandlers = new ArrayList<>();
-    Map<Integer, Position> gameStateMap = new HashMap<>();
+    Map<Integer, BoardState> gameStateMap = new HashMap<>();
 
     public void addUsersChangedHandler(UsersChangedHandler whoChangedHandler) {
         usersChangedHandlers.add(whoChangedHandler);

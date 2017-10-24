@@ -13,13 +13,13 @@ public class ConnectedBoard extends Board
 {
 	ConnectedGoFrame CGF;
 
-	public ConnectedBoard (ConnectedGoFrame gf, UIState uiState)
-	{	super(uiState);
+	public ConnectedBoard (ConnectedGoFrame gf, GameViewerState gameViewerState)
+	{	super(gameViewerState);
 		CGF=gf;
 	}
 
 	public synchronized void setmouse (int i, int j, int c)	
-	{	if (uiState.getBoardState().current().content().main() && CGF.wantsmove()) return;
+	{	if (gameViewerState.getBoardState().current().content().main() && CGF.wantsmove()) return;
 		super.setmouse(i,j,c);
 	}
 
@@ -29,18 +29,18 @@ public class ConnectedBoard extends Board
 	public synchronized void setmousec (int i, int j, int c) {}
 
 	public synchronized void movemouse (int i, int j)
-	{	if (uiState.getBoardState().hasChildren()) return;
-		if (uiState.getBoardPosition().color(i,j)!=0) return;
+	{	if (gameViewerState.getBoardState().hasChildren()) return;
+		if (gameViewerState.getBoardPosition().color(i,j)!=0) return;
 		if (captured==1 && capturei==i && capturej==j) return;
-		if (uiState.getBoardState().current().content().main() && CGF.wantsmove())
+		if (gameViewerState.getBoardState().current().content().main() && CGF.wantsmove())
 		{	if (CGF.moveset(i,j))
 			{
 				update(i,j); copy();
-				MyColor= uiState.getBoardPosition().color();
+				MyColor= gameViewerState.getBoardPosition().color();
 			}
 			JagoSound.play("click","",false);
 		}
-		else uiState.getBoardState().set(i,j); // try to set a new move
+		else gameViewerState.getBoardState().set(i,j); // try to set a new move
 	}
 
 	/**
@@ -49,22 +49,22 @@ public class ConnectedBoard extends Board
 	the GoFrame wants the removal, it gets it.
 	*/
 	public synchronized void removegroup (int i0, int j0)
-	{	if (uiState.getBoardState().hasChildren()) return;
-		if (uiState.getBoardPosition().color(i0,j0)==0) return;
-		if (CGF.wantsmove() && uiState.getBoardState().current().content().main())
+	{	if (gameViewerState.getBoardState().hasChildren()) return;
+		if (gameViewerState.getBoardPosition().color(i0,j0)==0) return;
+		if (CGF.wantsmove() && gameViewerState.getBoardState().current().content().main())
 		{	CGF.moveset(i0,j0);
 		}
-		//uiState.getBoardState().removegroup(i0,j0);
+		//gameViewerState.getBoardState().removegroup(i0,j0);
 	}
 
 	/**
 	Take back the last move.
 	*/
 	public synchronized void undo ()
-	{	if (uiState.getBoardState().current().content().main()
+	{	if (gameViewerState.getBoardState().current().content().main()
 			&& CGF.wantsmove())
-		{	if (!uiState.getBoardState().hasChildren())
-			{	if (uiState.getUiMode() != UIState.UIMode.PLAY_BLACK && uiState.getUiMode() != UIState.UIMode.PLAY_WHITE) uiState.getBoardState().clearremovals();
+		{	if (!gameViewerState.getBoardState().hasChildren())
+			{	if (gameViewerState.getUiMode() != GameViewerState.UIMode.PLAY_BLACK && gameViewerState.getUiMode() != GameViewerState.UIMode.PLAY_WHITE) gameViewerState.getBoardState().clearremovals();
 				CGF.undo();
 			}
 			return;
@@ -76,9 +76,9 @@ public class ConnectedBoard extends Board
 	Pass (report to the GoFrame if necessary.
 	*/
 	public synchronized void pass ()
-	{	if (uiState.getBoardState().hasChildren()) return;
-		if (uiState.getBoardState().current().content().main()) return;
-		if (uiState.getBoardState().current().content().main() && CGF.wantsmove())
+	{	if (gameViewerState.getBoardState().hasChildren()) return;
+		if (gameViewerState.getBoardState().current().content().main()) return;
+		if (gameViewerState.getBoardState().current().content().main() && CGF.wantsmove())
 		{	CGF.movepass(); return;
 		}
 	}
@@ -88,7 +88,7 @@ public class ConnectedBoard extends Board
 	Will not be possible, if the GoFrame wants moves.
 	*/
 	public synchronized void insertnode ()
-	{	if (!uiState.getBoardState().hasChildren() && uiState.getBoardState().current().content().main() && CGF.wantsmove()) return;
+	{	if (!gameViewerState.getBoardState().hasChildren() && gameViewerState.getBoardState().current().content().main() && CGF.wantsmove()) return;
 	}
 	
 	/**

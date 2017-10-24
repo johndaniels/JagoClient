@@ -3,7 +3,7 @@ package jagoclient.board
 import jagoclient.Global
 import java.util.*
 
-class UIState (val size: Int) {
+class GameViewerState (val size: Int) {
     interface StateChangedHandler {
         fun stateChanged()
     }
