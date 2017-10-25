@@ -3,12 +3,9 @@ package jagoclient.board
 import jagoclient.Global
 import java.util.*
 
-class GameViewerState (val size: Int) {
-    interface StateChangedHandler {
-        fun stateChanged()
-    }
-    private val stateChangedHandlers = ArrayList<StateChangedHandler>();
-    fun addStateChangedHandler(stateChangedHandler: StateChangedHandler) {
+class GameViewerState (val size: Int) : UIState {
+    private val stateChangedHandlers = ArrayList<UIState.StateChangedHandler>();
+    override fun addStateChangedHandler(stateChangedHandler: UIState.StateChangedHandler) {
         stateChangedHandlers.add(stateChangedHandler);
     }
 
@@ -19,18 +16,27 @@ class GameViewerState (val size: Int) {
      * recheck all of their state against the canonical state, similar
      * to how React works.
      */
-    fun stateChanged() {
+    override fun stateChanged() {
         for (stateChangedHandler in stateChangedHandlers) {
             stateChangedHandler.stateChanged();
         }
     }
+
+    var specialMarker = Field.Marker.SQUARE
     var textMarker = "A";
     var labelM = "";
     var number = 0;
-    var boardState: BoardState = BoardState(size);
+    val boardState: BoardState = BoardState(size);
+    init {
+        boardState.addStateChangedHandler(this::stateChanged)
+    }
     val boardPosition: Position
         get() = boardState.boardPosition ;
     var uiMode : UIMode = UIMode.PLAY_BLACK
+    set(value) {
+        field = value;
+        stateChanged();
+    }
     enum class UIMode(val description: String) {
         PLAY_BLACK(Global.resourceString("Next_move__Black_")),
         PLAY_WHITE(Global.resourceString("Next_move__White_")),

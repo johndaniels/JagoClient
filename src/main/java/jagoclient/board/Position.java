@@ -22,7 +22,7 @@ public class Position
 	Field[][] F; // the board
 	private int lasti = -1, lastj = 0; // last move (used to highlight the move)
 	int Pw,Pb; // total prisioners captured
-	private int captured = 0, capturei, capturej;
+	int captured = 0, capturei, capturej;
 	int number;
 	int let;
 	String currentComment;

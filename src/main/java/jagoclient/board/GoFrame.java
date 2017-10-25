@@ -37,6 +37,7 @@ import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -538,15 +539,13 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	TextMarkQuestion tmq;
 	IconBar IB;
 	JPanel ButtonP;
-	String DefaultTitle = "";
-	NavigationPanel Navigation;
-	GameViewerState gameViewerState;
+	private NavigationPanel Navigation;
+	private GameViewerState gameViewerState;
 
 	public GoFrame (String s)
 	// For children, who set up their own menus
 	{
 		super(s);
-		DefaultTitle = s;
 		seticon("iboard.gif");
 	}
 
@@ -554,7 +553,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	// Constructur for local board menus.
 	{
 		super(s);
-		DefaultTitle = s;
 		// Colors
 		seticon("iboard.gif");
 		setLayout(new BorderLayout());
@@ -564,6 +562,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 		gameViewerState = new GameViewerState(19);
 		gameViewerState.addStateChangedHandler(this);
 		B = new Board(gameViewerState);
+		B.addBoardClickHandler(this::boardClicked);
 		boardState =  gameViewerState.getBoardState();
 
 		Menu file = new GameFileMenu(B, boardState, this, true);
@@ -705,7 +704,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 		validate();
 		Show = true;
 		B.addKeyListener(this);
-		if (Navigation != null) Navigation.addKeyListener(B);
+		if (Navigation != null) Navigation.addKeyListener(this);
 		addmenuitems();
 		repaint();
 	}
@@ -750,44 +749,42 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	public void iconPressed (String s)
 	{
 		if (s.equals("undo"))
-			doAction(Global.resourceString("Undo"));
+			boardState.undo(1);
 		else if (s.equals("allback"))
-			doAction("I<<");
+			boardState.allback();
 		else if (s.equals("fastback"))
-			doAction("<<");
+			boardState.fastback();
 		else if (s.equals("back"))
-			doAction("<");
+			boardState.back();
 		else if (s.equals("forward"))
-			doAction(">");
+			boardState.forward();
 		else if (s.equals("fastforward"))
-			doAction(">>");
+			boardState.fastforward();
 		else if (s.equals("allforward"))
-			doAction(">>I");
+			boardState.allforward();
 		else if (s.equals("variationback"))
-			doAction("<rankValue");
+			boardState.varleft();
 		else if (s.equals("variationstart"))
-			doAction("rankValue");
+			boardState.varup();
 		else if (s.equals("variationforward"))
-			doAction("rankValue>");
+			boardState.varright();
 		else if (s.equals("main"))
-			doAction("*");
+			boardState.varmain();
 		else if (s.equals("mainend"))
-			doAction("**");
+			boardState.varmaindown();
 		else if (s.equals("mark"))
-			B.mark();
-		else if (s.equals("mark"))
-			B.mark();
+			gameViewerState.setUiMode(GameViewerState.UIMode.MARK);
 		else if (s.equals("square"))
-			B.specialmark(Field.Marker.SQUARE);
+			specialmark(Field.Marker.SQUARE);
 		else if (s.equals("triangle"))
-			B.specialmark(Field.Marker.TRIANGLE);
+			specialmark(Field.Marker.TRIANGLE);
 		else if (s.equals("circle"))
-			B.specialmark(Field.Marker.CIRCLE);
+			specialmark(Field.Marker.CIRCLE);
 		else if (s.equals("letter"))
-			B.letter();
+			letter();
 		else if (s.equals("text"))
 		{
-			B.textmark(Text);
+			textmark(Text);
 			if (tmq == null)
 			{
 				tmq = new TextMarkQuestion(this, Text);
@@ -795,18 +792,70 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 			}
 		}
 		else if (s.equals("black"))
-			B.black();
+			black();
 		else if (s.equals("white"))
-			B.white();
+			white();
 		else if (s.equals("setblack"))
-			B.setblack();
+			setblack();
 		else if (s.equals("setwhite"))
-			B.setwhite();
+			setwhite();
 		else if (s.equals("delete"))
 			B.deletestones();
 		else if (s.equals("deletemarks"))
 			boardState.clearmarks();
 		else if (s.equals("play")) B.resume();
+	}
+
+	void textmark (String s)
+	// marking
+	{
+		gameViewerState.setUiMode(GameViewerState.UIMode.TEXT_MARK);
+		gameViewerState.setTextMarker(s);
+	}
+
+	public void letter ()
+	// letter
+	{
+		gameViewerState.setUiMode(GameViewerState.UIMode.LETTER);
+	}
+
+	public void mark ()
+	// marking
+	{
+		gameViewerState.setUiMode(GameViewerState.UIMode.MARK);
+	}
+
+	public void setblack ()
+	// set black mode
+	{
+		gameViewerState.setUiMode(GameViewerState.UIMode.ADD_BLACK);
+	}
+
+	public void setwhite ()
+	// set white mode
+	{
+		gameViewerState.setUiMode(GameViewerState.UIMode.ADD_WHITE);
+	}
+
+	public void black ()
+	// black to play
+	{
+		gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_BLACK);
+		gameViewerState.getBoardPosition().color(1);
+	}
+
+	public void white ()
+	// white to play
+	{
+		gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_WHITE);
+		gameViewerState.getBoardPosition().color( -1);
+	}
+
+	void specialmark (Field.Marker i)
+	// marking
+	{
+		gameViewerState.setUiMode(GameViewerState.UIMode.SPECIAL_MARK);
+		gameViewerState.setSpecialMarker(i);
 	}
 
 	@Override
@@ -825,61 +874,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 			else if (Global.resourceString("Board_size").equals(o))
 			{
 				boardsize();
-			}
-			else if ("<".equals(o))
-			{
-				boardState.back();
-				gameViewerState.stateChanged();
-			}
-			else if (">".equals(o))
-			{
-				boardState.forward();
-				gameViewerState.stateChanged();
-			}
-			else if (">>".equals(o))
-			{
-				boardState.fastforward();
-				gameViewerState.stateChanged();
-			}
-			else if ("<<".equals(o))
-			{
-				boardState.fastback();
-				gameViewerState.stateChanged();
-			}
-			else if ("I<<".equals(o))
-			{
-				boardState.allback();
-				gameViewerState.stateChanged();
-			}
-			else if (">>I".equals(o))
-			{
-				boardState.allforward();
-				gameViewerState.stateChanged();
-			}
-			else if ("<rankValue".equals(o))
-			{
-				boardState.varleft();
-				gameViewerState.stateChanged();
-			}
-			else if ("rankValue>".equals(o))
-			{
-				boardState.varright();
-				gameViewerState.stateChanged();
-			}
-			else if ("rankValue".equals(o))
-			{
-				boardState.varup();
-				gameViewerState.stateChanged();
-			}
-			else if ("**".equals(o))
-			{
-				boardState.varmaindown();
-				gameViewerState.stateChanged();
-			}
-			else if ("*".equals(o))
-			{
-				boardState.varmain();
-				gameViewerState.stateChanged();
 			}
 			else if (Global.resourceString("Pass").equals(o))
 			{
@@ -1039,27 +1033,27 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	{
 		if (Global.resourceString("Set_Black").equals(o))
 		{
-			B.setblack();
+			setblack();
 		}
 		else if (Global.resourceString("Set_White").equals(o))
 		{
-			B.setwhite();
+			setwhite();
 		}
 		else if (Global.resourceString("Black_to_play").equals(o))
 		{
-			B.black();
+			black();
 		}
 		else if (Global.resourceString("White_to_play").equals(o))
 		{
-			B.white();
+			white();
 		}
 		else if (Global.resourceString("Mark").equals(o))
 		{
-			B.mark();
+			mark();
 		}
 		else if (Global.resourceString("Text").equals(o))
 		{
-			B.textmark(Text);
+			textmark(Text);
 			if (tmq == null)
 			{
 				tmq = new TextMarkQuestion(this, Text);
@@ -1068,23 +1062,23 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 		}
 		else if (Global.resourceString("Square").equals(o))
 		{
-			B.specialmark(Field.Marker.SQUARE);
+			specialmark(Field.Marker.SQUARE);
 		}
 		else if (Global.resourceString("Triangle").equals(o))
 		{
-			B.specialmark(Field.Marker.TRIANGLE);
+			specialmark(Field.Marker.TRIANGLE);
 		}
 		else if (Global.resourceString("Cross").equals(o))
 		{
-			B.specialmark(Field.Marker.CROSS);
+			specialmark(Field.Marker.CROSS);
 		}
 		else if (Global.resourceString("Circle").equals(o))
 		{
-			B.specialmark(Field.Marker.CIRCLE);
+			specialmark(Field.Marker.CIRCLE);
 		}
 		else if (Global.resourceString("Letter").equals(o))
 		{
-			B.letter();
+			letter();
 		}
 		else if (Global.resourceString("Delete").equals(o))
 		{
@@ -1192,8 +1186,8 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	public void color (int c)
 	{
 		if (c == -1)
-			B.white();
-		else B.black();
+			white();
+		else black();
 	}
 
 	/**
@@ -1374,7 +1368,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	 */
 	void setTextmark (String s)
 	{
-		B.textmark(s);
+		textmark(s);
 	}
 
 	/** A blocked board cannot react to the user. */
@@ -1774,6 +1768,34 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 				case KeyEvent.VK_INSERT:
 					callInsert();
 					break;
+				case KeyEvent.VK_DOWN:
+					gameViewerState.getBoardState().forward();
+					break;
+				case KeyEvent.VK_UP:
+					gameViewerState.getBoardState().back();
+					break;
+				case KeyEvent.VK_LEFT:
+					gameViewerState.getBoardState().varleft();
+					break;
+				case KeyEvent.VK_RIGHT:
+					gameViewerState.getBoardState().varright();
+					break;
+				case KeyEvent.VK_PAGE_DOWN:
+					gameViewerState.getBoardState().fastforward();
+					break;
+				case KeyEvent.VK_PAGE_UP:
+					gameViewerState.getBoardState().fastback();
+					break;
+				case KeyEvent.VK_BACK_SPACE:
+				case KeyEvent.VK_DELETE:
+					undo();
+					break;
+				case KeyEvent.VK_HOME:
+					gameViewerState.getBoardState().varmain();
+					break;
+				case KeyEvent.VK_END:
+					gameViewerState.getBoardState().varmaindown();
+					break;
 			}
 		}
 		else
@@ -1784,6 +1806,68 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 				case 'F':
 					boardState.search(Global.getParameter("searchstring", "++"));
 					break;
+				case '*':
+					gameViewerState.getBoardState().varmain();
+					break;
+				case '/':
+					gameViewerState.getBoardState().varmaindown();
+					break;
+				case 'v':
+				case 'V':
+					gameViewerState.getBoardState().varup();
+					break;
+				case 'm':
+				case 'M':
+					gameViewerState.setUiMode(GameViewerState.UIMode.MARK);
+					break;
+				case 'p':
+				case 'P':
+					// Resume after marking. TODO: Should this always start with black?
+					gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_BLACK);
+					break;
+				case 'c':
+				case 'C':
+					specialmark(Field.Marker.CIRCLE);
+					break;
+				case 's':
+				case 'S':
+					specialmark(Field.Marker.SQUARE);
+					break;
+				case 't':
+				case 'T':
+					specialmark(Field.Marker.TRIANGLE);
+					break;
+				case 'l':
+				case 'L':
+					gameViewerState.setUiMode(GameViewerState.UIMode.LETTER);
+					break;
+				case 'r':
+				case 'R':
+					specialmark(Field.Marker.CROSS);
+					break;
+				case 'w':
+					setwhite();
+					break;
+				case 'b':
+					setblack();
+					break;
+				case 'W':
+					white();
+					break;
+				case 'B':
+					black();
+					break;
+				case '+':
+					gameViewerState.getBoardState().gotonext();
+					break;
+				case '-':
+					gameViewerState.getBoardState().gotoprevious();
+					break;
+				// Bug (VK_DELETE not reported as ActionEvent)
+				case KeyEvent.VK_BACK_SPACE:
+				case KeyEvent.VK_DELETE:
+					undo();
+					break;
 			}
 		}
 	}
@@ -1793,6 +1877,78 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 
 	public void keyTyped (KeyEvent e)
 	{}
+
+	public void boardClicked(MouseEvent e, int i, int j) {
+		switch (gameViewerState.getUiMode())
+		{
+			case ADD_BLACK: // set a black stone
+				if (e.isShiftDown() && e.isControlDown())
+					boardState.setc(i, j, 1);
+				else boardState.set(i, j, 1);
+				break;
+			case ADD_WHITE: // set a white stone
+				if (e.isShiftDown() && e.isControlDown())
+					boardState.setc(i, j, -1);
+				else boardState.set(i, j, -1);
+				break;
+			case MARK:
+				break;
+			case LETTER:
+				gameViewerState.getBoardState().letter(i, j);
+				break;
+			case DELETE_STONE: // delete a stone
+				if (e.isShiftDown() && e.isControlDown())
+					boardState.delete(i, j);
+				else boardState.delete(i, j);
+				break;
+			case REMOVE_GROUP: // remove a group
+				//removemouse(i, j);
+				break;
+			case SPECIAL_MARK:
+				gameViewerState.getBoardState().specialmark(i, j);
+				break;
+			case TEXT_MARK:
+				gameViewerState.getBoardState().textmark(i, j);
+				break;
+			case PLAY_BLACK:
+			case PLAY_WHITE: // normal move mode
+				if (e.isShiftDown()) // create variation
+				{
+					if (e.isControlDown())
+					{
+						gameViewerState.getBoardState().changemove(i, j);
+					}
+					else {
+						gameViewerState.getBoardState().variation(i, j);
+					}
+				}
+				else if (e.isControlDown())
+				// goto variation
+				{
+					if (gameViewerState.getBoardPosition().tree(i, j) != null)
+					{
+						gameViewerState.getBoardState().gotovariation(i, j);
+					}
+				}
+				else if (e.isMetaDown()) // right click
+				{
+					if (gameViewerState.getBoardPosition().tree(i, j) != null)
+					{
+						gameViewerState.getBoardState().gotovariation(i, j);
+					}
+					else {
+						gameViewerState.getBoardState().variation(i, j);
+					}
+				}
+				else
+				// place a W or B stone
+				{
+					boardState.movemouse(i, j);
+				}
+				break;
+		}
+	}
+
 
 	// interface routines for the BoardInterface
 

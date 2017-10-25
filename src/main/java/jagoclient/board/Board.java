@@ -19,6 +19,8 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
 import java.io.BufferedReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -39,7 +41,7 @@ import javax.swing.*;
  */
 
 public class Board extends JPanel implements MouseListener,
-	MouseMotionListener, KeyListener
+	MouseMotionListener
 {
 	private int O, W, D, S, OT, OTU, OP; // pixel coordinates
 	// O=offset, W=total width, D=field width, S=board size (9,11,13,19)
@@ -60,7 +62,6 @@ public class Board extends JPanel implements MouseListener,
 	public int MyColor = 0;
 	// board position which has been sended to server
 	private Dimension Dim; // Note size to check for resizeing at paint
-	private Field.Marker SpecialMarker = Field.Marker.SQUARE;
 	private String TextMarker = "A";
 	BufferedReader LaterLoad = null; // File to be loaded at repaint
 	private Image BlackStone, WhiteStone;
@@ -81,6 +82,11 @@ public class Board extends JPanel implements MouseListener,
 	private Color WhiteSparkleColor = new Color( 250, 250, 250);
 	Color MarkerColor = Color.BLUE;
 	Color LabelColor = Color.PINK.darker();
+	private List<BoardClickHandler> boardclickHandlers = new ArrayList<>();
+
+	public interface BoardClickHandler {
+		void boardClicked(MouseEvent e, int i, int j);
+	}
 
 	// ******************** initialize board *******************
 
@@ -103,7 +109,10 @@ public class Board extends JPanel implements MouseListener,
 		setfonts();
 		addMouseListener(this);
 		addMouseMotionListener(this);
-		addKeyListener(this);
+	}
+
+	public void addBoardClickHandler(BoardClickHandler handler) {
+		this.boardclickHandlers.add(handler);
 	}
 
 	public Color labelColor (int color)
@@ -473,73 +482,8 @@ public class Board extends JPanel implements MouseListener,
 		y -= O + OTU;
 		int i = x / D, j = y / D; // determine position
 		if (x < 0 || y < 0 || i < 0 || j < 0 || i >= S || j >= S) return;
-		switch (gameViewerState.getUiMode())
-		{
-			case ADD_BLACK: // set a black stone
-				if (e.isShiftDown() && e.isControlDown())
-					setmousec(i, j, 1);
-				else setmouse(i, j, 1);
-				break;
-			case ADD_WHITE: // set a white stone
-				if (e.isShiftDown() && e.isControlDown())
-					setmousec(i, j, -1);
-				else setmouse(i, j, -1);
-				break;
-			case MARK:
-				break;
-			case LETTER:
-				gameViewerState.getBoardState().letter(i, j);
-				break;
-			case DELETE_STONE: // delete a stone
-				if (e.isShiftDown() && e.isControlDown())
-					deletemousec(i, j);
-				else deletemouse(i, j);
-				break;
-			case REMOVE_GROUP: // remove a group
-				//removemouse(i, j);
-				break;
-			case SPECIAL_MARK:
-				gameViewerState.getBoardState().specialmark(i, j);
-				break;
-			case TEXT_MARK:
-				gameViewerState.getBoardState().textmark(i, j);
-				break;
-			case PLAY_BLACK:
-			case PLAY_WHITE: // normal move mode
-				if (e.isShiftDown()) // create variation
-				{
-					if (e.isControlDown())
-					{
-						gameViewerState.getBoardState().changemove(i, j);
-					}
-					else {
-						gameViewerState.getBoardState().variation(i, j);
-					}
-				}
-				else if (e.isControlDown())
-				// goto variation
-				{
-					if (gameViewerState.getBoardPosition().tree(i, j) != null)
-					{
-						gameViewerState.getBoardState().gotovariation(i, j);
-					}
-				}
-				else if (e.isMetaDown()) // right click
-				{
-					if (gameViewerState.getBoardPosition().tree(i, j) != null)
-					{
-						gameViewerState.getBoardState().gotovariation(i, j);
-					}
-					else {
-						gameViewerState.getBoardState().variation(i, j);
-					}
-				}
-				else
-				// place a W or B stone
-				{
-					movemouse(i, j);
-				}
-				break;
+		for (BoardClickHandler handler : boardclickHandlers) {
+			handler.boardClicked(e, i, j);
 		}
 		showinformation();
 		copy(); // show position
@@ -624,119 +568,6 @@ public class Board extends JPanel implements MouseListener,
 		gameViewerState.stateChanged();
 	}
 
-	// *************** keyboard events ********************
-
-	public synchronized void keyPressed (KeyEvent e)
-	{
-		if (e.isActionKey())
-		{
-			switch (e.getKeyCode())
-			{
-				case KeyEvent.VK_DOWN:
-					gameViewerState.getBoardState().forward();
-					break;
-				case KeyEvent.VK_UP:
-					gameViewerState.getBoardState().back();
-					break;
-				case KeyEvent.VK_LEFT:
-					gameViewerState.getBoardState().varleft();
-					break;
-				case KeyEvent.VK_RIGHT:
-					gameViewerState.getBoardState().varright();
-					break;
-				case KeyEvent.VK_PAGE_DOWN:
-					gameViewerState.getBoardState().fastforward();
-					break;
-				case KeyEvent.VK_PAGE_UP:
-					gameViewerState.getBoardState().fastback();
-					break;
-				case KeyEvent.VK_BACK_SPACE:
-				case KeyEvent.VK_DELETE:
-					undo();
-					break;
-				case KeyEvent.VK_HOME:
-					gameViewerState.getBoardState().varmain();
-					break;
-				case KeyEvent.VK_END:
-					gameViewerState.getBoardState().varmaindown();
-					break;
-			}
-		}
-		else
-		{
-			switch (e.getKeyChar())
-			{
-				case '*':
-					gameViewerState.getBoardState().varmain();
-					break;
-				case '/':
-					gameViewerState.getBoardState().varmaindown();
-					break;
-				case 'v':
-				case 'V':
-					gameViewerState.getBoardState().varup();
-					break;
-				case 'm':
-				case 'M':
-					mark();
-					break;
-				case 'p':
-				case 'P':
-					resume();
-					break;
-				case 'c':
-				case 'C':
-					specialmark(Field.Marker.CIRCLE);
-					break;
-				case 's':
-				case 'S':
-					specialmark(Field.Marker.SQUARE);
-					break;
-				case 't':
-				case 'T':
-					specialmark(Field.Marker.TRIANGLE);
-					break;
-				case 'l':
-				case 'L':
-					letter();
-					break;
-				case 'r':
-				case 'R':
-					specialmark(Field.Marker.CROSS);
-					break;
-				case 'w':
-					setwhite();
-					break;
-				case 'b':
-					setblack();
-					break;
-				case 'W':
-					white();
-					break;
-				case 'B':
-					black();
-					break;
-				case '+':
-					gameViewerState.getBoardState().gotonext();
-					break;
-				case '-':
-					gameViewerState.getBoardState().gotoprevious();
-					break;
-				// Bug (VK_DELETE not reported as ActionEvent)
-				case KeyEvent.VK_BACK_SPACE:
-				case KeyEvent.VK_DELETE:
-					undo();
-					break;
-			}
-		}
-	}
-
-	public void keyReleased (KeyEvent e)
-	{}
-
-	public void keyTyped (KeyEvent e)
-	{}
-
 	// set things on the board
 
 	int captured = 0, capturei, capturej;
@@ -747,15 +578,6 @@ public class Board extends JPanel implements MouseListener,
 	// update the navigation buttons
 	// update the comment
 	{
-		if (gameViewerState.getUiMode() == GameViewerState.UIMode.PLAY_BLACK || gameViewerState.getUiMode() == GameViewerState.UIMode.PLAY_WHITE)
-		{
-			if (gameViewerState.getBoardPosition().color() == 1) {
-				gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_BLACK);
-			}
-			else {
-				gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_WHITE);
-			}
-		}
 		int i, j;
 
 		String sc = "";
@@ -1017,65 +839,6 @@ public class Board extends JPanel implements MouseListener,
 
 	// ********** set board state ******************
 
-	public void setblack ()
-	// set black mode
-	{
-		gameViewerState.setUiMode(GameViewerState.UIMode.ADD_BLACK);
-		showinformation();
-	}
-
-	public void setwhite ()
-	// set white mode
-	{
-		gameViewerState.setUiMode(GameViewerState.UIMode.ADD_WHITE);
-		showinformation();
-	}
-
-	public void black ()
-	// black to play
-	{
-		gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_BLACK);
-		gameViewerState.getBoardPosition().color(1);
-		showinformation();
-	}
-
-	public void white ()
-	// white to play
-	{
-		gameViewerState.setUiMode(GameViewerState.UIMode.PLAY_WHITE);
-		gameViewerState.getBoardPosition().color( -1);
-		showinformation();
-	}
-
-	public void mark ()
-	// marking
-	{
-		gameViewerState.setUiMode(GameViewerState.UIMode.MARK);
-		showinformation();
-	}
-
-	void specialmark (Field.Marker i)
-	// marking
-	{
-		gameViewerState.setUiMode(GameViewerState.UIMode.SPECIAL_MARK);
-		SpecialMarker = i;
-		showinformation();
-	}
-
-	void textmark (String s)
-	// marking
-	{
-		gameViewerState.setUiMode(GameViewerState.UIMode.TEXT_MARK);
-		TextMarker = s;
-		showinformation();
-	}
-
-	public void letter ()
-	// letter
-	{
-		gameViewerState.setUiMode(GameViewerState.UIMode.LETTER);
-		showinformation();
-	}
 
 	void deletestones ()
 	// hide stones
@@ -1197,14 +960,7 @@ public class Board extends JPanel implements MouseListener,
 	// (Callback to server etc.)
 	// *****************************************************
 
-	void movemouse (int i, int j)
-	// set a move at i,j
-	{
-		if (gameViewerState.getBoardState().hasChildren()) return;
-		if (captured == 1 && capturei == i && capturej == j) return;
-		gameViewerState.getBoardState().set(i, j); // try to set a new move
-		gameViewerState.stateChanged();
-	}
+
 
 	void setmouse (int i, int j, int c)
 	// set a stone at i,j with specified color

@@ -1,6 +1,7 @@
 package jagoclient.board;
 
 import jagoclient.Global;
+import org.jetbrains.annotations.NotNull;
 import rene.util.list.Tree;
 import rene.util.xml.XmlReader;
 import rene.util.xml.XmlReaderException;
@@ -9,16 +10,14 @@ import rene.util.xml.XmlWriter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
 
 
 /**
  * Stores all of the game state associated with an SGF, including
  * variations, comments, etc.
  */
-public class BoardState {
+public class BoardState implements UIState {
     private int sendi = -1, sendj;
     private Position boardPosition;
     private int S;
@@ -28,6 +27,7 @@ public class BoardState {
     private String TextMarker = "A";
     private String comment;
     private Field.Marker SpecialMarker = Field.Marker.SQUARE;
+    private List<StateChangedHandler> stateChangedHandlers = new ArrayList<>();
 
     public BoardState(int s) {
         /*if (a.type().equals("SZ"))
@@ -76,6 +76,7 @@ public class BoardState {
         Pos = newpos;
         boardPosition.act(Pos.content());
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
     public void variation (int i, int j)
@@ -90,6 +91,7 @@ public class BoardState {
             boardPosition.number(i, j, 1);
             number = 2;
             Pos.content().number(2);
+            stateChanged();
         }
     }
 
@@ -109,6 +111,7 @@ public class BoardState {
             Pos.removeall();
         else Pos.remove(pos);
         goforward();
+        stateChanged();
     }
 
     private void goback ()
@@ -118,6 +121,7 @@ public class BoardState {
         boardPosition.undonode(Pos.content());
         Pos = Pos.parent();
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
     private void goforward ()
@@ -127,6 +131,7 @@ public class BoardState {
         Pos = Pos.firstchild();
         boardPosition.act(Pos.content());
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
     void gotoMove (int move)
@@ -135,6 +140,7 @@ public class BoardState {
         {
             goforward();
         }
+        stateChanged();
     }
 
     private void tovarright ()
@@ -146,7 +152,7 @@ public class BoardState {
         Pos = newpos;
         boardPosition.act(Pos.content());
         boardPosition.setcurrent(Pos);
-
+        stateChanged();
     }
 
     static Tree<Node> previouschild (Tree<Node> p)
@@ -176,6 +182,7 @@ public class BoardState {
             goforward();
             boardPosition.color( -c);
         }
+        stateChanged();
     }
 
     private void resettree ()
@@ -206,6 +213,7 @@ public class BoardState {
         Pos = newpos;
         boardPosition.act(Pos.content());
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
     void varright ()
@@ -219,6 +227,7 @@ public class BoardState {
         Pos = newpos;
         boardPosition.act(Pos.content());
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
     void varmain ()
@@ -230,6 +239,7 @@ public class BoardState {
             goback();
         }
         if (Pos.haschildren()) goforward();
+        stateChanged();
     }
 
     void varmaindown ()
@@ -244,6 +254,7 @@ public class BoardState {
         {
             goforward();
         }
+        stateChanged();
     }
 
     public synchronized void varup ()
@@ -257,6 +268,7 @@ public class BoardState {
         {
             goback();
         }
+        stateChanged();
     }
 
     void gotonext ()
@@ -269,6 +281,7 @@ public class BoardState {
             if ( !Pos.haschildren()) break;
             goforward();
         }
+        stateChanged();
     }
 
     void gotoprevious ()
@@ -281,6 +294,7 @@ public class BoardState {
             if (Pos.parent() == null) break;
             goback();
         }
+        stateChanged();
     }
 
     void allback ()
@@ -289,6 +303,7 @@ public class BoardState {
         getinformation();
         while (Pos.parent() != null)
             goback();
+        stateChanged();
     }
 
     void allforward ()
@@ -297,6 +312,7 @@ public class BoardState {
         getinformation();
         while (Pos.haschildren())
             goforward();
+        stateChanged();
     }
 
     private void getinformation ()
@@ -389,6 +405,7 @@ public class BoardState {
         p.addchild(new Tree<Node>(n));
         n.main(p);
         if (Pos == p) forward();
+        stateChanged();
     }
 
     public synchronized void setblack (int i, int j)
@@ -415,6 +432,7 @@ public class BoardState {
             n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
             boardPosition.color(i, j, 1);
         }
+        stateChanged();
     }
 
     public synchronized void setwhite (int i, int j)
@@ -441,6 +459,7 @@ public class BoardState {
             n.addchange(new Change(i, j, boardPosition.color(i, j), boardPosition.number(i, j)));
             boardPosition.color(i, j, -1);
         }
+        stateChanged();
     }
 
     public synchronized void pass ()
@@ -456,6 +475,7 @@ public class BoardState {
         n.main(Pos);
         goforward();
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
 
@@ -474,6 +494,7 @@ public class BoardState {
         });
         boardPosition.act(Pos.content());
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
     public void clearremovals ()
@@ -487,6 +508,7 @@ public class BoardState {
         });
         boardPosition.act(Pos.content());
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
     // *************** change the game tree ***********
@@ -501,6 +523,7 @@ public class BoardState {
         getinformation();
         Pos = Pos.lastchild();
         boardPosition.setcurrent(Pos);
+        stateChanged();
     }
 
     public void insertvariation ()
@@ -516,6 +539,7 @@ public class BoardState {
         Pos = Pos.lastchild();
         boardPosition.setcurrent(Pos);
         boardPosition.color( -c);
+        stateChanged();
     }
 
     public void undo (int n)
@@ -527,6 +551,7 @@ public class BoardState {
             goback();
             Pos.removeall();
         }
+        stateChanged();
     }
 
     public void delete (int i, int j)
@@ -574,6 +599,7 @@ public class BoardState {
                 boardPosition.color(i, j, 0);
             }
         }
+        stateChanged();
     }
 
     public void changemove (int i, int j)
@@ -594,9 +620,17 @@ public class BoardState {
                 }
             }
         }
+        stateChanged();
     }
 
-
+    void movemouse (int i, int j)
+    // set a move at i,j
+    {
+        if (hasChildren()) return;
+        if (boardPosition.captured == 1 && boardPosition.capturei == i && boardPosition.capturej == j) return;
+        set(i, j); // try to set a new move
+        stateChanged();
+    }
 
     public void specialmark (int i, int j)
     // Emphasize with the SpecialMarker
@@ -605,6 +639,7 @@ public class BoardState {
         Action.Type s = SpecialMarker.value;
         Action a = new Action(s, Field.string(i, j));
         n.toggleaction(a);
+        stateChanged();
     }
 
     public void markterritory (int i, int j, int color)
@@ -617,12 +652,14 @@ public class BoardState {
             a = new Action(Action.Type.WHITE_TERRITORY, Field.string(i, j));
         }
         Pos.content().expandaction(a);
+        stateChanged();
     }
 
     public void textmark (int i, int j)
     {
         Action a = new Action(Action.Type.LABEL, Field.string(i, j) + ":" + TextMarker);
         Pos.content().expandaction(a);
+        stateChanged();
     }
 
     public void letter (int i, int j)
@@ -630,6 +667,7 @@ public class BoardState {
     {
         Action a = new LabelAction(Field.string(i, j));
         Pos.content().toggleaction(a);
+        stateChanged();
     }
 
     public Node newnode ()
@@ -640,6 +678,7 @@ public class BoardState {
         n.main(Pos);
         Pos = newpos; // update current position pointerAction a;
         boardPosition.setcurrent(Pos);
+        stateChanged();
         return n;
     }
 
@@ -671,6 +710,7 @@ public class BoardState {
             n.expandaction(a); // note the move action
             boardPosition.color(i, j, c);
         }
+        stateChanged();
     }
 
     public String done ()
@@ -754,6 +794,7 @@ public class BoardState {
             boardPosition.act(Pos.content());
             boardPosition.setcurrent(Pos);
         }
+        stateChanged();
     }
 
     public void loadXml (XmlReader xml) throws XmlReaderException
@@ -768,6 +809,7 @@ public class BoardState {
             boardPosition.act(Pos.content());
             boardPosition.setcurrent(Pos);
         }
+        stateChanged();
     }
 
     public void save (PrintWriter o)
@@ -1043,6 +1085,7 @@ public class BoardState {
                 // !!! We alow for suicide moves
             }
         }
+        stateChanged();
     }
 
     public void addcomment (String s)
@@ -1075,6 +1118,7 @@ public class BoardState {
             p.content().addaction(new Action(Action.Type.COMMENT, s));
             break;
         }
+        stateChanged();
     }
 
     private String twodigits (int n)
@@ -1219,5 +1263,15 @@ public class BoardState {
 
     public Position getBoardPosition() {
         return boardPosition;
+    }
+
+    @Override
+    public void addStateChangedHandler(@NotNull StateChangedHandler stateChangedHandler) {
+        stateChangedHandlers.add(stateChangedHandler);
+    }
+
+    @Override
+    public void stateChanged() {
+        stateChangedHandlers.forEach(s -> s.stateChanged());
     }
 }
