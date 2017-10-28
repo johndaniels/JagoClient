@@ -26,12 +26,12 @@ class GameViewerState (val size: Int) : UIState {
     var textMarker = "A";
     var labelM = "";
     var number = 0;
-    val boardState: BoardState = BoardState(size);
+    val gameTree: GameTree = GameTree(size);
     init {
-        boardState.addStateChangedHandler(this::stateChanged)
+        gameTree.addStateChangedHandler(this::stateChanged)
     }
     val boardPosition: Position
-        get() = boardState.boardPosition ;
+        get() = gameTree.boardPosition ;
     var uiMode : UIMode = UIMode.PLAY_BLACK
     set(value) {
         field = value;

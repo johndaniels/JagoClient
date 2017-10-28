@@ -13,7 +13,7 @@ import java.awt.MenuItem
 import java.awt.event.ActionEvent
 import java.io.*
 
-class GameFileMenu(val board: Board, val boardState : BoardState, val frame : GoFrame, val mutable: Boolean) : MyMenu(Global.resourceString("File")) {
+class GameFileMenu(val board: Board, val gameTree: GameTree, val frame : GoFrame, val mutable: Boolean) : MyMenu(Global.resourceString("File")) {
     var useXML: Boolean = false;
     val useXMLCheckbox: CheckboxMenuItem
     val useSGFCheckbox: CheckboxMenuItem
@@ -68,7 +68,7 @@ class GameFileMenu(val board: Board, val boardState : BoardState, val frame : Go
             if (useXML) {
                 val `in` = FileInputStream(fd.getDirectory() + fn)
                 try {
-                    boardState.loadXml(XmlReader(`in`))
+                    gameTree.loadXml(XmlReader(`in`))
                 } catch (e: XmlReaderException) {
                     Message(frame, "Error in file!\n" + e.text).isVisible = true
                 }
@@ -83,7 +83,7 @@ class GameFileMenu(val board: Board, val boardState : BoardState, val frame : Go
                     fi = BufferedReader(InputStreamReader(
                             FileInputStream(fd.getDirectory() + fn), "utf-8"))
                 try {
-                    boardState.load(fi)
+                    gameTree.load(fi)
                 } catch (e: IOException) {
                     Message(frame, "Error in file!").isVisible = true
                 }
@@ -96,11 +96,11 @@ class GameFileMenu(val board: Board, val boardState : BoardState, val frame : Go
             return
         }
 
-        val s = boardState.firstnode().getaction(Action.Type.GAME_NAME)
+        val s = gameTree.firstnode().getaction(Action.Type.GAME_NAME)
         if (s != null && s != "")
             frame.setTitle(s)
         else {
-            boardState.firstnode().setaction(Action.Type.GAME_NAME, FileName.purefilename(fn))
+            gameTree.firstnode().setaction(Action.Type.GAME_NAME, FileName.purefilename(fn))
             frame.setTitle(FileName.purefilename(fn))
         }
         if (fn.toLowerCase().indexOf("kogo") >= 0)
@@ -109,7 +109,7 @@ class GameFileMenu(val board: Board, val boardState : BoardState, val frame : Go
     private fun saveGame(event: ActionEvent) {
         val fd = FileDialog(frame, Global.resourceString("Save"),
                 FileDialog.SAVE)
-        val s = boardState.firstnode().getaction(Action.Type.GAME_NAME)
+        val s = gameTree.firstnode().getaction(Action.Type.GAME_NAME)
         if (s != null && s != "")
             fd.setFile(s + "." + extension())
         else
@@ -125,13 +125,13 @@ class GameFileMenu(val board: Board, val boardState : BoardState, val frame : Go
             fo = PrintWriter(OutputStreamWriter(
                     FileOutputStream(fd.getDirectory() + fn),
                     "UTF8"))
-            boardState.saveXML(fo, "utf-8")
+            gameTree.saveXML(fo, "utf-8")
         } else {
             fo = PrintWriter(OutputStreamWriter(
                     FileOutputStream(fd.getDirectory() + fn), Global
                     .getParameter("encoding", System
                             .getProperty("file.encoding"))))
-            boardState.save(fo)
+            gameTree.save(fo)
         }
         fo.close()
     }
@@ -157,7 +157,7 @@ class GameFileMenu(val board: Board, val boardState : BoardState, val frame : Go
     private fun saveBitmap(event: ActionEvent) {
         val fd = FileDialog(frame, Global
                 .resourceString("Save_Bitmap"), FileDialog.SAVE)
-        val s = boardState.firstnode().getaction(Action.Type.GAME_NAME)
+        val s = gameTree.firstnode().getaction(Action.Type.GAME_NAME)
         if (s != null && s != "")
             fd.setFile(s + "." + Global.getParameter("extension", "bmp"))
         else

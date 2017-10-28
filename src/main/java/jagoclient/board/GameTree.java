@@ -17,7 +17,7 @@ import java.util.*;
  * Stores all of the game state associated with an SGF, including
  * variations, comments, etc.
  */
-public class BoardState implements UIState {
+public class GameTree implements UIState {
     private int sendi = -1, sendj;
     private Position boardPosition;
     private int S;
@@ -29,7 +29,7 @@ public class BoardState implements UIState {
     private Field.Marker SpecialMarker = Field.Marker.SQUARE;
     private List<StateChangedHandler> stateChangedHandlers = new ArrayList<>();
 
-    public BoardState(int s) {
+    public GameTree(int s) {
         /*if (a.type().equals("SZ"))
         {
             if (Pos.parent() == null)

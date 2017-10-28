@@ -11,8 +11,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -775,14 +773,14 @@ public class Board extends JPanel implements MouseListener,
 	public void undo ()
 	// take back the last move, ask if necessary
 	{ // System.out.println("undo");
-		if (gameViewerState.getBoardState().hasChildren() || gameViewerState.getBoardState().hasParent()
-			&& gameViewerState.getBoardState().current().parent().lastchild() != gameViewerState.getBoardState().current().parent().firstchild()
-			&& gameViewerState.getBoardState().current() == gameViewerState.getBoardState().current().parent().firstchild())
+		if (gameViewerState.getGameTree().hasChildren() || gameViewerState.getGameTree().hasParent()
+			&& gameViewerState.getGameTree().current().parent().lastchild() != gameViewerState.getGameTree().current().parent().firstchild()
+			&& gameViewerState.getGameTree().current() == gameViewerState.getGameTree().current().parent().firstchild())
 		{
-			gameViewerState.getBoardState().doundo(gameViewerState.getBoardState().current());
+			gameViewerState.getGameTree().doundo(gameViewerState.getGameTree().current());
 		}
 		else {
-			gameViewerState.getBoardState().doundo(gameViewerState.getBoardState().current());
+			gameViewerState.getGameTree().doundo(gameViewerState.getGameTree().current());
 		}
 	}
 
@@ -844,13 +842,13 @@ public class Board extends JPanel implements MouseListener,
 	public boolean score ()
 	// board state is removing groups
 	{
-		if (gameViewerState.getBoardState().hasChildren()) {
+		if (gameViewerState.getGameTree().hasChildren()) {
 			return false;
 		}
 		gameViewerState.setUiMode(GameViewerState.UIMode.REMOVE_GROUP);
 		Removing = true;
 		showinformation();
-		if (gameViewerState.getBoardState().current().content().main())
+		if (gameViewerState.getGameTree().current().content().main())
 			return true;
 		else return false;
 	}
@@ -867,7 +865,7 @@ public class Board extends JPanel implements MouseListener,
 	public void lastrange (int n)
 	// set the range for stone numbers
 	{
-		int l = gameViewerState.getBoardState().current().content().number() - 2;
+		int l = gameViewerState.getGameTree().current().content().number() - 2;
 		Range = l / n * n;
 		if (Range < 0) Range = 0;
 		KeepRange = true;
@@ -927,14 +925,14 @@ public class Board extends JPanel implements MouseListener,
 	void setmouse (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
-		gameViewerState.getBoardState().set(i, j, c);
+		gameViewerState.getGameTree().set(i, j, c);
 		gameViewerState.stateChanged();
 	}
 
 	void setmousec (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
-		gameViewerState.getBoardState().setc(i, j, c);
+		gameViewerState.getGameTree().setc(i, j, c);
 		gameViewerState.stateChanged();
 	}
 
@@ -947,19 +945,19 @@ public class Board extends JPanel implements MouseListener,
 	void deletemousec (int i, int j)
 	// delete a stone at i,j
 	{
-		gameViewerState.getBoardState().delete(i, j);
+		gameViewerState.getGameTree().delete(i, j);
 		gameViewerState.stateChanged();
 	}
 
 	void setVariationStyle (boolean hide, boolean current)
 	{
-		gameViewerState.getBoardPosition().undonode(gameViewerState.getBoardState().current().content());
+		gameViewerState.getBoardPosition().undonode(gameViewerState.getGameTree().current().content());
 		VHide = hide;
 		VCurrent = current;
-		gameViewerState.getBoardPosition().act(gameViewerState.getBoardState().current().content());
+		gameViewerState.getBoardPosition().act(gameViewerState.getGameTree().current().content());
 		gameViewerState.stateChanged();
 		copy();
 	}
 
-	public int maincolor() { return gameViewerState.getBoardState().getBoardPosition().color(); }
+	public int maincolor() { return gameViewerState.getGameTree().getBoardPosition().color(); }
 }

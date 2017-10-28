@@ -61,14 +61,14 @@ public class PartnerGoFrame extends ConnectedGoFrame
 			return;
 		}
 		else if (Global.resourceString("Count").equals(o))
-		{	if (Ended || !boardState.ismain())
-			{	String s=boardState.done();
+		{	if (Ended || !gameTree.ismain())
+			{	String s= gameTree.done();
 				if (s!=null) new Message(this,s).setVisible(true);
 			}
 			return;
 		}
 		else if (Global.resourceString("Undo").equals(o))
-		{	if (Ended || !boardState.ismain()) B.undo();
+		{	if (Ended || !gameTree.ismain()) B.undo();
 			else
 			{	if (Col!=B.maincolor()) return;
 				B.undo();
@@ -76,7 +76,7 @@ public class PartnerGoFrame extends ConnectedGoFrame
 			return;
 		}
 		else if (Global.resourceString("Undo_Adding_Removing").equals(o))
-		{	boardState.clearremovals();
+		{	gameTree.clearremovals();
 			return;
 		}
 		else super.doAction(o);
@@ -120,13 +120,13 @@ public class PartnerGoFrame extends ConnectedGoFrame
 	}
 
 	public void dopass ()
-	{	boardState.setpass();
+	{	gameTree.setpass();
 	}
 
 	public void undo () { PF.undo(); }
 
 	public void undo (int n)
-	{	boardState.undo(n);
+	{	gameTree.undo(n);
 	}
 
 	public void settimes (int bt, int bm, int wt, int wm)
@@ -242,11 +242,11 @@ public class PartnerGoFrame extends ConnectedGoFrame
 		BlackMoves=-1; WhiteMoves=-1;
 		Timer=new Thread(new GoTimer(this,100));
 		Timer.start();
-		if (Handicap>0) gameViewerState.getBoardState().handicap(Handicap);
+		if (Handicap>0) gameViewerState.getGameTree().handicap(Handicap);
 	}
 	
 	void setHandicap ()
-	{	if (Handicap>0) gameViewerState.getBoardState().handicap(Handicap);
+	{	if (Handicap>0) gameViewerState.getGameTree().handicap(Handicap);
 		Handicap=0;
 	}
 

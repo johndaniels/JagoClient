@@ -60,7 +60,7 @@ public class ConnectedGoFrame extends GoFrame
 		// Menu
 		MenuBar M = new MenuBar();
 		setMenuBar(M);
-		Menu file = new GameFileMenu(B, boardState, this, false);
+		Menu file = new GameFileMenu(B, gameTree, this, false);
 		FileMenu = file;
 		M.add(file);
 		/*
@@ -297,7 +297,7 @@ public class ConnectedGoFrame extends GoFrame
 	public void addComment (String s)
 	// add a comment to the board (called from external sources)
 	{
-		boardState.addcomment(s);
+		gameTree.addcomment(s);
 		if (AllComments != null) AllComments.append(s + "\n");
 	}
 
