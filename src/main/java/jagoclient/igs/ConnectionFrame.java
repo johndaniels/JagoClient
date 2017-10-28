@@ -198,6 +198,7 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 	JTextField Game;
 	CheckboxMenuItem CheckInfo, CheckMessages, CheckErrors, ReducedOutput,
 		AutoReply;
+	JTabbedPane tabbedPane;
 	public int MoveStyle = ConnectionInfo.MOVE;
 	JTextField WhoRange; // Kyu/Dan range for the who command.
 	String Waitfor; // Pop a a message, when this player connects.
@@ -275,15 +276,15 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		// Input
 		Input = new HistoryTextField(this, "Input");
 		Input.loadHistory("input.history");
-		JTabbedPane tabbedPane = new JTabbedPane();
+		tabbedPane = new JTabbedPane();
 		roomsPanel.add("Center", center);
 		// Buttons:
 		MyPanel p = new MyPanel();
 		p.add(new ButtonAction(this, Global.resourceString("Who")));
 		p.add(WhoRange = new HistoryTextField(this, "WhoRange", 5));
 		WhoRange.setText(Global.getParameter("whorange", "20k-8d"));
-		ButtonAction observeButton = new ButtonAction(this, Global.resourceString("Observe"));
-		observeButton.addActionListener(actionEvent -> connectionState.observeGame(gamesPanel.getSelectedGame().getGameNumber()));
+		JButton observeButton = new JButton("Observe");
+		observeButton.addActionListener(actionEvent -> this.observe(gamesPanel.getSelectedGame().getGameNumber()));
 		p.add(new MyLabel(" "));
 		p.add(new ButtonAction(this, Global.resourceString("Peek")));
 		p.add(new ButtonAction(this, Global.resourceString("Status")));
@@ -305,152 +306,6 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		MoveStyle = style;
 	}
 
-	/**
-	 * Tries to connect to the server using IgsStream. Upon success, it starts
-	 * the ReceiveThread, which handles the login and then all input from the
-	 * server, scanned by IgsStream.
-	 * <P>
-	 * Then it starts some default distributors, shows itself and returns true.
-	 * 
-	 * @returns success of failure
-	 * @see jagoclient.igs.IgsStream
-	 */
-	/*
-	public boolean connect (String server, int port, String user,
-		String password, boolean proxy)
-	{
-		try
-		{
-			Server = new Socket(server, port);
-			String encoding = Encoding;
-			if (encoding.startsWith("!"))
-			{
-				encoding = encoding.substring(1);
-			}
-			if (encoding.equals(""))
-				Out = new RefreshWriter(
-					new OutputStreamWriter(Outstream = new DataOutputStream(
-						Server.getOutputStream())), true);
-			else Out = new RefreshWriter(new OutputStreamWriter(
-				Outstream = new DataOutputStream(Server.getOutputStream()),
-				encoding), true);
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			try
-			{
-				Out = new RefreshWriter(
-					new OutputStreamWriter(Outstream = new DataOutputStream(
-						Server.getOutputStream())), true);
-			}
-			catch (Exception ex)
-			{
-				return false;
-			}
-		}
-		catch (IllegalArgumentException e)
-		{
-			try
-			{
-				Out = new RefreshWriter(
-					new OutputStreamWriter(Outstream = new DataOutputStream(
-						Server.getOutputStream())), true);
-			}
-			catch (Exception ex)
-			{
-				return false;
-			}
-		}
-		catch (IOException e)
-		{
-			return false;
-		}
-		try
-		{
-			In = new IgsStream();
-		}
-		catch (Exception e)
-		{
-			return false;
-		}
-		setVisible(true);
-		new PlayDistributor(this, In, Out);
-		new MessageDistributor(this, In, Out);
-		new ErrorDistributor(this, In, Out);
-		new InformationDistributor(this, In, Out);
-		new SayDistributor(this, In, Out);
-		return true;
-	}
-
-	public boolean connectvia (String server, int port, String user,
-		String password, String relayserver, int relayport)
-	{
-		try
-		{
-			Server = new Socket(relayserver, relayport);
-			String encoding = Encoding;
-			if (encoding.startsWith("!"))
-			{
-				encoding = encoding.substring(1);
-			}
-			if (encoding.equals(""))
-				Out = new RefreshWriter(
-					new OutputStreamWriter(Outstream = new DataOutputStream(
-						Server.getOutputStream())), true);
-			else Out = new RefreshWriter(new OutputStreamWriter(
-				Outstream = new DataOutputStream(Server.getOutputStream()),
-				encoding), true);
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			try
-			{
-				Out = new RefreshWriter(
-					new OutputStreamWriter(Outstream = new DataOutputStream(
-						Server.getOutputStream())), true);
-			}
-			catch (Exception ex)
-			{
-				return false;
-			}
-		}
-		catch (IllegalArgumentException e)
-		{
-			try
-			{
-				Out = new RefreshWriter(
-					new OutputStreamWriter(Outstream = new DataOutputStream(
-						Server.getOutputStream())), true);
-			}
-			catch (Exception ex)
-			{
-				return false;
-			}
-		}
-		catch (IOException e)
-		{
-			return false;
-		}
-		try
-		{
-			In = new IgsStream();
-		}
-		catch (Exception e)
-		{
-			return false;
-		}
-		Out.println(server);
-		Out.println("" + port);
-		setVisible(true);
-		RT = new ReceiveThread(usersPanel, In, Out, user, password, false, this);
-		RT.start();
-		new PlayDistributor(this, In, Out);
-		new MessageDistributor(this, In, Out);
-		new ErrorDistributor(this, In, Out);
-		new InformationDistributor(this, In, Out);
-		new SayDistributor(this, In, Out);
-		return true;
-	}*/
 
 	@Override
 	public void doAction (String o)
@@ -718,6 +573,10 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 		new Status(gf, In, Out, n);
 	}
 
+	private void observeCurrent() {
+
+	}
+
 	public void observe (int n)
 	{
 		/*if (In.gamewaiting(n))
@@ -726,6 +585,9 @@ public class ConnectionFrame extends CloseFrame implements DoItemListener, KeyLi
 				.resourceString("There_is_already_a_board_for_this_game_")).setVisible(true);
 			return;
 		}*/
+		connectionState.observeGame(n);
+		tabbedPane.addTab("Game " + Integer.toString(n), new IgsGamePanel(n, connectionState));
+
 		IgsGoFrame gf = new IgsGoFrame(this, Global
 			.resourceString("Observe_game"));
 		gf.setVisible(true);

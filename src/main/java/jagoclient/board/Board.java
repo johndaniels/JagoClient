@@ -58,7 +58,6 @@ public class Board extends JPanel implements MouseListener,
 	private FontMetrics fontmetrics; // metrics of this font
 	jagoclient.board.GameViewerState gameViewerState;
 	private boolean Active;
-	private int MainColor = 1;
 	public int MyColor = 0;
 	// board position which has been sended to server
 	private Dimension Dim; // Note size to check for resizeing at paint
@@ -804,11 +803,6 @@ public class Board extends JPanel implements MouseListener,
 		return S;
 	}
 
-	public int maincolor ()
-	{
-		return MainColor;
-	}
-
 	boolean valid (int i, int j)
 	{
 		return i >= 0 && i < S && j >= 0 && j < S;
@@ -882,39 +876,7 @@ public class Board extends JPanel implements MouseListener,
 		KeepRange = false;
 	}
 
-	public void handicap (int n)
-	// set number of handicap points
-	{
-		int h = S < 13?3:4;
-		if (n > 5)
-		{
-			gameViewerState.getBoardState().setblack(h - 1, S / 2);
-			gameViewerState.getBoardState().setblack(S - h, S / 2);
-		}
-		if (n > 7)
-		{
-			gameViewerState.getBoardState().setblack(S / 2, h - 1);
-			gameViewerState.getBoardState().setblack(S / 2, S - h);
-		}
-		switch (n)
-		{
-			case 9:
-			case 7:
-			case 5:
-				gameViewerState.getBoardState().setblack(S / 2, S / 2);
-			case 8:
-			case 6:
-			case 4:
-				gameViewerState.getBoardState().setblack(S - h, S - h);
-			case 3:
-				gameViewerState.getBoardState().setblack(h - 1, h - 1);
-			case 2:
-				gameViewerState.getBoardState().setblack(h - 1, S - h);
-			case 1:
-				gameViewerState.getBoardState().setblack(S - h, h - 1);
-		}
-		MainColor = -1;
-	}
+
 
 	public void updateall ()
 	// update all of the board
@@ -998,4 +960,6 @@ public class Board extends JPanel implements MouseListener,
 		gameViewerState.stateChanged();
 		copy();
 	}
+
+	public int maincolor() { return gameViewerState.getBoardState().getBoardPosition().color(); }
 }

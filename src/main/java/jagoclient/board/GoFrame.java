@@ -1409,7 +1409,7 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	 */
 	public void handicap (int n)
 	{
-		B.handicap(n);
+		gameViewerState.getBoardState().handicap(n);
 	}
 
 	/** set a move at i,j (called from Board) */
@@ -1986,4 +1986,5 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 	{
 		return Color.gray;
 	}
+
 }

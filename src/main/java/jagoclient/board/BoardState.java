@@ -22,7 +22,7 @@ public class BoardState implements UIState {
     private Position boardPosition;
     private int S;
     Tree<Node> Pos; // the current board position in this presentation
-    private SGFTree T; // the game tree
+    private SGFTree gameTree; // the game tree
     int number; // number of the next move
     private String TextMarker = "A";
     private String comment;
@@ -64,8 +64,8 @@ public class BoardState implements UIState {
         number = 1;
         Node n = new Node(number);
         n.main(true);
-        T = new SGFTree(n);
-        Pos = T.top();
+        gameTree = new SGFTree(n);
+        Pos = gameTree.top();
     }
 
     void gotovariation (int i, int j)
@@ -169,7 +169,7 @@ public class BoardState implements UIState {
 
     public void setpass ()
     {
-        Tree<Node> p = T.top();
+        Tree<Node> p = gameTree.top();
         while (p.haschildren())
             p = p.firstchild();
         Node n = new Node(number);
@@ -187,7 +187,7 @@ public class BoardState implements UIState {
 
     private void resettree ()
     {
-        Pos = T.top();
+        Pos = gameTree.top();
         boardPosition = new Position(S);
     }
 
@@ -381,7 +381,7 @@ public class BoardState implements UIState {
     // white move at i,j at the end of the main tree
     {
         if (i < 0 || j < 0 || i >= S || j >= S) return;
-        Tree<Node> p = T.top();
+        Tree<Node> p = gameTree.top();
         while (p.haschildren())
             p = p.firstchild();
         Action a = new Action(Action.Type.BLACK, Field.string(i, j));
@@ -396,7 +396,7 @@ public class BoardState implements UIState {
     // black move at i,j at the end of the main tree
     {
         if (i < 0 || j < 0 || i >= S || j >= S) return;
-        Tree<Node> p = T.top();
+        Tree<Node> p = gameTree.top();
         while (p.haschildren())
             p = p.firstchild();
         Action a = new Action(Action.Type.WHITE, Field.string(i, j));
@@ -412,12 +412,12 @@ public class BoardState implements UIState {
     // set a white stone at i,j at the end of the main tree
     {
         if (i < 0 || j < 0 || i >= S || j >= S) return;
-        Tree<Node> p = T.top();
+        Tree<Node> p = gameTree.top();
         while (p.haschildren())
             p = p.firstchild();
         Action a = new Action(Action.Type.ADD_BLACK, Field.string(i, j));
         Node n;
-        if (p == T.top())
+        if (p == gameTree.top())
         {
             Tree<Node> newpos;
             p.addchild(newpos = new Tree<Node>(new Node(1)));
@@ -439,12 +439,12 @@ public class BoardState implements UIState {
     // set a white stone at i,j at the end of the main tree
     {
         if (i < 0 || j < 0 || i >= S || j >= S) return;
-        Tree<Node> p = T.top();
+        Tree<Node> p = gameTree.top();
         while (p.haschildren())
             p = p.firstchild();
         Action a = new Action(Action.Type.ADD_WHITE, Field.string(i, j));
         Node n;
-        if (p == T.top())
+        if (p == gameTree.top())
         {
             Tree<Node> newpos;
             p.addchild(newpos = new Tree<Node>(new Node(1)));
@@ -627,7 +627,7 @@ public class BoardState implements UIState {
     // set a move at i,j
     {
         if (hasChildren()) return;
-        if (boardPosition.captured == 1 && boardPosition.capturei == i && boardPosition.capturej == j) return;
+        if (boardPosition.getCaptured() == 1 && boardPosition.getCapturei() == i && boardPosition.getCapturej() == j) return;
         set(i, j); // try to set a new move
         stateChanged();
     }
@@ -670,7 +670,7 @@ public class BoardState implements UIState {
         stateChanged();
     }
 
-    public Node newnode ()
+    private Node newnode ()
     {
         Node n = new Node(++number);
         Tree<Node> newpos = new Tree<Node>(n);
@@ -789,7 +789,7 @@ public class BoardState implements UIState {
         synchronized (this)
         {
             if (v.size() == 0) return;
-            T = (SGFTree)v.elementAt(0);
+            gameTree = (SGFTree)v.elementAt(0);
             resettree();
             boardPosition.act(Pos.content());
             boardPosition.setcurrent(Pos);
@@ -804,7 +804,7 @@ public class BoardState implements UIState {
         synchronized (this)
         {
             if (v.size() == 0) return;
-            T = (SGFTree)v.elementAt(0);
+            gameTree = (SGFTree)v.elementAt(0);
             resettree();
             boardPosition.act(Pos.content());
             boardPosition.setcurrent(Pos);
@@ -817,11 +817,11 @@ public class BoardState implements UIState {
     // in SGF
     {
         getinformation();
-        T.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
-        T.top().content().setaction(Action.Type.SIZE, "" + S, true);
-        T.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
-        T.top().content().setaction(Action.Type.FILE_FORMAT, "4", true);
-            ((SGFTree)T).print(o);
+        gameTree.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
+        gameTree.top().content().setaction(Action.Type.SIZE, "" + S, true);
+        gameTree.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
+        gameTree.top().content().setaction(Action.Type.FILE_FORMAT, "4", true);
+            ((SGFTree) gameTree).print(o);
     }
 
     public void savePos (PrintWriter o)
@@ -840,16 +840,16 @@ public class BoardState implements UIState {
     // save the file in Jago's XML format
     {
         getinformation();
-        T.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
-        T.top().content().setaction(Action.Type.SIZE, "" + S, true);
-        T.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
-        T.top().content().setaction(Action.Type.FILE_FORMAT, "4", true);
+        gameTree.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
+        gameTree.top().content().setaction(Action.Type.SIZE, "" + S, true);
+        gameTree.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
+        gameTree.top().content().setaction(Action.Type.FILE_FORMAT, "4", true);
         XmlWriter xml = new XmlWriter(o);
         xml.printEncoding(encoding);
         xml.printXls("go.xsl");
         xml.printDoctype("Go", "go.dtd");
         xml.startTagNewLine("Go");
-        T.printXML(xml);
+        gameTree.printXML(xml);
         xml.endTagNewLine("Go");
     }
 
@@ -857,10 +857,10 @@ public class BoardState implements UIState {
     // save the file in Jago's XML format
     {
         getinformation();
-        T.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
-        T.top().content().setaction(Action.Type.SIZE, "" + S, true);
-        T.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
-        T.top().content().setaction(Action.Type.FILE_FORMAT,"4", true);
+        gameTree.top().content().setaction(Action.Type.APPLICATION, "Jago:" + Global.version(), true);
+        gameTree.top().content().setaction(Action.Type.SIZE, "" + S, true);
+        gameTree.top().content().setaction(Action.Type.GAME_TYPE, "1", true);
+        gameTree.top().content().setaction(Action.Type.FILE_FORMAT,"4", true);
         XmlWriter xml = new XmlWriter(o);
         xml.printEncoding(encoding);
         xml.printXls("go.xsl");
@@ -890,7 +890,7 @@ public class BoardState implements UIState {
     // an ASCII image of the board.
     {
         int i, j;
-        o.println(T.top().content().getaction(Action.Type.GAME_NAME));
+        o.println(gameTree.top().content().getaction(Action.Type.GAME_NAME));
         o.print("      ");
         for (i = 0; i < S; i++)
         {
@@ -964,14 +964,14 @@ public class BoardState implements UIState {
         n.setaction(Action.Type.SIZE, "" + S, true);
         n.setaction(Action.Type.GAME_TYPE, "1", true);
         n.setaction(Action.Type.FILE_FORMAT, "4", true);
-        n.copyAction(T.top().content(), Action.Type.GAME_NAME);
-        n.copyAction(T.top().content(), Action.Type.DATE);
-        n.copyAction(T.top().content(), Action.Type.BLACK_PLAYER_NAME);
-        n.copyAction(T.top().content(), Action.Type.BLACK_PLAYER_RANK);
-        n.copyAction(T.top().content(), Action.Type.WHITE_PLAYER_NAME);
-        n.copyAction(T.top().content(), Action.Type.WHITE_PLAYER_RANK);
-        n.copyAction(T.top().content(), Action.Type.USER);
-        n.copyAction(T.top().content(), Action.Type.COPYRIGHT);
+        n.copyAction(gameTree.top().content(), Action.Type.GAME_NAME);
+        n.copyAction(gameTree.top().content(), Action.Type.DATE);
+        n.copyAction(gameTree.top().content(), Action.Type.BLACK_PLAYER_NAME);
+        n.copyAction(gameTree.top().content(), Action.Type.BLACK_PLAYER_RANK);
+        n.copyAction(gameTree.top().content(), Action.Type.WHITE_PLAYER_NAME);
+        n.copyAction(gameTree.top().content(), Action.Type.WHITE_PLAYER_RANK);
+        n.copyAction(gameTree.top().content(), Action.Type.USER);
+        n.copyAction(gameTree.top().content(), Action.Type.COPYRIGHT);
         int i, j;
         for (i = 0; i < S; i++)
         {
@@ -1091,7 +1091,7 @@ public class BoardState implements UIState {
     public void addcomment (String s)
     // add a string to the comments, notifies comment area
     {
-        Tree<Node> p = T.top();
+        Tree<Node> p = gameTree.top();
         while (p.haschildren())
             p = p.firstchild();
         String Added = "";
@@ -1179,7 +1179,7 @@ public class BoardState implements UIState {
     // get a mixture from handicap, komi and prisoners
     {
         StringBuffer b = new StringBuffer(Global.resourceString("_("));
-        Node n = T.top().content();
+        Node n = gameTree.top().content();
         if (n.contains(Action.Type.HANDICAP))
         {
             b.append(Global.resourceString("Ha_"));
@@ -1202,14 +1202,47 @@ public class BoardState implements UIState {
                                 String whiterank, String komi, String handicap)
     // set various things like names, rank etc.
     {
-        T.top().content().setaction(Action.Type.BLACK_PLAYER_NAME, black, true);
-        T.top().content().setaction(Action.Type.BLACK_PLAYER_RANK, blackrank, true);
-        T.top().content().setaction(Action.Type.WHITE_PLAYER_NAME, white, true);
-        T.top().content().setaction(Action.Type.WHITE_PLAYER_RANK, whiterank, true);
-        T.top().content().setaction(Action.Type.KOMI, komi, true);
-        T.top().content().setaction(Action.Type.HANDICAP, handicap, true);
-        T.top().content().setaction(Action.Type.GAME_NAME, white + "-" + black, true);
-        T.top().content().setaction(Action.Type.DATE, new Date().toString());
+        gameTree.top().content().setaction(Action.Type.BLACK_PLAYER_NAME, black, true);
+        gameTree.top().content().setaction(Action.Type.BLACK_PLAYER_RANK, blackrank, true);
+        gameTree.top().content().setaction(Action.Type.WHITE_PLAYER_NAME, white, true);
+        gameTree.top().content().setaction(Action.Type.WHITE_PLAYER_RANK, whiterank, true);
+        gameTree.top().content().setaction(Action.Type.KOMI, komi, true);
+        gameTree.top().content().setaction(Action.Type.HANDICAP, handicap, true);
+        gameTree.top().content().setaction(Action.Type.GAME_NAME, white + "-" + black, true);
+        gameTree.top().content().setaction(Action.Type.DATE, new Date().toString());
+    }
+
+    public void handicap (int n)
+    // set number of handicap points
+    {
+        int h = S < 13?3:4;
+        if (n > 5)
+        {
+            setblack(h - 1, S / 2);
+            setblack(S - h, S / 2);
+        }
+        if (n > 7)
+        {
+            setblack(S / 2, h - 1);
+            setblack(S / 2, S - h);
+        }
+        switch (n)
+        {
+            case 9:
+            case 7:
+            case 5:
+                setblack(S / 2, S / 2);
+            case 8:
+            case 6:
+            case 4:
+                setblack(S - h, S - h);
+            case 3:
+                setblack(h - 1, h - 1);
+            case 2:
+                setblack(h - 1, S - h);
+            case 1:
+                setblack(S - h, h - 1);
+        }
     }
 
     public int siblings ()
@@ -1233,7 +1266,7 @@ public class BoardState implements UIState {
 
     Node firstnode ()
     {
-        return T.top().content();
+        return gameTree.top().content();
     }
 
     public boolean canfinish ()
@@ -1244,13 +1277,13 @@ public class BoardState implements UIState {
     String getname ()
     // get node name
     {
-        return T.top().content().getaction(Action.Type.NAME);
+        return gameTree.top().content().getaction(Action.Type.NAME);
     }
 
     public String getKomi ()
     // get Komi string
     {
-        return T.top().content().getaction(Action.Type.KOMI);
+        return gameTree.top().content().getaction(Action.Type.KOMI);
     }
 
     boolean hasParent() {

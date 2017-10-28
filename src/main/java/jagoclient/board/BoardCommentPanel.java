@@ -8,7 +8,7 @@ import javax.swing.JPanel;
  * This panel contains two panels aside. The left panel is kept square.
  */
 
-class BoardCommentPanel extends JPanel
+public class BoardCommentPanel extends JPanel
 {
 	Component C1, C2;
 	Board B;

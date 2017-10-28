@@ -22,14 +22,14 @@ public class Position
 	Field[][] F; // the board
 	private int lasti = -1, lastj = 0; // last move (used to highlight the move)
 	int Pw,Pb; // total prisioners captured
-	int captured = 0, capturei, capturej;
+	private int captured = 0, capturei, capturej;
 	int number;
 	int let;
 	String currentComment;
 
 	List<Tree<Node>> nodes = new ArrayList<>(); // A list of the nodes that got us to this point.
-	
-	/** 
+
+	/**
 	Initialize F with an empty board, and set the next turn to black.
 	*/
 	public Position (int size)
@@ -499,5 +499,17 @@ public class Position
 
 	public String getCurrentComment() {
 		return currentComment;
+	}
+
+	public int getCaptured() {
+		return captured;
+	}
+
+	public int getCapturei() {
+		return capturei;
+	}
+
+	public int getCapturej() {
+		return capturej;
 	}
 }

@@ -187,12 +187,6 @@ public class IgsGoFrame extends ConnectedGoFrame implements TimedBoard,
 	@Override
 	public boolean moveset (int i, int j)
 	{
-		if (Dis != null)
-		{
-			if (B.maincolor() > 0)
-				Dis.set(i, j, BlackRun);
-			else Dis.set(i, j, WhiteRun);
-		}
 		return true;
 	}
 
@@ -351,18 +345,7 @@ public class IgsGoFrame extends ConnectedGoFrame implements TimedBoard,
 
 	public void alarm ()
 	{
-		long now = System.currentTimeMillis();
-		if (B.maincolor() > 0)
-		{
-			BlackRun = (int)((now - CurrentTime) / 1000);
-			if (B.MyColor > 0) beep(BlackTime - BlackRun);
-		}
-		else
-		{
-			WhiteRun = (int)((now - CurrentTime) / 1000);
-			if (B.MyColor < 0) beep(WhiteTime - WhiteRun);
-		}
-		settitle1();
+
 	}
 
 	/** called from the board to sound an alarm */

@@ -1,10 +1,7 @@
 package jagoclient.partner;
 
 import jagoclient.Global;
-import jagoclient.board.ConnectedGoFrame;
-import jagoclient.board.GoTimer;
-import jagoclient.board.OutputFormatter;
-import jagoclient.board.TimedBoard;
+import jagoclient.board.*;
 import jagoclient.dialogs.Message;
 import jagoclient.sound.JagoSound;
 
@@ -14,14 +11,16 @@ The go frame for partner connections.
 
 public class PartnerGoFrame extends ConnectedGoFrame 
 	implements TimedBoard
-{	String BlackName,WhiteName;
-	int BlackTime,WhiteTime,BlackMoves,WhiteMoves;
-	int BlackRun,WhiteRun;
+{
+	private String BlackName,WhiteName;
+	private int BlackTime,WhiteTime,BlackMoves,WhiteMoves;
+	private int BlackRun,WhiteRun;
 	Thread Timer;
 	long CurrentTime;
 	PartnerFrame PF;
 	int Col,TotalTime,ExtraTime,ExtraMoves;
 	public boolean Started,Ended;
+	GameViewerState gameViewerState;
 	int Handicap;
 	
 	public PartnerGoFrame (PartnerFrame pf, String s,
@@ -243,11 +242,11 @@ public class PartnerGoFrame extends ConnectedGoFrame
 		BlackMoves=-1; WhiteMoves=-1;
 		Timer=new Thread(new GoTimer(this,100));
 		Timer.start();
-		if (Handicap>0) B.handicap(Handicap);
+		if (Handicap>0) gameViewerState.getBoardState().handicap(Handicap);
 	}
 	
 	void setHandicap ()
-	{	if (Handicap>0) B.handicap(Handicap);
+	{	if (Handicap>0) gameViewerState.getBoardState().handicap(Handicap);
 		Handicap=0;
 	}
 

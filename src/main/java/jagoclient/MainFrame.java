@@ -7,7 +7,6 @@ import jagoclient.dialogs.GetFontSize;
 import jagoclient.dialogs.GetParameter;
 import jagoclient.dialogs.Help;
 import jagoclient.dialogs.Message;
-import jagoclient.gmp.GMPConnection;
 import jagoclient.gui.ButtonAction;
 import jagoclient.gui.CheckboxMenuItemAction;
 import jagoclient.gui.GrayTextField;
@@ -523,10 +522,6 @@ public class MainFrame extends CloseFrame implements DoItemListener
 			{
 				GoFrame gf = new GoFrame(new Frame(), Global.resourceString("Local_Viewer"));
 				gf.setVisible(true);
-			}
-			else if (Global.resourceString("Play_Go").equals(o))
-			{
-				new GMPConnection(this).setVisible(true);
 			}
 			else if (Global.resourceString("Server_Port").equals(o))
 			{
