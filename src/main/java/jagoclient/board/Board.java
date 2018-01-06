@@ -2,15 +2,7 @@ package jagoclient.board;
 
 import jagoclient.Global;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -96,7 +88,7 @@ public class Board extends JPanel implements MouseListener,
 		EmptyShadow = null;
 		showlast = true;
 		this.gameViewerState = gameViewerState;
-		this.gameViewerState.addStateChangedHandler(this::updateall);
+		this.gameViewerState.addStateChangedHandler(this::repaint);
 		number = 1;
 		CurrentTree = 0;
 		Active = true;
@@ -196,7 +188,6 @@ public class Board extends JPanel implements MouseListener,
 		emptypaint();
 		ActiveImage = createImage(W, W);
 		// update the emtpy board
-		updateall();
 		repaint();
 	}
 
@@ -212,9 +203,8 @@ public class Board extends JPanel implements MouseListener,
 			Dim = d;
 			makeimages();
 		}
-		if (ActiveImage != null) {
-			g.drawImage(ActiveImage, 0, 0, this);
-		}
+		updateall(g);
+		drawTarget(g, iTarget, jTarget);
 		if ( !Activated)
 		{
 			Activated = true;
@@ -483,8 +473,6 @@ public class Board extends JPanel implements MouseListener,
 			handler.boardClicked(e, i, j);
 		}
 		showinformation();
-		copy(); // show position
-		gameViewerState.stateChanged();
 	}
 
 	// target rectangle things
@@ -507,28 +495,24 @@ public class Board extends JPanel implements MouseListener,
 		if (i < 0 || j < 0 || i >= S || j >= S)
 		{
 			iTarget = jTarget = -1;
-			copy();
 			return;
 		}
 		if ((iTarget != i || jTarget != j))
 		{
-			drawTarget(i, j);
 			iTarget = i;
 			jTarget = j;
 		}
 		gameViewerState.setLabelM(Field.coordinate(i, j, S));
+		repaint();
 	}
 
-	public void drawTarget (int i, int j)
+	public void drawTarget (Graphics g, int i, int j)
 	{
-		copy();
-		Graphics g = getGraphics();
 		if (g == null) return;
 		i = O + OTU + i * D + D / 2;
 		j = O + OTU + j * D + D / 2;
 		g.setColor(Color.gray.brighter());
 		g.drawRect(i - D / 4, j - D / 4, D / 2, D / 2);
-		g.dispose();
 	}
 
 	public void mouseEntered (MouseEvent e)
@@ -544,11 +528,9 @@ public class Board extends JPanel implements MouseListener,
 		y -= O + OTU;
 		int i = x / D, j = y / D; // determine position
 		if (i < 0 || j < 0 || i >= S || j >= S) return;
-		drawTarget(i, j);
 		iTarget = i;
 		jTarget = j;
 		gameViewerState.setLabelM(Field.coordinate(i, j, S));
-		gameViewerState.stateChanged();
 	}
 
 	public void mouseExited (MouseEvent e)
@@ -561,8 +543,6 @@ public class Board extends JPanel implements MouseListener,
 			DisplayNodeName = true;
 		}
 		iTarget = jTarget = -1;
-		copy();
-		gameViewerState.stateChanged();
 	}
 
 	// set things on the board
@@ -586,14 +566,13 @@ public class Board extends JPanel implements MouseListener,
 		}
 	}
 
-	public void update (int i, int j)
+	public void update (Graphics g, int i, int j)
 	// update the field (i,j) in the offscreen image Active
 	// in dependance of the board position gameViewerState.getBoardPosition().
 	// display the last move mark, if applicable.
 	{
-		if (ActiveImage == null) return;
+		Shape oldClip = g.getClip();
 		if (i < 0 || j < 0) return;
-		Graphics g = ActiveImage.getGraphics();
 		int xi = O + OTU + i * D;
 		int xj = O + OTU + j * D;
 
@@ -629,8 +608,7 @@ public class Board extends JPanel implements MouseListener,
 		}
 		g.setClip(xi, xj, D, D);
 		update1(g, i, j);
-		g.dispose();
-		repaint();
+		g.setClip(oldClip);
 	}
 
 	void update1 (Graphics g, int i, int j)
@@ -758,18 +736,6 @@ public class Board extends JPanel implements MouseListener,
 		}
 	}
 
-	public void copy ()
-	// copy the offscreen board to the screen
-	{
-		if (ActiveImage == null) return;
-		try
-		{
-			getGraphics().drawImage(ActiveImage, 0, 0, this);
-		}
-		catch (Exception e)
-		{}
-	}
-
 	public void undo ()
 	// take back the last move, ask if necessary
 	{ // System.out.println("undo");
@@ -810,8 +776,6 @@ public class Board extends JPanel implements MouseListener,
 	{
 		if (Range == -1) return;
 		Range = -1;
-		updateall();
-		copy();
 	}
 
 	// *****************************************
@@ -869,25 +833,22 @@ public class Board extends JPanel implements MouseListener,
 		Range = l / n * n;
 		if (Range < 0) Range = 0;
 		KeepRange = true;
-		updateall();
-		copy();
 		KeepRange = false;
 	}
 
 
 
-	public void updateall ()
+	public void updateall (Graphics g)
 	// update all of the board
 	{
-		if (ActiveImage == null) return;
 		synchronized (this)
 		{
-			ActiveImage.getGraphics().drawImage(Empty, 0, 0, this);
+			g.drawImage(Empty, 0, 0, this);
 		}
 		int i, j;
 		for (i = 0; i < S; i++) {
 			for (j = 0; j < S; j++) {
-				update(i, j);
+				update(g, i, j);
 			}
 		}
 		showinformation();
@@ -900,8 +861,6 @@ public class Board extends JPanel implements MouseListener,
 		EmptyShadow = null;
 		setfonts();
 		makeimages();
-		updateall();
-		copy();
 	}
 
 	Image getBoardImage ()
@@ -926,14 +885,12 @@ public class Board extends JPanel implements MouseListener,
 	// set a stone at i,j with specified color
 	{
 		gameViewerState.getGameTree().set(i, j, c);
-		gameViewerState.stateChanged();
 	}
 
 	void setmousec (int i, int j, int c)
 	// set a stone at i,j with specified color
 	{
 		gameViewerState.getGameTree().setc(i, j, c);
-		gameViewerState.stateChanged();
 	}
 
 	void deletemouse (int i, int j)
@@ -946,7 +903,6 @@ public class Board extends JPanel implements MouseListener,
 	// delete a stone at i,j
 	{
 		gameViewerState.getGameTree().delete(i, j);
-		gameViewerState.stateChanged();
 	}
 
 	void setVariationStyle (boolean hide, boolean current)
@@ -955,8 +911,6 @@ public class Board extends JPanel implements MouseListener,
 		VHide = hide;
 		VCurrent = current;
 		gameViewerState.getBoardPosition().act(gameViewerState.getGameTree().current().content());
-		gameViewerState.stateChanged();
-		copy();
 	}
 
 	public int maincolor() { return gameViewerState.getGameTree().getBoardPosition().color(); }

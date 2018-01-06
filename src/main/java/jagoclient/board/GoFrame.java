@@ -1119,7 +1119,6 @@ public class GoFrame extends CloseFrame implements DoItemListener, KeyListener,
 		{
 			LastNumber = flag;
 			Global.setParameter("lastnumber", LastNumber);
-			B.updateall();
 		}
 		else if (Global.resourceString("Show_Target").equals(o))
 		{

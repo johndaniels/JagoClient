@@ -35,7 +35,7 @@ public class ConnectedBoard extends Board
 		if (gameViewerState.getGameTree().current().content().main() && CGF.wantsmove())
 		{	if (CGF.moveset(i,j))
 			{
-				update(i,j); copy();
+				repaint();
 				MyColor= gameViewerState.getBoardPosition().color();
 			}
 			JagoSound.play("click","",false);
